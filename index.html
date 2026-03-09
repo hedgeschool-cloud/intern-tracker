@@ -21,7 +21,7 @@
       --red: #dc2626;
       --text: #1a1028;
       --muted: #7c6a9e;
-      --card: #181d28;
+      --card: #ede8f9;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,7 +46,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(ellipse at 30% 20%, #e8e0ff 0%, var(--bg) 60%);
+      background: radial-gradient(ellipse at 30% 20%, #ede8f9 0%, var(--bg) 60%);
     }
 
     .auth-box {
@@ -180,7 +180,7 @@
       display: inline-flex; align-items: center; gap: 6px;
       padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
     }
-    .pill-blue { background: rgba(79,142,247,.15); color: var(--accent); }
+    .pill-blue { background:rgba(124,58,237,.12); color: var(--accent); }
     .pill-green { background: rgba(34,197,94,.15); color: var(--green); }
     .pill-yellow { background: rgba(245,158,11,.15); color: var(--yellow); }
     .pill-red { background: rgba(239,68,68,.15); color: var(--red); }
@@ -248,7 +248,7 @@
     .text-sm { font-size: 13px; }
     .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
     .badge-admin { background: rgba(124,58,237,.2); color: #a78bfa; }
-    .badge-mentor { background: rgba(79,142,247,.15); color: var(--accent); }
+    .badge-mentor { background:rgba(124,58,237,.12); color: var(--accent); }
 
     .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
     .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
@@ -340,7 +340,7 @@
     /* ── PENDING APPROVAL SCREEN ── */
     #pending-screen {
       min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      background: radial-gradient(ellipse at 30% 20%, #e8e0ff 0%, var(--bg) 60%);
+      background: radial-gradient(ellipse at 30% 20%, #ede8f9 0%, var(--bg) 60%);
     }
     .pending-box {
       background: var(--surface); border: 1px solid var(--border);
@@ -1262,7 +1262,7 @@ async function renderScorecardAsync() {
                 <td><span class="tag">${e.batch.name}</span></td>
                 <td><span style="font-size:12px;color:var(--muted)">${e.batch.stream || '—'}</span></td>
                 <td><span class="score-pill" style="background:${pctBg(e.sc.aggregate)};color:${pctColor(e.sc.aggregate)}">${e.sc.aggregate}%</span></td>
-                <td><span class="score-pill" style="background:rgba(79,142,247,.15);color:var(--accent)">${e.sc.processScore}%</span></td>
+                <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${e.sc.processScore}%</span></td>
                 <td><span class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green)">${e.sc.progressScore}%</span></td>
                 <td>${e.sc.attendance}% <span style="font-size:11px;color:var(--muted)">(${e.sc.attPct}%)</span></td>
                 <td>${e.sc.hrclub}% <span style="font-size:11px;color:var(--muted)">(${e.sc.hrPct}%)</span></td>
@@ -1393,8 +1393,8 @@ function renderDashboard() {
             <div class="batch-card-title">${b.name}</div>
             ${b.description ? `<div class="text-muted text-sm" style="margin-bottom:8px">${b.description}</div>` : ''}
             <div style="display:flex; gap:8px; flex-wrap:wrap">
-              ${b.stream ? `<span class="stat-pill pill-blue">🎓 ${b.stream}</span>` : ''}
-              <span class="stat-pill pill-yellow">📋 ${b.taskCount||10} tasks & attendance slots</span>
+              ${b.stream ? `<span class="stat-pill pill-blue" style="background:rgba(124,58,237,.12);color:#5b21b6">🎓 ${b.stream}</span>` : ''}
+              <span class="stat-pill pill-yellow" style="background:rgba(217,119,6,.12);color:#92400e">📋 ${b.taskCount||10} tasks & attendance slots</span>
             </div>
             <div class="batch-meta">
               <div class="batch-stat">
@@ -1428,11 +1428,11 @@ function renderBatchList() {
             <div class="batch-card-title">${b.name}</div>
             ${b.description ? `<div class="text-muted text-sm" style="margin-bottom:8px">${b.description}</div>` : ''}
             <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px">
-              ${b.stream ? `<span class="stat-pill pill-blue">🎓 ${b.stream}</span>` : ''}
-              <span class="stat-pill pill-yellow">📋 ${b.taskCount||10} tasks & attendance slots</span>
+              ${b.stream ? `<span class="stat-pill pill-blue" style="background:rgba(124,58,237,.12);color:#5b21b6">🎓 ${b.stream}</span>` : ''}
+              <span class="stat-pill pill-yellow" style="background:rgba(217,119,6,.12);color:#92400e">📋 ${b.taskCount||10} tasks & attendance slots</span>
             </div>
             <div style="display:flex; align-items:center; justify-content:space-between">
-              <span class="stat-pill pill-green">👤 ${b.internCount||0} interns</span>
+              <span class="stat-pill pill-green" style="background:rgba(22,163,74,.12);color:#14532d">👤 ${b.internCount||0} interns</span>
               ${_state.userDoc.role === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteBatch('${b.id}')">🗑 Delete</button>` : ''}
             </div>
           </div>
@@ -1456,7 +1456,7 @@ async function renderBatchDetailAsync(batchId) {
         <button class="btn btn-ghost btn-sm" onclick="navigate('batches')" style="margin-bottom:8px">← Back</button>
         <div class="page-title">${batch.name}</div>
         <div class="page-sub">${batch.description || ''} &nbsp;
-          ${batch.stream ? `<span class="tag" style="background:rgba(79,142,247,.15);color:var(--accent)">🎓 ${batch.stream}</span>` : ''}
+          ${batch.stream ? `<span class="tag" style="background:rgba(124,58,237,.12);color:var(--accent)">🎓 ${batch.stream}</span>` : ''}
           <span class="tag">📋 ${batch.taskCount||10} tasks & attendance slots</span>
         </div>
       </div>
@@ -1524,7 +1524,7 @@ async function renderBatchDetailAsync(batchId) {
                   <td><div class="rank-badge ${rc}">${rl}</div></td>
                   <td><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${batch.id}',internId:'${i.id}'})">${i.name}</span></td>
                   <td><span class="score-pill" style="background:${pctBg(i.sc.aggregate)};color:${pctColor(i.sc.aggregate)}">${i.sc.aggregate}%</span></td>
-                  <td><span class="score-pill" style="background:rgba(79,142,247,.15);color:var(--accent)">${i.sc.processScore}%</span></td>
+                  <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${i.sc.processScore}%</span></td>
                   <td><span class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green)">${i.sc.progressScore}%</span></td>
                 </tr>`;
               }).join('')}
@@ -1667,7 +1667,7 @@ async function renderInternDetailAsync(param) {
       <div class="card mb-16">
         <div class="flex-between mb-8">
           <h3 style="font-size:15px;font-weight:700">🎯 HR/Club Activities <span style="font-size:12px;color:var(--muted)">(${hrCount} slots • 15% weight)</span></h3>
-          <span class="score-pill" style="background:rgba(79,142,247,.15);color:var(--accent)">${sc.hrPct}% → ${sc.hrclub}pts</span>
+          <span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${sc.hrPct}% → ${sc.hrclub}pts</span>
         </div>
         <div class="slots-grid">
           ${Array.from({length: hrCount}, (_,i) => {
@@ -1701,7 +1701,7 @@ async function renderInternDetailAsync(param) {
       <div style="display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:24px">
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">👤 Gender</h3>
-          <select style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none"
+          <select style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none"
             onchange="updateSingleField('${batchId}','${internId}','gender',this.value)">
             <option value="" ${!intern.gender ? 'selected' : ''}>— Select —</option>
             <option value="male" ${intern.gender==='male' ? 'selected' : ''}>Male</option>
@@ -1712,7 +1712,7 @@ async function renderInternDetailAsync(param) {
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">📁 Project Title</h3>
         <input type="text" placeholder="Enter project title..." 
           value="${intern.projectTitle || ''}"
-          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
+          style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
           onfocus="this.style.borderColor='var(--accent)'" 
           onblur="this.style.borderColor='var(--border)'; updateProjectTitle('${batchId}','${internId}',this.value)" />
         </div>
@@ -1724,7 +1724,7 @@ async function renderInternDetailAsync(param) {
         <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Enter keywords separated by commas — these will be woven into the evaluation PDF (e.g. analytical, proactive, detail-oriented, team player)</p>
         <input type="text" placeholder="e.g. analytical, proactive, detail-oriented, quick learner..."
           value="${intern.evalKeywords || ''}"
-          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
+          style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
           onfocus="this.style.borderColor='var(--accent)'"
           onblur="this.style.borderColor='var(--border)'; updateEvalKeywords('${batchId}','${internId}',this.value)" />
       </div>
@@ -1734,7 +1734,7 @@ async function renderInternDetailAsync(param) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">⚡ Zappyvue Grade</h3>
-          <select style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:16px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
+          <select style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:16px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onchange="updateSingleField('${batchId}','${internId}','zappyvueGrade',this.value)">
             <option value="" ${!intern.zappyvueGrade ? 'selected' : ''}>— Select Grade —</option>
             <option value="A" ${intern.zappyvueGrade==='A' ? 'selected' : ''}>A</option>
@@ -1745,7 +1745,7 @@ async function renderInternDetailAsync(param) {
         </div>
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">💼 Technical Interview Grade</h3>
-          <select style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:16px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
+          <select style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:16px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onchange="updateSingleField('${batchId}','${internId}','technicalInterviewGrade',this.value)">
             <option value="" ${!intern.technicalInterviewGrade ? 'selected' : ''}>— Select Grade —</option>
             <option value="A" ${intern.technicalInterviewGrade==='A' ? 'selected' : ''}>A</option>
@@ -1764,14 +1764,14 @@ async function renderInternDetailAsync(param) {
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">🔬 Project Quality <span style="font-size:12px;color:var(--muted)">(10% weight)</span></h3>
           <input type="number" min="0" max="100" value="${intern.projectQuality ?? ''}" placeholder="Score out of 100"
-            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
+            style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onblur="updateSingleField('${batchId}','${internId}','projectQuality',this.value)" />
           <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.projectQuality}pts / 10</div>
         </div>
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">🌐 Social Contest <span style="font-size:12px;color:var(--muted)">(10% weight)</span></h3>
           <input type="number" min="0" max="100" value="${intern.socialContest ?? ''}" placeholder="Score out of 100"
-            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
+            style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onblur="updateSingleField('${batchId}','${internId}','socialContest',this.value)" />
           <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.socialContest}pts / 10</div>
         </div>
@@ -2122,7 +2122,7 @@ async function renderUsersAsync() {
     <div class="card mb-24" style="border-color:rgba(245,158,11,.4)">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <h3 style="font-size:16px;font-weight:700">⏳ Pending Approval (${pending.length})</h3>
-        <span class="stat-pill pill-yellow">${pending.length} waiting</span>
+        <span class="stat-pill pill-yellow" style="background:rgba(217,119,6,.12);color:#92400e">${pending.length} waiting</span>
       </div>
       <div class="table-wrap">
         <table>
