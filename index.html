@@ -1540,8 +1540,8 @@ async function renderBatchDetailAsync(batchId) {
           <span class="tag">📋 ${batch.taskCount||10} tasks & attendance slots</span>
         </div>
       </div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap">
-        <button class="btn btn-green btn-sm" onclick="exportBatch('${batchId}')">📥 Export All</button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+        <button class="btn btn-green" onclick="exportBatch('${batchId}')" style="font-weight:700">📥 Export Full Report</button>
         ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditTasksModal('${batchId}',${batch.taskCount||10})">⚙️ Edit Tasks</button>` : ''}
       </div>
     </div>
