@@ -1929,7 +1929,7 @@ window.exportEvaluationPDF = async (batchId, internId) => {
     : '';
 
   const evalText = [
-    `${name} served as an intern in our ${stream} stream for a period of ${duration} days. ${His} project title was "${projectTitle}". We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
+    `${name} served as an intern in our ${stream} stream for a period of ${duration} days. ${intern.projectTitle ? `${His} project title was "${projectTitle}". ` : ''}We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
     `In terms of process parameters, ${name} demonstrated ${attQ} attendance throughout the internship period, reflecting ${his} ${kw1 ? kw1 + ' and ' : ''}commitment and dedication to the program. ${His} participation in HR and Club Activities was ${hrQ}, indicating ${his} ${kw2 ? kw2 + ' approach and ' : ''}engagement with the broader organisational culture. With respect to Daily Report submissions, ${He} showed ${drQ} consistency, which is a key indicator of ${his} work ethic and accountability.`,
     `Regarding progress parameters, ${His} Project Quality was found to be ${pqQ}, reflecting the depth of ${kw3 ? kw3 + ' and ' : ''}effort invested in ${his} project work. ${his} performance across assigned tasks was ${taskQ}, demonstrating ${his} ${kw4 ? kw4 + ' and ' : ''}grasp of the subject matter and practical skills. ${His} engagement in the Social Contest component was ${scQ}, showcasing ${his} ${kw5 ? kw5 + ' and ' : ''}initiative beyond core responsibilities.`,
     `Overall, ${name} demonstrated a ${overallQ} performance across both process and progress dimensions.${kwSentence} We believe ${he} has shown real potential and has made meaningful contributions during the internship. As an area for continued growth, we encourage ${him} to focus on improving ${his} ${weakest.name}, which we believe will further strengthen ${his} professional profile.`,
@@ -1983,16 +1983,18 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   pdf.setTextColor(30, 30, 30);
   pdf.text(stream, margin + 22, y);
 
-  y += 7;
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(9);
-  pdf.setTextColor(100, 100, 100);
-  pdf.text('PROJECT:', margin, y);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(10);
-  pdf.setTextColor(30, 30, 30);
-  const projShort = projectTitle.length > 60 ? projectTitle.substring(0, 60) + '...' : projectTitle;
-  pdf.text(projShort, margin + 22, y);
+  if (intern.projectTitle) {
+    y += 7;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('PROJECT:', margin, y);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(30, 30, 30);
+    const projShort = projectTitle.length > 60 ? projectTitle.substring(0, 60) + '...' : projectTitle;
+    pdf.text(projShort, margin + 22, y);
+  }
 
   // Divider
   y += 8;
