@@ -1821,6 +1821,36 @@ window.toggleField = async (batchId, internId, fieldPath, el) => {
 // ══════════════════════════════════════════════
 // EVALUATION PDF EXPORT
 // ══════════════════════════════════════════════
+
+// ══════════════════════════════════════════════
+// JUSTIFIED TEXT HELPER FOR jsPDF
+// ══════════════════════════════════════════════
+function justifyText(pdf, text, x, y, maxWidth, lineHeight) {
+  const lines = pdf.splitTextToSize(text, maxWidth);
+  lines.forEach((line, i) => {
+    const isLastLine = i === lines.length - 1;
+    if (isLastLine || line.trim() === '') {
+      // Last line of paragraph - left align
+      pdf.text(line, x, y + i * lineHeight);
+    } else {
+      const words = line.trim().split(' ');
+      if (words.length <= 1) {
+        pdf.text(line, x, y + i * lineHeight);
+        return;
+      }
+      const textWidth = pdf.getTextWidth(words.join(' '));
+      const totalSpaceWidth = maxWidth - pdf.getTextWidth(words.join(''));
+      const spaceWidth = totalSpaceWidth / (words.length - 1);
+      let curX = x;
+      words.forEach((word, wi) => {
+        pdf.text(word, curX, y + i * lineHeight);
+        curX += pdf.getTextWidth(word) + spaceWidth;
+      });
+    }
+  });
+  return lines.length;
+}
+
 window.exportEvaluationPDF = async (batchId, internId) => {
   const batch = _state.batches.find(b => b.id === batchId);
   const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
@@ -1967,8 +1997,8 @@ window.exportEvaluationPDF = async (batchId, internId) => {
       pdf.addImage(letterheadData, 'PNG', 0, 0, pageW, pageH);
       y = 52;
     }
-    pdf.text(lines, margin, y);
-    y += lines.length * 5.5 + 7;
+    const lCount = justifyText(pdf, para, margin, y, contentW, 5.5);
+    y += lCount * 5.5 + 7;
   }
 
   pdf.save(name.replace(/\s+/g, '_') + '_Evaluation.pdf');
