@@ -1229,13 +1229,13 @@ function calcScorecard(intern, batch) {
   const pq = parseFloat(intern.projectQuality) || 0;
   const pqScore = (pq / 100) * 10;
 
-  // Task Score (30%)
-  let taskTotal = 0, taskFilled = 0;
+  // Task Score (30%) - divide by total tasks, not just filled ones
+  let taskTotal = 0;
   for (let i = 1; i <= taskCount; i++) {
     const v = parseFloat(intern.tasks?.['task'+i]);
-    if (!isNaN(v) && intern.tasks?.['task'+i] !== '') { taskTotal += v; taskFilled++; }
+    if (!isNaN(v) && intern.tasks?.['task'+i] !== '') taskTotal += v;
   }
-  const taskAvg = taskFilled ? taskTotal / taskFilled : 0;
+  const taskAvg = taskCount ? taskTotal / taskCount : 0;
   const taskScore = (taskAvg / 100) * 30;
 
   // Social Contest (10%)
