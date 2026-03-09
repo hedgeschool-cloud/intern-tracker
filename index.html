@@ -368,7 +368,8 @@
     .global-topbar {
       position: fixed; top: 0; left: 260px; right: 0; height: 60px;
       background: var(--surface); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; padding: 0 32px; gap: 16px; z-index: 99;
+      display: flex; align-items: center; padding: 0 32px 0 56px; gap: 16px; z-index: 99;
+      transition: left .25s ease;
     }
     .search-wrap { position: relative; flex: 1; max-width: 480px; }
     .search-input {
@@ -1471,17 +1472,18 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const main = document.getElementById('main-content');
   const btn = document.getElementById('sidebar-toggle');
+  const topbar = document.getElementById('global-topbar');
   const isCollapsed = sidebar.style.transform === 'translateX(-260px)';
   if (isCollapsed) {
-    // Show sidebar
     sidebar.style.transform = '';
     main.style.marginLeft = '260px';
+    if (topbar) topbar.style.left = '260px';
     btn.style.left = '276px';
     btn.textContent = '☰';
   } else {
-    // Hide sidebar
     sidebar.style.transform = 'translateX(-260px)';
     main.style.marginLeft = '0';
+    if (topbar) topbar.style.left = '0';
     btn.style.left = '16px';
     btn.textContent = '▶';
   }
