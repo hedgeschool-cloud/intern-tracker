@@ -1471,10 +1471,20 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const main = document.getElementById('main-content');
   const btn = document.getElementById('sidebar-toggle');
-  const collapsed = sidebar.classList.toggle('collapsed');
-  main.classList.toggle('expanded', collapsed);
-  btn.classList.toggle('shifted', !collapsed);
-  btn.textContent = collapsed ? '▶' : '☰';
+  const isCollapsed = sidebar.style.transform === 'translateX(-260px)';
+  if (isCollapsed) {
+    // Show sidebar
+    sidebar.style.transform = '';
+    main.style.marginLeft = '260px';
+    btn.style.left = '276px';
+    btn.textContent = '☰';
+  } else {
+    // Hide sidebar
+    sidebar.style.transform = 'translateX(-260px)';
+    main.style.marginLeft = '0';
+    btn.style.left = '16px';
+    btn.textContent = '▶';
+  }
 }
 // ══════════════════════════════════════════════
 function calcAttendance(attendance, dayCount) {
