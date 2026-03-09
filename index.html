@@ -109,19 +109,17 @@
     .sidebar {
       width: 260px; background: var(--surface); border-right: 1px solid var(--border);
       display: flex; flex-direction: column; padding: 24px 0; position: fixed;
+      left: 0; top: 0;
       height: 100vh; overflow-y: auto; z-index: 100;
-      transition: transform .25s ease, width .25s ease;
+      transition: left .25s ease;
     }
-    .sidebar.collapsed { transform: translateX(-260px); }
-    .main-content.expanded { margin-left: 0 !important; }
     .sidebar-toggle {
-      position: fixed; top: 16px; left: 16px; z-index: 200;
+      position: fixed; top: 16px; left: 276px; z-index: 300;
       background: var(--accent); color: #fff; border: none; border-radius: 8px;
       width: 34px; height: 34px; font-size: 16px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      display: none; align-items: center; justify-content: center;
       box-shadow: 0 2px 8px rgba(124,58,237,.4); transition: left .25s ease;
     }
-    .sidebar-toggle.shifted { left: 276px; }
 
     .sidebar-logo {
       font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
@@ -156,7 +154,7 @@
     .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-role { font-size: 11px; color: var(--muted); }
 
-    .main-content { margin-left: 260px; flex: 1; padding: 32px; min-height: 100vh; }
+    .main-content { margin-left: 260px; flex: 1; padding: 32px; min-height: 100vh; transition: margin-left .25s ease; }
 
     /* ── TOPBAR ── */
     .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
@@ -1474,17 +1472,19 @@ function toggleSidebar() {
   const main = document.getElementById('main-content');
   const btn = document.getElementById('sidebar-toggle');
   const topbar = document.getElementById('global-topbar');
-  const isCollapsed = sidebar.style.transform === 'translateX(-260px)';
-  if (isCollapsed) {
-    sidebar.style.transform = '';
+  const isHidden = sidebar.style.left === '-260px';
+  if (isHidden) {
+    // Show sidebar
+    sidebar.style.left = '0';
     main.style.marginLeft = '260px';
-    if (topbar) topbar.style.left = '260px';
+    topbar.style.left = '260px';
     btn.style.left = '276px';
     btn.textContent = '☰';
   } else {
-    sidebar.style.transform = 'translateX(-260px)';
-    main.style.marginLeft = '0';
-    if (topbar) topbar.style.left = '0';
+    // Hide sidebar
+    sidebar.style.left = '-260px';
+    main.style.marginLeft = '0px';
+    topbar.style.left = '0px';
     btn.style.left = '16px';
     btn.textContent = '▶';
   }
