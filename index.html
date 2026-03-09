@@ -1544,9 +1544,17 @@ async function renderBatchDetailAsync(batchId) {
               <tr>
                 <th>#</th>
                 <th>Intern Name</th>
-                <th>Attendance %</th>
-                ${Array.from({length: batch.taskCount||10}, (_,i) => `<th>T${i+1}</th>`).join('')}
-                <th>Marks %</th>
+                <th>Aggregate</th>
+                <th>Process</th>
+                <th>Progress</th>
+                <th>Attendance</th>
+                <th>HR/Club</th>
+                <th>Daily Report</th>
+                <th>Project</th>
+                <th>Tasks</th>
+                <th>Social</th>
+                <th>Zappyvue</th>
+                <th>Tech Interview</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -1554,23 +1562,25 @@ async function renderBatchDetailAsync(batchId) {
     `;
 
     interns.forEach((intern, idx) => {
-      const attPct = calcAttendance(intern.attendance, batch.dayCount||30);
-      const markPct = calcMarks(intern.marks, batch.taskCount||10);
+      const sc = calcScorecard(intern, batch);
+      const gradeColor = (g) => g==='A'?'rgba(22,163,74,.15)':g==='B'?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)';
+      const gradeText = (g) => g==='A'?'var(--green)':g==='B'?'var(--yellow)':'var(--red)';
       html += `<tr>
         <td style="color:var(--muted)">${idx+1}</td>
-        <td><span class="intern-name" style="cursor:pointer; color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">${intern.name}</span></td>
+        <td><span style="cursor:pointer;color:var(--accent);font-weight:600" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">${intern.name}</span></td>
+        <td><span class="score-pill" style="background:${pctBg(sc.aggregate)};color:${pctColor(sc.aggregate)}">${sc.aggregate}%</span></td>
+        <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${sc.processScore}%</span></td>
+        <td><span class="score-pill" style="background:rgba(22,163,74,.12);color:var(--green)">${sc.progressScore}%</span></td>
+        <td><span class="score-pill" style="background:${pctBg(sc.attPct)};color:${pctColor(sc.attPct)}">${sc.attPct}%</span></td>
+        <td><span class="score-pill" style="background:${pctBg(sc.hrPct)};color:${pctColor(sc.hrPct)}">${sc.hrPct}%</span></td>
+        <td><span class="score-pill" style="background:${pctBg(sc.drPct)};color:${pctColor(sc.drPct)}">${sc.drPct}%</span></td>
+        <td><span class="score-pill" style="background:${pctBg(sc.projectQuality)};color:${pctColor(sc.projectQuality)}">${sc.projectQuality}%</span></td>
+        <td><span class="score-pill" style="background:${pctBg(sc.taskScore)};color:${pctColor(sc.taskScore)}">${sc.taskScore}%</span></td>
+        <td><span class="score-pill" style="background:${pctBg(sc.socialContest)};color:${pctColor(sc.socialContest)}">${sc.socialContest}%</span></td>
+        <td>${intern.zappyvueGrade ? `<span class="score-pill" style="background:${gradeColor(intern.zappyvueGrade)};color:${gradeText(intern.zappyvueGrade)}">${intern.zappyvueGrade}</span>` : '—'}</td>
+        <td>${intern.technicalInterviewGrade ? `<span class="score-pill" style="background:${gradeColor(intern.technicalInterviewGrade)};color:${gradeText(intern.technicalInterviewGrade)}">${intern.technicalInterviewGrade}</span>` : '—'}</td>
         <td>
-          <span class="pct-badge" style="background:${pctBg(attPct)}; color:${pctColor(attPct)}">${attPct}%</span>
-        </td>
-        ${Array.from({length: batch.taskCount||10}, (_,i) => {
-          const key = 'task'+(i+1);
-          return `<td><input class="mark-input" type="number" min="0" max="100" value="${intern.marks?.[key] ?? ''}" onblur="updateMark('${batchId}','${intern.id}','${key}',this.value)" placeholder="—" /></td>`;
-        }).join('')}
-        <td>
-          <span class="pct-badge" style="background:${pctBg(markPct)}; color:${pctColor(markPct)}">${markPct}%</span>
-        </td>
-        <td>
-          <div style="display:flex; gap:6px">
+          <div style="display:flex;gap:6px">
             <button class="btn btn-ghost btn-sm" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">👁 View</button>
             <button class="btn btn-green btn-sm" onclick="exportIntern('${batchId}','${intern.id}')">📥</button>
             ${_state.userDoc.role === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteIntern('${batchId}','${intern.id}','${intern.name}')">🗑</button>` : ''}
