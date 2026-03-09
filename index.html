@@ -1351,7 +1351,7 @@ async function renderScorecardAsync() {
               return `<tr>
                 <td><div class="rank-badge ${rankClass}">${rankLabel}</div></td>
                 <td><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
-                <td><span class="tag">${e.batch.name}</span></td>
+                <td><span class="tag" style="cursor:pointer;color:var(--accent)" onclick="navigate('batch-detail','${e.batch.id}')">${e.batch.name}</span></td>
                 <td><span style="font-size:12px;color:var(--muted)">${e.batch.stream || '—'}</span></td>
                 <td><span class="score-pill" style="background:${pctBg(e.sc.aggregate)};color:${pctColor(e.sc.aggregate)}">${e.sc.aggregate}%</span></td>
                 <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${e.sc.processScore}%</span></td>
