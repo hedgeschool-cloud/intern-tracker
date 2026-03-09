@@ -1281,23 +1281,35 @@ async function renderScorecardAsync() {
 
     <!-- Score card legend -->
     <div class="card mb-24" style="background:var(--surface2)">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">⚙️ PROCESS (50%)</div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>📅 Attendance</span><span style="color:var(--muted)">20%</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>🎯 HR/Club Activities</span><span style="color:var(--muted)">15%</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>📝 Daily Report</span><span style="color:var(--muted)">15%</span></div>
-          </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+        <div style="text-align:center;padding:10px 16px;background:rgba(124,58,237,.08);border-radius:10px;min-width:110px">
+          <div style="font-size:18px;font-weight:800;color:var(--accent)">20%</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">📅 Attendance</div>
         </div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px">📈 PROGRESS (50%)</div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>🔬 Project Quality</span><span style="color:var(--muted)">10%</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>✅ Task Score</span><span style="color:var(--muted)">30%</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>🌐 Social Contest</span><span style="color:var(--muted)">10%</span></div>
-          </div>
+        <div style="text-align:center;padding:10px 16px;background:rgba(124,58,237,.08);border-radius:10px;min-width:110px">
+          <div style="font-size:18px;font-weight:800;color:var(--accent)">15%</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">🎯 HR/Club</div>
         </div>
+        <div style="text-align:center;padding:10px 16px;background:rgba(124,58,237,.08);border-radius:10px;min-width:110px">
+          <div style="font-size:18px;font-weight:800;color:var(--accent)">15%</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">📝 Daily Report</div>
+        </div>
+        <div style="text-align:center;padding:10px 16px;background:rgba(22,163,74,.08);border-radius:10px;min-width:110px">
+          <div style="font-size:18px;font-weight:800;color:var(--green)">10%</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">🔬 Project Quality</div>
+        </div>
+        <div style="text-align:center;padding:10px 16px;background:rgba(22,163,74,.08);border-radius:10px;min-width:110px">
+          <div style="font-size:18px;font-weight:800;color:var(--green)">30%</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">✅ Task Score</div>
+        </div>
+        <div style="text-align:center;padding:10px 16px;background:rgba(22,163,74,.08);border-radius:10px;min-width:110px">
+          <div style="font-size:18px;font-weight:800;color:var(--green)">10%</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">🌐 Social Contest</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:32px;margin-top:12px;font-size:12px;font-weight:700">
+        <span style="color:var(--accent)">⚙️ PROCESS — 50%</span>
+        <span style="color:var(--green)">📈 PROGRESS — 50%</span>
       </div>
     </div>
   `;
