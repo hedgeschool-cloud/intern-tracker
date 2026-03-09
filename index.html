@@ -109,16 +109,15 @@
     .sidebar {
       width: 260px; background: var(--surface); border-right: 1px solid var(--border);
       display: flex; flex-direction: column; padding: 24px 0; position: fixed;
-      left: 0; top: 0;
+      left: -260px; top: 0;
       height: 100vh; overflow-y: auto; z-index: 100;
+      transition: left .25s ease;
     }
-    .sidebar-toggle {
-      position: fixed; top: 16px; left: 276px; z-index: 9999;
-      background: var(--accent); color: #fff; border: none; border-radius: 8px;
-      width: 34px; height: 34px; font-size: 16px; cursor: pointer;
-      display: none; align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(124,58,237,.4);
+    .sidebar-hint {
+      position: fixed; left: 0; top: 0; width: 8px; height: 100vh;
+      z-index: 99; cursor: pointer;
     }
+
 
     .sidebar-logo {
       font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
@@ -153,7 +152,7 @@
     .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-role { font-size: 11px; color: var(--muted); }
 
-    .main-content { margin-left: 260px; flex: 1; padding: 32px; min-height: 100vh; transition: margin-left .25s ease; }
+    .main-content { margin-left: 0px; flex: 1; padding: 32px; min-height: 100vh; transition: margin-left .25s ease; }
 
     /* ── TOPBAR ── */
     .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
@@ -363,7 +362,7 @@
 
     /* ── GLOBAL SEARCH BAR ── */
     .global-topbar {
-      position: fixed; top: 0; left: 260px; right: 0; height: 60px;
+      position: fixed; top: 0; left: 0px; right: 0; height: 60px;
       background: var(--surface); border-bottom: 1px solid var(--border);
       display: flex; align-items: center; padding: 0 32px 0 56px; gap: 16px; z-index: 99;
       transition: left .25s ease;
@@ -414,7 +413,6 @@
   </style>
 </head>
 <body>
-<button class="sidebar-toggle shifted" id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar" style="display:none">☰</button>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <!-- AUTH SCREEN -->
@@ -732,7 +730,6 @@ onAuthStateChanged(auth, async user => {
     } else {
       document.getElementById('app').style.display = 'flex';
       document.getElementById('global-topbar').style.display = 'flex';
-      document.getElementById('sidebar-toggle').style.display = 'flex';
       initSidebar();
       loadBatches();
       navigate('dashboard');
@@ -1466,25 +1463,31 @@ window.exportScorecard = async () => {
 
 // ══════════════════════════════════════════════
 // UTILS
-window.toggleSidebar = function() {
+function showSidebar() {
   const sidebar = document.getElementById('sidebar');
   const main = document.getElementById('main-content');
-  const btn = document.getElementById('sidebar-toggle');
   const topbar = document.getElementById('global-topbar');
-  if (sidebar.style.display === 'none') {
-    sidebar.style.display = 'flex';
-    main.style.marginLeft = '260px';
-    topbar.style.left = '260px';
-    btn.style.left = '276px';
-    btn.innerHTML = '☰';
-  } else {
-    sidebar.style.display = 'none';
-    main.style.marginLeft = '0px';
-    topbar.style.left = '0px';
-    btn.style.left = '16px';
-    btn.innerHTML = '▶';
-  }
+  if (!sidebar) return;
+  sidebar.style.left = '0';
+  main.style.marginLeft = '260px';
+  topbar.style.left = '260px';
 }
+function hideSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const main = document.getElementById('main-content');
+  const topbar = document.getElementById('global-topbar');
+  if (!sidebar) return;
+  sidebar.style.left = '-260px';
+  main.style.marginLeft = '0px';
+  topbar.style.left = '0px';
+}
+document.addEventListener('mousemove', (e) => {
+  if (e.clientX <= 8) {
+    showSidebar();
+  } else if (e.clientX > 280) {
+    hideSidebar();
+  }
+});
 // ══════════════════════════════════════════════
 function calcAttendance(attendance, dayCount) {
   if (!attendance) return 0;
