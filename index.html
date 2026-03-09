@@ -1386,22 +1386,71 @@ window.exportScorecard = async () => {
   }
   allEntries.sort((a, b) => b.sc.aggregate - a.sc.aggregate);
 
-  const headers = ['Rank','Intern Name','Batch','Stream','Project Title','Aggregate %','Process Score %','Progress Score %',
-    'Attendance (weighted)','HR/Club (weighted)','Daily Report (weighted)',
-    'Project Quality (weighted)','Task Score (weighted)','Social Contest (weighted)',
-    'Zappyvue Grade','Technical Interview Grade'];
-  const rows = allEntries.map((e, i) => [
-    i+1, e.intern.name, e.batch.name, e.batch.stream||'', e.intern.projectTitle||'',
+  // Sheet 1: Full Scorecard Rankings
+  const scoreHeaders = [
+    'Rank','Intern Name','Batch','Stream','Project Title','Gender','Evaluation Keywords',
+    'Aggregate %','Process Score %','Progress Score %',
+    'Attendance %','HR/Club %','Daily Report %',
+    'Project Quality %','Task Score %','Social Contest %',
+    'Zappyvue Grade','Technical Interview Grade'
+  ];
+  const scoreRows = allEntries.map((e, i) => [
+    i+1, e.intern.name, e.batch.name, e.batch.stream||'',
+    e.intern.projectTitle||'', e.intern.gender||'', e.intern.evalKeywords||'',
     e.sc.aggregate+'%', e.sc.processScore+'%', e.sc.progressScore+'%',
-    e.sc.attendance+'%', e.sc.hrclub+'%', e.sc.dailyreport+'%',
+    e.sc.attPct+'%', e.sc.hrPct+'%', e.sc.drPct+'%',
     e.sc.projectQuality+'%', e.sc.taskScore+'%', e.sc.socialContest+'%',
     e.intern.zappyvueGrade||'', e.intern.technicalInterviewGrade||''
   ]);
 
+  // Sheet 2: Attendance (all interns)
+  const maxDays = Math.max(...allEntries.map(e => e.batch.dayCount||30));
+  const attHeaders = ['Intern Name','Batch','Attendance %',...Array.from({length:maxDays},(_,i)=>'Day '+(i+1))];
+  const attRows = allEntries.map(e => {
+    const dc = e.batch.dayCount||30;
+    const row = [e.intern.name, e.batch.name, e.sc.attPct+'%'];
+    for (let i=1; i<=maxDays; i++) row.push(i<=dc ? (e.intern.attendance?.['day'+i] ? 'Present' : 'Absent') : '—');
+    return row;
+  });
+
+  // Sheet 3: Task Scores (all interns)
+  const maxTasks = Math.max(...allEntries.map(e => e.batch.taskCount||10));
+  const taskHeaders = ['Intern Name','Batch','Task Score %',...Array.from({length:maxTasks},(_,i)=>'Task '+(i+1))];
+  const taskRows = allEntries.map(e => {
+    const tc = e.batch.taskCount||10;
+    const row = [e.intern.name, e.batch.name, e.sc.taskScore+'%'];
+    for (let i=1; i<=maxTasks; i++) row.push(i<=tc ? (e.intern.tasks?.['task'+i] ?? '') : '—');
+    return row;
+  });
+
+  // Sheet 4: HR/Club Activities (all interns)
+  const maxHR = Math.max(...allEntries.map(e => e.batch.hrclubCount||4));
+  const hrHeaders = ['Intern Name','Batch','HR/Club %',...Array.from({length:maxHR},(_,i)=>'HR/Club '+(i+1))];
+  const hrRows = allEntries.map(e => {
+    const hc = e.batch.hrclubCount||4;
+    const row = [e.intern.name, e.batch.name, e.sc.hrPct+'%'];
+    for (let i=1; i<=maxHR; i++) row.push(i<=hc ? (e.intern.hrclub?.['hr'+i] ? 'Done' : 'Not Done') : '—');
+    return row;
+  });
+
+  // Sheet 5: Daily Reports (all interns)
+  const maxDR = Math.max(...allEntries.map(e => e.batch.dailyreportCount||17));
+  const drHeaders = ['Intern Name','Batch','Daily Report %',...Array.from({length:maxDR},(_,i)=>'DR '+(i+1))];
+  const drRows = allEntries.map(e => {
+    const dc = e.batch.dailyreportCount||17;
+    const row = [e.intern.name, e.batch.name, e.sc.drPct+'%'];
+    for (let i=1; i<=maxDR; i++) row.push(i<=dc ? (e.intern.dailyreport?.['dr'+i] ? 'Submitted' : 'Not Submitted') : '—');
+    return row;
+  });
+
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, ...rows]), 'Score Card');
-  XLSX.writeFile(wb, 'InternTrack_ScoreCard_' + new Date().toISOString().slice(0,10) + '.xlsx');
-  showToast('📥 Score Card exported!');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([scoreHeaders, ...scoreRows]), 'Score Card');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([attHeaders, ...attRows]), 'Attendance');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([taskHeaders, ...taskRows]), 'Task Scores');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([hrHeaders, ...hrRows]), 'HR Club Activities');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([drHeaders, ...drRows]), 'Daily Reports');
+  XLSX.writeFile(wb, 'InternTrack_FullReport_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  showToast('📥 Full report exported!');
 };
 
 // ══════════════════════════════════════════════
