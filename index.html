@@ -923,25 +923,69 @@ window.exportBatch = async (batchId) => {
   const interns = await getInterns(batchId);
   const taskCount = batch.taskCount || 10;
   const dayCount = batch.dayCount || 30;
+  const hrCount = batch.hrclubCount || 4;
+  const drCount = batch.dailyreportCount || 17;
 
-  const headers = ['Name', 'Attendance %', 'Marks %'];
-  for (let i = 1; i <= taskCount; i++) headers.push('Task ' + i);
-  for (let i = 1; i <= dayCount; i++) headers.push('Day ' + i);
+  // Sheet 1: Scorecard Summary
+  const scoreHeaders = [
+    'Name', 'Stream', 'Project Title', 'Gender',
+    'Aggregate %', 'Process %', 'Progress %',
+    'Attendance %', 'HR/Club %', 'Daily Report %',
+    'Project Quality %', 'Task Score %', 'Social Contest %',
+    'Zappyvue Grade', 'Tech Interview Grade', 'Evaluation Keywords'
+  ];
+  const scoreRows = interns.map(intern => {
+    const sc = calcScorecard(intern, batch);
+    return [
+      intern.name, batch.stream || '', intern.projectTitle || '', intern.gender || '',
+      sc.aggregate + '%', sc.processScore + '%', sc.progressScore + '%',
+      sc.attPct + '%', sc.hrPct + '%', sc.drPct + '%',
+      sc.projectQuality + '%', sc.taskScore + '%', sc.socialContest + '%',
+      intern.zappyvueGrade || '', intern.technicalInterviewGrade || '',
+      intern.evalKeywords || ''
+    ];
+  });
 
-  const rows = interns.map(intern => {
-    const attPct = calcAttendance(intern.attendance, dayCount);
-    const markPct = calcMarks(intern.marks, taskCount);
-    const row = [intern.name, attPct + '%', markPct + '%'];
-    for (let i = 1; i <= taskCount; i++) row.push(intern.marks?.['task'+i] ?? '');
+  // Sheet 2: Task Scores
+  const taskHeaders = ['Name', ...Array.from({length: taskCount}, (_,i) => 'Task '+(i+1))];
+  const taskRows = interns.map(intern => {
+    const row = [intern.name];
+    for (let i = 1; i <= taskCount; i++) row.push(intern.tasks?.['task'+i] ?? '');
+    return row;
+  });
+
+  // Sheet 3: Attendance
+  const attHeaders = ['Name', ...Array.from({length: dayCount}, (_,i) => 'Day '+(i+1))];
+  const attRows = interns.map(intern => {
+    const row = [intern.name];
     for (let i = 1; i <= dayCount; i++) row.push(intern.attendance?.['day'+i] ? 'Present' : 'Absent');
     return row;
   });
 
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  // Sheet 4: HR/Club Activities
+  const hrHeaders = ['Name', ...Array.from({length: hrCount}, (_,i) => 'HR/Club '+(i+1))];
+  const hrRows = interns.map(intern => {
+    const row = [intern.name];
+    for (let i = 1; i <= hrCount; i++) row.push(intern.hrclub?.['hr'+i] ? 'Done' : 'Not Done');
+    return row;
+  });
+
+  // Sheet 5: Daily Reports
+  const drHeaders = ['Name', ...Array.from({length: drCount}, (_,i) => 'DR '+(i+1))];
+  const drRows = interns.map(intern => {
+    const row = [intern.name];
+    for (let i = 1; i <= drCount; i++) row.push(intern.dailyreport?.['dr'+i] ? 'Submitted' : 'Not Submitted');
+    return row;
+  });
+
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, batch.name);
-  XLSX.writeFile(wb, batch.name.replace(/\s+/g,'_') + '_data.xlsx');
-  showToast('📥 Export ready!');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([scoreHeaders, ...scoreRows]), 'Scorecard');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([taskHeaders, ...taskRows]), 'Task Scores');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([attHeaders, ...attRows]), 'Attendance');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([hrHeaders, ...hrRows]), 'HR Club Activities');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([drHeaders, ...drRows]), 'Daily Reports');
+  XLSX.writeFile(wb, batch.name.replace(/\s+/g,'_') + '_full_report.xlsx');
+  showToast('📥 Full batch report exported!');
 };
 
 window.exportIntern = async (batchId, internId) => {
@@ -950,25 +994,60 @@ window.exportIntern = async (batchId, internId) => {
   const intern = snap.data();
   const taskCount = batch.taskCount || 10;
   const dayCount = batch.dayCount || 30;
+  const hrCount = batch.hrclubCount || 4;
+  const drCount = batch.dailyreportCount || 17;
+  const sc = calcScorecard(intern, batch);
 
-  const attRows = [['Day', 'Status']];
-  for (let i = 1; i <= dayCount; i++) attRows.push(['Day ' + i, intern.attendance?.['day'+i] ? 'Present' : 'Absent']);
-  const markRows = [['Task', 'Score']];
-  for (let i = 1; i <= taskCount; i++) markRows.push(['Task ' + i, intern.marks?.['task'+i] ?? '']);
-
+  // Sheet 1: Full Summary
   const summaryRows = [
+    ['Field', 'Value'],
     ['Intern Name', intern.name],
     ['Batch', batch.name],
-    ['Attendance %', calcAttendance(intern.attendance, dayCount) + '%'],
-    ['Marks %', calcMarks(intern.marks, taskCount) + '%'],
+    ['Stream', batch.stream || ''],
+    ['Project Title', intern.projectTitle || ''],
+    ['Gender', intern.gender || ''],
+    ['Evaluation Keywords', intern.evalKeywords || ''],
+    [''],
+    ['SCORECARD', ''],
+    ['Aggregate %', sc.aggregate + '%'],
+    ['Process Score %', sc.processScore + '%'],
+    ['Progress Score %', sc.progressScore + '%'],
+    ['Attendance %', sc.attPct + '%'],
+    ['HR/Club %', sc.hrPct + '%'],
+    ['Daily Report %', sc.drPct + '%'],
+    ['Project Quality %', sc.projectQuality + '%'],
+    ['Task Score %', sc.taskScore + '%'],
+    ['Social Contest %', sc.socialContest + '%'],
+    [''],
+    ['GRADES', ''],
+    ['Zappyvue Grade', intern.zappyvueGrade || 'Not assessed'],
+    ['Technical Interview Grade', intern.technicalInterviewGrade || 'Not assessed'],
   ];
+
+  // Sheet 2: Task Scores
+  const taskRows = [['Task', 'Score']];
+  for (let i = 1; i <= taskCount; i++) taskRows.push(['Task ' + i, intern.tasks?.['task'+i] ?? '']);
+
+  // Sheet 3: Attendance
+  const attRows = [['Day', 'Status']];
+  for (let i = 1; i <= dayCount; i++) attRows.push(['Day ' + i, intern.attendance?.['day'+i] ? 'Present' : 'Absent']);
+
+  // Sheet 4: HR/Club
+  const hrRows = [['Activity', 'Status']];
+  for (let i = 1; i <= hrCount; i++) hrRows.push(['HR/Club ' + i, intern.hrclub?.['hr'+i] ? 'Done' : 'Not Done']);
+
+  // Sheet 5: Daily Reports
+  const drRows = [['Report', 'Status']];
+  for (let i = 1; i <= drCount; i++) drRows.push(['Daily Report ' + i, intern.dailyreport?.['dr'+i] ? 'Submitted' : 'Not Submitted']);
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryRows), 'Summary');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(markRows), 'Marks');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(taskRows), 'Task Scores');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(attRows), 'Attendance');
-  XLSX.writeFile(wb, intern.name.replace(/\s+/g,'_') + '_report.xlsx');
-  showToast('📥 Individual report ready!');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hrRows), 'HR Club Activities');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(drRows), 'Daily Reports');
+  XLSX.writeFile(wb, intern.name.replace(/\s+/g,'_') + '_full_report.xlsx');
+  showToast('📥 Full report exported!');
 };
 
 
