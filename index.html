@@ -1791,6 +1791,13 @@ async function renderInternDetailAsync(param) {
           }).join('')}
         </div>
       </div>
+
+      <!-- BOTTOM ACTION BUTTONS -->
+      <div style="display:flex;gap:12px;justify-content:center;padding:32px 0 16px;border-top:1px solid var(--border);margin-top:24px">
+        <button class="btn btn-primary" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
+        <button class="btn btn-green" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
+        <button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:#5b21b6;border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
+      </div>
     </div>
   `;
 }
