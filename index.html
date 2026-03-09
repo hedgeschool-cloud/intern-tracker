@@ -1271,12 +1271,12 @@ async function renderScorecardAsync() {
   allEntries.sort((a, b) => b.sc.aggregate - a.sc.aggregate);
 
   let html = `
-    <div class="topbar">
-      <div>
-        <div class="page-title">🏆 Excellence Score Card</div>
-        <div class="page-sub">Internship Process & Progress Rankings</div>
+    <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div class="page-title">🏆 Excellence Score Card</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <div class="page-sub" style="margin:0">Internship Process & Progress Rankings</div>
+        <button class="btn btn-green btn-sm" onclick="exportScorecard()">📥 Export Score Card</button>
       </div>
-      <button class="btn btn-green" onclick="exportScorecard()">📥 Export Score Card</button>
     </div>
 
     <!-- Score card legend -->
