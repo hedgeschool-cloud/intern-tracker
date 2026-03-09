@@ -1473,18 +1473,19 @@ async function renderBatchDetailAsync(batchId) {
       <div class="flex-between mb-16">
         <h3 style="font-size:16px; font-weight:700">Add Interns</h3>
       </div>
-      <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap">
-        <div style="flex:1; min-width:200px">
-          <div class="form-group" style="margin:0">
-            <label>Intern Name</label>
-            <input id="new-intern-name" type="text" placeholder="Full name" onkeydown="if(event.key==='Enter') addIntern('${batchId}')" />
-          </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:8px;align-items:center;max-width:500px">
+          <input id="new-intern-name" type="text" placeholder="Full name"
+            style="flex:1;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none"
+            onkeydown="if(event.key==='Enter') addIntern('${batchId}')" />
+          <button class="btn btn-primary" style="white-space:nowrap;flex-shrink:0" onclick="addIntern('${batchId}')">+ Add Intern</button>
         </div>
-        <button class="btn btn-primary" style="height:44px;white-space:nowrap" onclick="addIntern('${batchId}')">+ Add Intern</button>
-        <label class="btn btn-ghost" style="cursor:pointer;height:44px;white-space:nowrap">
-          📂 Import CSV/Excel
-          <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleImportFile('${batchId}', this.files[0])" />
-        </label>
+        <div>
+          <label class="btn btn-ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            📂 Import CSV/Excel
+            <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleImportFile('${batchId}', this.files[0])" />
+          </label>
+        </div>
       </div>
     </div>
     ` : ''}
