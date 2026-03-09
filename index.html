@@ -1711,6 +1711,17 @@ async function renderInternDetailAsync(param) {
         </div>
       </div>
 
+      <!-- EVALUATION KEYWORDS -->
+      <div class="card" style="margin-bottom:24px">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">🏷️ Evaluation Keywords</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Enter keywords separated by commas — these will be woven into the evaluation PDF (e.g. analytical, proactive, detail-oriented, team player)</p>
+        <input type="text" placeholder="e.g. analytical, proactive, detail-oriented, quick learner..."
+          value="${intern.evalKeywords || ''}"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'; updateEvalKeywords('${batchId}','${internId}',this.value)" />
+      </div>
+
       <!-- GRADES SECTION -->
       <div style="font-size:13px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">🎓 Interview & Assessment Grades</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
@@ -1857,11 +1868,25 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   const tGrade = intern.technicalInterviewGrade || 'Not assessed';
   const name = intern.name;
 
+  // Parse keywords
+  const rawKeywords = (intern.evalKeywords || '').split(',').map(k => k.trim()).filter(Boolean);
+  const kw1 = rawKeywords[0] || null;
+  const kw2 = rawKeywords[1] || null;
+  const kw3 = rawKeywords[2] || null;
+  const kw4 = rawKeywords[3] || null;
+  const kw5 = rawKeywords[4] || null;
+  const kwExtra = rawKeywords.slice(5);
+
+  // Build keyword sentence for closing paragraph
+  const kwSentence = rawKeywords.length > 0
+    ? ` Throughout the internship, ${he} consistently exhibited qualities such as ${rawKeywords.join(', ')}, which stood out to the team.`
+    : '';
+
   const evalText = [
     `${name} served as an intern in our ${stream} stream for a period of ${duration} days. ${His} project title was "${projectTitle}". We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
-    `In terms of process parameters, ${name} demonstrated ${attQ} attendance throughout the internship period, reflecting ${his} commitment and dedication to the program. ${His} participation in HR and Club Activities was ${hrQ}, indicating ${his} engagement with the broader organisational culture. With respect to Daily Report submissions, ${He} showed ${drQ} consistency, which is a key indicator of ${his} work ethic and accountability.`,
-    `Regarding progress parameters, ${His} Project Quality was found to be ${pqQ}, reflecting the depth of effort and thought invested in ${his} project work. ${His} performance across assigned tasks was ${taskQ}, demonstrating ${his} grasp of the subject matter and practical skills. ${His} engagement in the Social Contest component was ${scQ}, showcasing ${his} initiative beyond core responsibilities.`,
-    `Overall, ${name} demonstrated a ${overallQ} performance across both process and progress dimensions. We believe ${he} has shown real potential and has made meaningful contributions during the internship. As an area for continued growth, we encourage ${him} to focus on improving ${his} ${weakest.name}, which we believe will further strengthen ${his} professional profile.`,
+    `In terms of process parameters, ${name} demonstrated ${attQ} attendance throughout the internship period, reflecting ${his} ${kw1 ? kw1 + ' and ' : ''}commitment and dedication to the program. ${His} participation in HR and Club Activities was ${hrQ}, indicating ${his} ${kw2 ? kw2 + ' approach and ' : ''}engagement with the broader organisational culture. With respect to Daily Report submissions, ${He} showed ${drQ} consistency, which is a key indicator of ${his} work ethic and accountability.`,
+    `Regarding progress parameters, ${His} Project Quality was found to be ${pqQ}, reflecting the depth of ${kw3 ? kw3 + ' and ' : ''}effort invested in ${his} project work. ${His} performance across assigned tasks was ${taskQ}, demonstrating ${his} ${kw4 ? kw4 + ' and ' : ''}grasp of the subject matter and practical skills. ${His} engagement in the Social Contest component was ${scQ}, showcasing ${his} ${kw5 ? kw5 + ' and ' : ''}initiative beyond core responsibilities.`,
+    `Overall, ${name} demonstrated a ${overallQ} performance across both process and progress dimensions.${kwSentence} We believe ${he} has shown real potential and has made meaningful contributions during the internship. As an area for continued growth, we encourage ${him} to focus on improving ${his} ${weakest.name}, which we believe will further strengthen ${his} professional profile.`,
     `${name}'s Zappyvue assessment grade is ${zGrade} and ${his} Technical Interview grade is ${tGrade}. We wish ${him} all the best in ${his} future endeavours and are confident that the skills and experience gained during this internship will serve ${him} well.`
   ];
 
@@ -1948,6 +1973,11 @@ window.exportEvaluationPDF = async (batchId, internId) => {
 
   pdf.save(name.replace(/\s+/g, '_') + '_Evaluation.pdf');
   showToast('📄 Evaluation PDF downloaded!');
+};
+
+window.updateEvalKeywords = async (batchId, internId, val) => {
+  await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { evalKeywords: val.trim() });
+  if (val.trim()) showToast('✅ Keywords saved!');
 };
 
 window.updateProjectTitle = async (batchId, internId, val) => {
@@ -2109,6 +2139,11 @@ window.exportEvaluationPDF = async (batchId, internId) => {
 
   pdf.save(name.replace(/\s+/g, '_') + '_Evaluation.pdf');
   showToast('📄 Evaluation PDF downloaded!');
+};
+
+window.updateEvalKeywords = async (batchId, internId, val) => {
+  await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { evalKeywords: val.trim() });
+  if (val.trim()) showToast('✅ Keywords saved!');
 };
 
 window.updateProjectTitle = async (batchId, internId, val) => {
