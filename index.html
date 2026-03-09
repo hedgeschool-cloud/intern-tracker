@@ -829,6 +829,7 @@ async function getInterns(batchId) {
 }
 
 window.addIntern = async (batchId) => {
+  if (_state.userDoc.role !== 'admin') return showToast('⛔ Admin only', 'error');
   const nameEl = document.getElementById('new-intern-name');
   const name = nameEl.value.trim();
   if (!name) return showToast('⚠️ Enter intern name', 'warn');
@@ -1466,7 +1467,8 @@ async function renderBatchDetailAsync(batchId) {
       </div>
     </div>
 
-    <!-- Add intern + import -->
+    <!-- Add intern + import (Admin only) -->
+    ${_state.userDoc.role === 'admin' ? `
     <div class="card mb-24">
       <div class="flex-between mb-16">
         <h3 style="font-size:16px; font-weight:700">Add Interns</h3>
@@ -1485,6 +1487,7 @@ async function renderBatchDetailAsync(batchId) {
         </label>
       </div>
     </div>
+    ` : ''}
   `;
 
   if (interns.length === 0) {
