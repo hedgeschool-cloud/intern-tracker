@@ -2642,27 +2642,30 @@ window.exportMentorReport = async (mentorName) => {
   }
   allEntries.sort((a, b) => b.sc.aggregate - a.sc.aggregate);
 
-  const scoreHeaders = ['Rank','Intern','Batch','Stream','Project Title','Gender',
+  // Sheet 1: Full Scorecard
+  const scoreHeaders = ['Rank','Intern','Batch','Stream','Project Title','Gender','Evaluation Keywords',
     'Aggregate %','Process %','Progress %','Attendance %','HR/Club %','Daily Report %',
     'Project Quality %','Task Score %','Social Contest %','Zappyvue Grade','Tech Interview Grade'];
   const scoreRows = allEntries.map((e, i) => [
     i+1, e.intern.name, e.batch.name, e.batch.stream||'',
-    e.intern.projectTitle||'', e.intern.gender||'',
+    e.intern.projectTitle||'', e.intern.gender||'', e.intern.evalKeywords||'',
     e.sc.aggregate+'%', e.sc.processScore+'%', e.sc.progressScore+'%',
     e.sc.attPct+'%', e.sc.hrPct+'%', e.sc.drPct+'%',
     e.sc.projectQuality+'%', e.sc.taskScore+'%', e.sc.socialContest+'%',
     e.intern.zappyvueGrade||'', e.intern.technicalInterviewGrade||''
   ]);
 
+  // Sheet 2: Task Scores
   const maxTasks = Math.max(...allEntries.map(e => e.batch.taskCount||10));
-  const taskHeaders = ['Intern','Batch',...Array.from({length:maxTasks},(_,i)=>'Task '+(i+1))];
+  const taskHeaders = ['Intern','Batch','Task Score %',...Array.from({length:maxTasks},(_,i)=>'Task '+(i+1))];
   const taskRows = allEntries.map(e => {
     const tc = e.batch.taskCount||10;
-    const row = [e.intern.name, e.batch.name];
+    const row = [e.intern.name, e.batch.name, e.sc.taskScore+'%'];
     for (let i=1; i<=maxTasks; i++) row.push(i<=tc ? (e.intern.tasks?.['task'+i]??'') : '—');
     return row;
   });
 
+  // Sheet 3: Attendance
   const maxDays = Math.max(...allEntries.map(e => e.batch.dayCount||30));
   const attHeaders = ['Intern','Batch','Attendance %',...Array.from({length:maxDays},(_,i)=>'Day '+(i+1))];
   const attRows = allEntries.map(e => {
@@ -2672,12 +2675,34 @@ window.exportMentorReport = async (mentorName) => {
     return row;
   });
 
+  // Sheet 4: HR/Club Activities
+  const maxHR = Math.max(...allEntries.map(e => e.batch.hrclubCount||4));
+  const hrHeaders = ['Intern','Batch','HR/Club %',...Array.from({length:maxHR},(_,i)=>'HR/Club '+(i+1))];
+  const hrRows = allEntries.map(e => {
+    const hc = e.batch.hrclubCount||4;
+    const row = [e.intern.name, e.batch.name, e.sc.hrPct+'%'];
+    for (let i=1; i<=maxHR; i++) row.push(i<=hc ? (e.intern.hrclub?.['hr'+i]?'Done':'Not Done') : '—');
+    return row;
+  });
+
+  // Sheet 5: Daily Reports
+  const maxDR = Math.max(...allEntries.map(e => e.batch.dailyreportCount||17));
+  const drHeaders = ['Intern','Batch','Daily Report %',...Array.from({length:maxDR},(_,i)=>'DR '+(i+1))];
+  const drRows = allEntries.map(e => {
+    const dc = e.batch.dailyreportCount||17;
+    const row = [e.intern.name, e.batch.name, e.sc.drPct+'%'];
+    for (let i=1; i<=maxDR; i++) row.push(i<=dc ? (e.intern.dailyreport?.['dr'+i]?'Submitted':'Not Submitted') : '—');
+    return row;
+  });
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([scoreHeaders, ...scoreRows]), 'Score Card');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([taskHeaders, ...taskRows]), 'Task Scores');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([attHeaders, ...attRows]), 'Attendance');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([hrHeaders, ...hrRows]), 'HR Club Activities');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([drHeaders, ...drRows]), 'Daily Reports');
   XLSX.writeFile(wb, mentorName.replace(/\s+/g,'_') + '_FullReport_' + new Date().toISOString().slice(0,10) + '.xlsx');
-  showToast('📥 Mentor report exported!');
+  showToast('📥 Full mentor report exported!');
 };
 
 function renderUsers() {
