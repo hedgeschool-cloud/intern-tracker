@@ -1470,24 +1470,6 @@ function showSidebar() {
   const sidebar = document.getElementById('sidebar');
   const main = document.getElementById('main-content');
   const topbar = document.getElementById('global-topbar');
-  if (!sidebar) return;
-  sidebar.style.left = '0';
-  main.style.marginLeft = '260px';
-  topbar.style.left = '260px';
-}
-function hideSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const main = document.getElementById('main-content');
-  const topbar = document.getElementById('global-topbar');
-  if (!sidebar) return;
-  sidebar.style.left = '-260px';
-  main.style.marginLeft = '0px';
-  topbar.style.left = '0px';
-}
-function showSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const main = document.getElementById('main-content');
-  const topbar = document.getElementById('global-topbar');
   const tab = document.getElementById('sidebar-tab');
   if (!sidebar) return;
   sidebar.style.left = '0';
