@@ -2168,6 +2168,9 @@ async function renderInternDetailAsync(param) {
         <button class="btn btn-green" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
         <button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:#5b21b6;border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
       </div>
+      <div style="padding:8px 0 24px">
+        <button class="btn btn-ghost btn-sm" onclick="navigate('batch-detail','${batchId}')">← Back to ${batch?.name}</button>
+      </div>
     </div>
   `;
 }
