@@ -1767,7 +1767,6 @@ async function renderBatchDetailAsync(batchId) {
       <div class="page-title">${batch.name}</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
         ${batch.stream ? `<span class="tag" style="background:rgba(124,58,237,.12);color:var(--accent)">🎓 ${batch.stream}</span>` : ''}
-        <span class="tag">📋 ${batch.taskCount||10} tasks & attendance slots</span>
         ${batch.mentor ? `<span class="tag" style="background:rgba(22,163,74,.12);color:var(--green)">👤 Mentor: ${batch.mentor}</span>` : ''}
         <button class="btn btn-green btn-sm" onclick="exportBatch('${batchId}')">📥 Export Full Report</button>
         ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditBatchModal('${batchId}')">✏️ Edit Batch</button>` : ''}
