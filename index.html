@@ -859,6 +859,24 @@ const DURATION_CONFIG = {
   60: { attendance: 32, hrclub: 8, dailyreport: 29, tasks: 30 }
 };
 
+
+const STREAM_DURATION_MAP = {
+  'Macro Economic Analysis - 15 days': 15,
+  'Equity Research Comparative Model - 30 days': 30,
+  'Wealth Management - 30 days': 30,
+  'Equity Research Absolute Model - 60 days': 60,
+  'Technical Analysis - 60 days': 60,
+  'Derivative Analysis - 60 days': 60,
+  'Human Resources - 15 days': 15,
+  'Human Resources - 30 days': 30,
+  'Human Resources - 60 days': 60,
+  'Marketing - 15 days': 15,
+  'Marketing - 30 days': 30,
+  'Marketing - 60 days': 60
+};
+
+window.STREAM_DURATION_MAP = STREAM_DURATION_MAP;
+
 window.createBatch = async () => {
   const name = document.getElementById('batch-name-input').value.trim();
   const stream = document.getElementById('batch-stream-input').value;
@@ -2897,26 +2915,23 @@ window.showEditBatchModal = (batchId) => {
     <div class="modal-title">✏️ Edit Batch</div>
     <div class="form-group"><label>Batch Name</label><input id="eb-name" type="text" value="${batch.name}" /></div>
     <div class="form-group">
-      <label>Stream</label>
-      <select id="eb-stream">
+      <label>Stream & Duration</label>
+      <select id="eb-stream" onchange="document.getElementById('eb-duration').value=window.STREAM_DURATION_MAP[this.value]||30">
         <option value="">— Select Stream —</option>
-        <option ${batch.stream==='Macro Economy Analysis'?'selected':''}>Macro Economy Analysis</option>
-        <option ${batch.stream==='Equity Research-Comparative Model'?'selected':''}>Equity Research-Comparative Model</option>
-        <option ${batch.stream==='Equity Research-Absolute Model'?'selected':''}>Equity Research-Absolute Model</option>
-        <option ${batch.stream==='Wealth Management'?'selected':''}>Wealth Management</option>
-        <option ${batch.stream==='Technical Analysis'?'selected':''}>Technical Analysis</option>
-        <option ${batch.stream==='Derivative Analysis'?'selected':''}>Derivative Analysis</option>
-        <option ${batch.stream==='Human Resource'?'selected':''}>Human Resource</option>
-        <option ${batch.stream==='Marketing'?'selected':''}>Marketing</option>
+        <option value="Macro Economic Analysis - 15 days" ${batch.stream==='Macro Economic Analysis - 15 days'?'selected':''}>Macro Economic Analysis - 15 days</option>
+        <option value="Equity Research Comparative Model - 30 days" ${batch.stream==='Equity Research Comparative Model - 30 days'?'selected':''}>Equity Research Comparative Model - 30 days</option>
+        <option value="Wealth Management - 30 days" ${batch.stream==='Wealth Management - 30 days'?'selected':''}>Wealth Management - 30 days</option>
+        <option value="Equity Research Absolute Model - 60 days" ${batch.stream==='Equity Research Absolute Model - 60 days'?'selected':''}>Equity Research Absolute Model - 60 days</option>
+        <option value="Technical Analysis - 60 days" ${batch.stream==='Technical Analysis - 60 days'?'selected':''}>Technical Analysis - 60 days</option>
+        <option value="Derivative Analysis - 60 days" ${batch.stream==='Derivative Analysis - 60 days'?'selected':''}>Derivative Analysis - 60 days</option>
+        <option value="Human Resources - 15 days" ${batch.stream==='Human Resources - 15 days'?'selected':''}>Human Resources - 15 days</option>
+        <option value="Human Resources - 30 days" ${batch.stream==='Human Resources - 30 days'?'selected':''}>Human Resources - 30 days</option>
+        <option value="Human Resources - 60 days" ${batch.stream==='Human Resources - 60 days'?'selected':''}>Human Resources - 60 days</option>
+        <option value="Marketing - 15 days" ${batch.stream==='Marketing - 15 days'?'selected':''}>Marketing - 15 days</option>
+        <option value="Marketing - 30 days" ${batch.stream==='Marketing - 30 days'?'selected':''}>Marketing - 30 days</option>
+        <option value="Marketing - 60 days" ${batch.stream==='Marketing - 60 days'?'selected':''}>Marketing - 60 days</option>
       </select>
-    </div>
-    <div class="form-group">
-      <label>Internship Duration</label>
-      <select id="eb-duration">
-        <option value="15" ${batch.duration==15?'selected':''}>15 Days — 8 att, 2 HR, 11 DR, 10 tasks</option>
-        <option value="30" ${batch.duration==30?'selected':''}>30 Days — 16 att, 4 HR, 17 DR, 20 tasks</option>
-        <option value="60" ${batch.duration==60?'selected':''}>60 Days — 32 att, 8 HR, 29 DR, 30 tasks</option>
-      </select>
+      <input type="hidden" id="eb-duration" value="${batch.duration||30}" />
     </div>
     <div class="form-group">
       <label>Mentor</label>
@@ -2997,26 +3012,24 @@ window.showCreateBatchModal = () => {
     <div class="modal-title">📦 Create New Batch</div>
     <div class="form-group"><label>Batch Name</label><input id="batch-name-input" type="text" placeholder="e.g. Batch 2024 A" /></div>
     <div class="form-group">
-      <label>Stream</label>
-      <select id="batch-stream-input">
+      <label>Stream & Duration</label>
+      <select id="batch-stream-input" onchange="document.getElementById('batch-duration-input').value=window.STREAM_DURATION_MAP[this.value]||30">
+
         <option value="">— Select Stream —</option>
-        <option value="Macro Economy Analysis">Macro Economy Analysis</option>
-        <option value="Equity Research-Comparative Model">Equity Research-Comparative Model</option>
-        <option value="Equity Research-Absolute Model">Equity Research-Absolute Model</option>
-        <option value="Wealth Management">Wealth Management</option>
-        <option value="Technical Analysis">Technical Analysis</option>
-        <option value="Derivative Analysis">Derivative Analysis</option>
-        <option value="Human Resource">Human Resource</option>
-        <option value="Marketing">Marketing</option>
+        <option value="Macro Economic Analysis - 15 days">Macro Economic Analysis — 15 days</option>
+        <option value="Equity Research Comparative Model - 30 days">Equity Research Comparative Model — 30 days</option>
+        <option value="Wealth Management - 30 days">Wealth Management — 30 days</option>
+        <option value="Equity Research Absolute Model - 60 days">Equity Research Absolute Model — 60 days</option>
+        <option value="Technical Analysis - 60 days">Technical Analysis — 60 days</option>
+        <option value="Derivative Analysis - 60 days">Derivative Analysis — 60 days</option>
+        <option value="Human Resources - 15 days">Human Resources — 15 days</option>
+        <option value="Human Resources - 30 days">Human Resources — 30 days</option>
+        <option value="Human Resources - 60 days">Human Resources — 60 days</option>
+        <option value="Marketing - 15 days">Marketing — 15 days</option>
+        <option value="Marketing - 30 days">Marketing — 30 days</option>
+        <option value="Marketing - 60 days">Marketing — 60 days</option>
       </select>
-    </div>
-    <div class="form-group">
-      <label>Internship Duration</label>
-      <select id="batch-duration-input">
-        <option value="15">15 Days — 8 att, 2 HR, 11 DR, 10 tasks</option>
-        <option value="30" selected>30 Days — 16 att, 4 HR, 17 DR, 20 tasks</option>
-        <option value="60">60 Days — 32 att, 8 HR, 29 DR, 30 tasks</option>
-      </select>
+      <input type="hidden" id="batch-duration-input" value="30" />
     </div>
     <div class="form-group"><label>Mentor Name (optional)</label>
       <select id="batch-mentor-input">
