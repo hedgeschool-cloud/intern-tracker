@@ -729,6 +729,8 @@ onAuthStateChanged(auth, async user => {
     } else {
       document.getElementById('app').style.display = 'flex';
       document.getElementById('global-topbar').style.display = 'flex';
+      const tab = document.getElementById('sidebar-tab');
+      if (tab && isMobile()) tab.style.display = 'block';
       initSidebar();
       loadBatches();
       navigate('dashboard');
@@ -738,6 +740,8 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
     document.getElementById('global-topbar').style.display = 'none';
+    const tab = document.getElementById('sidebar-tab');
+    if (tab) tab.style.display = 'none';
   }
 });
 
@@ -1518,7 +1522,7 @@ window.addEventListener('load', () => {
   tab.textContent = '☰';
   tab.style.cssText = `
     position:fixed; top:50%; left:0px; transform:translateY(-50%);
-    z-index:9999; background:var(--accent); color:#fff;
+    z-index:9999; background:#7c3aed; color:#fff;
     border:none; border-radius:0 8px 8px 0;
     width:28px; height:56px; font-size:16px; cursor:pointer;
     box-shadow:2px 0 8px rgba(124,58,237,.4);
@@ -1526,12 +1530,12 @@ window.addEventListener('load', () => {
   `;
   tab.onclick = () => {
     const sidebar = document.getElementById('sidebar');
-    if (sidebar.style.left === '0px' || sidebar.style.left === '0') hideSidebar();
-    else showSidebar();
+    const isOpen = sidebar.style.left === '0px' || sidebar.style.left === '0';
+    if (isOpen) hideSidebar(); else showSidebar();
   };
   document.body.appendChild(tab);
-  // Show tab only on mobile
-  if (isMobile()) tab.style.display = 'block';
+  // Always start hidden - shown only after login
+  tab.style.display = 'none';
   window.addEventListener('resize', () => {
     tab.style.display = isMobile() ? 'block' : 'none';
     if (!isMobile()) hideSidebar();
