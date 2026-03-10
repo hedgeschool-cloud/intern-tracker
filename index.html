@@ -977,10 +977,14 @@ window.updateAttendance = async (batchId, internId, day, val) => {
 
 window.updateMark = async (batchId, internId, task, val) => {
   const num = val === '' ? '' : Math.max(0, Math.min(100, parseFloat(val) || 0));
+  const ts = new Date().toISOString();
+  const by = _state.userDoc?.name || 'Unknown';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
     ['tasks.' + task]: num,
-    lastUpdatedTasks: new Date().toISOString(),
-    lastUpdatedTasksBy: _state.userDoc?.name || 'Unknown'
+    ['taskTs.' + task]: ts,
+    ['taskBy.' + task]: by,
+    lastUpdatedTasks: ts,
+    lastUpdatedTasksBy: by
   });
   showToast('✅ Mark saved!');
 };
@@ -2040,8 +2044,13 @@ async function renderInternDetailAsync(param) {
           ${Array.from({length: attCount}, (_,i) => {
             const key = 'day'+(i+1);
             const present = intern.attendance?.[key] || false;
-            return `<div class="toggle-slot ${present ? 'active' : ''}" onclick="toggleField('${batchId}','${internId}','attendance.${key}',this)" title="Day ${i+1}">
-              ${present ? '✅' : '❌'}
+            const attTs = intern.slotTs?.['attendance_'+key];
+            const attBy = intern.slotBy?.['attendance_'+key];
+            const attFmt = attTs ? new Date(attTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + new Date(attTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
+            return `<div class="toggle-slot ${present ? 'active' : ''}" onclick="toggleField('${batchId}','${internId}','attendance.${key}',this)" title="Day ${i+1}" style="flex-direction:column;gap:2px;height:auto;min-height:52px;padding:6px 4px">
+              <span style="font-size:14px">${present ? '✅' : '❌'}</span>
+              <span style="font-size:9px;color:var(--muted)">Day ${i+1}</span>
+              ${_state.userDoc.role==='admin' && attFmt ? `<span style="font-size:8px;color:var(--muted);text-align:center;line-height:1.3">${attFmt}<br><span style="color:var(--accent)">${attBy||''}</span></span>` : ''}
             </div>`;
           }).join('')}
         </div>
@@ -2058,8 +2067,13 @@ async function renderInternDetailAsync(param) {
           ${Array.from({length: hrCount}, (_,i) => {
             const key = 'hr'+(i+1);
             const present = intern.hrclub?.[key] || false;
-            return `<div class="toggle-slot ${present ? 'active' : ''}" onclick="toggleField('${batchId}','${internId}','hrclub.${key}',this)" title="Activity ${i+1}">
-              ${present ? '✅' : '❌'}
+            const hrTs = intern.slotTs?.['hrclub_'+key];
+            const hrBy = intern.slotBy?.['hrclub_'+key];
+            const hrFmt = hrTs ? new Date(hrTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + new Date(hrTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
+            return `<div class="toggle-slot ${present ? 'active' : ''}" onclick="toggleField('${batchId}','${internId}','hrclub.${key}',this)" title="Activity ${i+1}" style="flex-direction:column;gap:2px;height:auto;min-height:52px;padding:6px 4px">
+              <span style="font-size:14px">${present ? '✅' : '❌'}</span>
+              <span style="font-size:9px;color:var(--muted)">HR ${i+1}</span>
+              ${_state.userDoc.role==='admin' && hrFmt ? `<span style="font-size:8px;color:var(--muted);text-align:center;line-height:1.3">${hrFmt}<br><span style="color:var(--accent)">${hrBy||''}</span></span>` : ''}
             </div>`;
           }).join('')}
         </div>
@@ -2076,8 +2090,13 @@ async function renderInternDetailAsync(param) {
           ${Array.from({length: drCount}, (_,i) => {
             const key = 'dr'+(i+1);
             const present = intern.dailyreport?.[key] || false;
-            return `<div class="toggle-slot ${present ? 'active' : ''}" onclick="toggleField('${batchId}','${internId}','dailyreport.${key}',this)" title="Report ${i+1}">
-              ${present ? '✅' : '❌'}
+            const drTs = intern.slotTs?.['dailyreport_'+key];
+            const drBy = intern.slotBy?.['dailyreport_'+key];
+            const drFmt = drTs ? new Date(drTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + new Date(drTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
+            return `<div class="toggle-slot ${present ? 'active' : ''}" onclick="toggleField('${batchId}','${internId}','dailyreport.${key}',this)" title="Report ${i+1}" style="flex-direction:column;gap:2px;height:auto;min-height:52px;padding:6px 4px">
+              <span style="font-size:14px">${present ? '✅' : '❌'}</span>
+              <span style="font-size:9px;color:var(--muted)">DR ${i+1}</span>
+              ${_state.userDoc.role==='admin' && drFmt ? `<span style="font-size:8px;color:var(--muted);text-align:center;line-height:1.3">${drFmt}<br><span style="color:var(--accent)">${drBy||''}</span></span>` : ''}
             </div>`;
           }).join('')}
         </div>
@@ -2193,9 +2212,13 @@ async function renderInternDetailAsync(param) {
         <div class="marks-grid">
           ${Array.from({length: taskCount}, (_,i) => {
             const key = 'task'+(i+1);
+            const taskTs = intern.taskTs?.[key];
+            const taskBy = intern.taskBy?.[key];
+            const taskFmt = taskTs ? new Date(taskTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + new Date(taskTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
             return `<div class="mark-card">
               <label>Task ${i+1}</label>
               <input type="number" min="0" max="100" value="${intern.tasks?.[key] ?? ''}" placeholder="—" onblur="updateMark('${batchId}','${internId}','${key}',this.value)" />
+              ${_state.userDoc.role==='admin' && taskFmt ? `<div style="font-size:8px;color:var(--muted);margin-top:4px;line-height:1.4;text-align:center">${taskFmt}<br><span style="color:var(--accent)">${taskBy||''}</span></div>` : ''}
             </div>`;
           }).join('')}
         </div>
@@ -2253,11 +2276,20 @@ window.toggleField = async (batchId, internId, fieldPath, el) => {
   const newVal = !current;
   el.classList.toggle('active', newVal);
   el.textContent = newVal ? '✅' : '❌';
+  const ts = new Date().toISOString();
+  const by = _state.userDoc?.name || 'Unknown';
   const isHR = fieldPath.startsWith('hrclub');
   const isDR = fieldPath.startsWith('dailyreport');
-  const updates = { [fieldPath]: newVal };
-  if (isHR) { updates.lastUpdatedHrclub = new Date().toISOString(); updates.lastUpdatedHrclubBy = _state.userDoc?.name || 'Unknown'; }
-  if (isDR) { updates.lastUpdatedDailyreport = new Date().toISOString(); updates.lastUpdatedDailyreportBy = _state.userDoc?.name || 'Unknown'; }
+  const isAtt = fieldPath.startsWith('attendance');
+  const slotKey = fieldPath.replace('.', 'Ts_').replace(/\./g, '_');
+  const updates = {
+    [fieldPath]: newVal,
+    ['slotTs.' + fieldPath.replace('.','_')]: ts,
+    ['slotBy.' + fieldPath.replace('.','_')]: by,
+  };
+  if (isHR)  { updates.lastUpdatedHrclub = ts; updates.lastUpdatedHrclubBy = by; }
+  if (isDR)  { updates.lastUpdatedDailyreport = ts; updates.lastUpdatedDailyreportBy = by; }
+  if (isAtt) { updates.lastUpdatedAttendance = ts; updates.lastUpdatedAttendanceBy = by; }
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), updates);
   showToast('✅ Saved!');
 };
