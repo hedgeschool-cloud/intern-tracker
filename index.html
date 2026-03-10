@@ -1737,8 +1737,7 @@ async function renderBatchDetailAsync(batchId) {
         <span class="tag">📋 ${batch.taskCount||10} tasks & attendance slots</span>
         ${batch.mentor ? `<span class="tag" style="background:rgba(22,163,74,.12);color:var(--green)">👤 Mentor: ${batch.mentor}</span>` : ''}
         <button class="btn btn-green btn-sm" onclick="exportBatch('${batchId}')">📥 Export Full Report</button>
-        ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditTasksModal('${batchId}',${batch.taskCount||10})">⚙️ Edit Tasks</button>` : ''}
-        ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditMentorModal('${batchId}')">✏️ Edit Mentor</button>` : ''}
+        ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditBatchModal('${batchId}')">✏️ Edit Batch</button>` : ''}
       </div>
     </div>
 
@@ -2742,6 +2741,70 @@ function renderUsers() {
 // ══════════════════════════════════════════════
 // MODALS
 // ══════════════════════════════════════════════
+window.showEditBatchModal = (batchId) => {
+  const batch = _state.batches.find(b => b.id === batchId);
+  if (!batch) return;
+  const mentors = ['Noufal Latheef','Jaison Philip Varghese','Steffy Francis','Jija Thankam Mathew','Parth S Mavani','Nehla K Shihab','Manu Krishnan C','John J Antony','Nirmal P John','Aneesh Y'];
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">✏️ Edit Batch</div>
+    <div class="form-group"><label>Batch Name</label><input id="eb-name" type="text" value="${batch.name}" /></div>
+    <div class="form-group">
+      <label>Stream</label>
+      <select id="eb-stream">
+        <option value="">— Select Stream —</option>
+        <option ${batch.stream==='Macro Economy Analysis'?'selected':''}>Macro Economy Analysis</option>
+        <option ${batch.stream==='Equity Research-Comparative Model'?'selected':''}>Equity Research-Comparative Model</option>
+        <option ${batch.stream==='Equity Research-Absolute Model'?'selected':''}>Equity Research-Absolute Model</option>
+        <option ${batch.stream==='Wealth Management'?'selected':''}>Wealth Management</option>
+        <option ${batch.stream==='Technical Analysis'?'selected':''}>Technical Analysis</option>
+        <option ${batch.stream==='Derivative Analysis'?'selected':''}>Derivative Analysis</option>
+        <option ${batch.stream==='Human Resource'?'selected':''}>Human Resource</option>
+        <option ${batch.stream==='Marketing'?'selected':''}>Marketing</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Internship Duration</label>
+      <select id="eb-duration">
+        <option value="15" ${batch.duration==15?'selected':''}>15 Days — 8 att, 2 HR, 11 DR, 10 tasks</option>
+        <option value="30" ${batch.duration==30?'selected':''}>30 Days — 16 att, 4 HR, 17 DR, 20 tasks</option>
+        <option value="60" ${batch.duration==60?'selected':''}>60 Days — 32 att, 8 HR, 29 DR, 30 tasks</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Mentor</label>
+      <select id="eb-mentor">
+        <option value="">— Select Mentor —</option>
+        ${mentors.map(m => `<option ${batch.mentor===m?'selected':''}>${m}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>Description (optional)</label><input id="eb-desc" type="text" value="${batch.description||''}" /></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditBatch('${batchId}')">Save Changes</button>
+    </div>
+  `;
+  document.getElementById('modal-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('eb-name')?.focus(), 50);
+};
+
+window.saveEditBatch = async (batchId) => {
+  const name = document.getElementById('eb-name').value.trim();
+  const stream = document.getElementById('eb-stream').value;
+  const duration = parseInt(document.getElementById('eb-duration').value);
+  const mentor = document.getElementById('eb-mentor').value;
+  const desc = document.getElementById('eb-desc').value.trim();
+  if (!name) return showToast('⚠️ Batch name required', 'warn');
+  if (!stream) return showToast('⚠️ Please select a stream', 'warn');
+  const cfg = DURATION_CONFIG[duration];
+  await updateDoc(doc(db, 'batches', batchId), {
+    name, stream, duration, mentor, description: desc,
+    taskCount: cfg.tasks, dayCount: cfg.attendance,
+    hrclubCount: cfg.hrclub, dailyreportCount: cfg.dailyreport
+  });
+  closeModal();
+  showToast('✅ Batch updated!');
+};
+
 window.showEditMentorModal = (batchId) => {
   const batch = _state.batches.find(b => b.id === batchId);
   const currentMentor = batch?.mentor || '';
