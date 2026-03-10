@@ -1831,11 +1831,11 @@ async function renderBatchDetailAsync(batchId) {
     const rankedInterns = [...interns].map(i => ({ ...i, sc: calcScorecard(i, batch) })).sort((a,b) => b.sc.aggregate - a.sc.aggregate);
     html += `
       <div class="card mb-16">
-        <div class="flex-between" style="cursor:pointer;user-select:none" onclick="toggleRankings()">
-          <h3 style="font-size:15px;font-weight:700">🏆 Batch Rankings <span style="font-size:12px;color:var(--muted);font-weight:400">(${rankedInterns.length} interns)</span></h3>
-          <span id="rankings-arrow" style="font-size:12px;color:var(--muted);transition:transform .2s;font-weight:600">▶ Show</span>
+        <div style="display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none" onclick="window.toggleRankings()">
+          <span id="rankings-arrow" style="font-size:11px;color:var(--accent);font-weight:700;background:rgba(124,58,237,.12);padding:3px 10px;border-radius:20px;white-space:nowrap">▶ Show</span>
+          <h3 style="font-size:15px;font-weight:700;margin:0">🏆 Batch Rankings <span style="font-size:12px;color:var(--muted);font-weight:400">(${rankedInterns.length} interns)</span></h3>
         </div>
-        <div id="rankings-body" style="display:none !important;margin-top:12px" class="rankings-collapsed">
+        <div id="rankings-body" class="rankings-collapsed" style="margin-top:12px">
         <div class="table-wrap">
           <table style="width:auto">
             <thead><tr>
