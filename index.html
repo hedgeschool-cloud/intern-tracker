@@ -1923,6 +1923,10 @@ async function renderBatchDetailAsync(batchId) {
     html += `</tbody></table></div></div>`;
   }
 
+  html += `<div style="padding:24px 0 8px">
+    <button class="btn btn-ghost btn-sm" onclick="navigate('batches')">← Back to Batches</button>
+  </div>`;
+
   return html;
 }
 
@@ -2739,6 +2743,9 @@ async function renderMentorDetailAsync(mentorName) {
       </div>
     `;
   }
+  html += `<div style="padding:24px 0 8px">
+    <button class="btn btn-ghost btn-sm" onclick="navigate('mentors')">← Back to Mentors</button>
+  </div>`;
   return html;
 }
 
