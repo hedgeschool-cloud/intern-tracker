@@ -2749,7 +2749,19 @@ window.showEditMentorModal = (batchId) => {
     <div class="modal-title">👤 Edit Mentor</div>
     <div class="form-group">
       <label>Mentor Name</label>
-      <input id="mentor-name-input" type="text" value="${currentMentor}" placeholder="e.g. Dr. John Smith" />
+      <select id="mentor-name-input">
+        <option value="">— Select Mentor —</option>
+        <option ${currentMentor==='Noufal Latheef'?'selected':''}>Noufal Latheef</option>
+        <option ${currentMentor==='Jaison Philip Varghese'?'selected':''}>Jaison Philip Varghese</option>
+        <option ${currentMentor==='Steffy Francis'?'selected':''}>Steffy Francis</option>
+        <option ${currentMentor==='Jija Thankam Mathew'?'selected':''}>Jija Thankam Mathew</option>
+        <option ${currentMentor==='Parth S Mavani'?'selected':''}>Parth S Mavani</option>
+        <option ${currentMentor==='Nehla K Shihab'?'selected':''}>Nehla K Shihab</option>
+        <option ${currentMentor==='Manu Krishnan C'?'selected':''}>Manu Krishnan C</option>
+        <option ${currentMentor==='John J Antony'?'selected':''}>John J Antony</option>
+        <option ${currentMentor==='Nirmal P John'?'selected':''}>Nirmal P John</option>
+        <option ${currentMentor==='Aneesh Y'?'selected':''}>Aneesh Y</option>
+      </select>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -2795,7 +2807,21 @@ window.showCreateBatchModal = () => {
         <option value="60">60 Days — 32 att, 8 HR, 29 DR, 30 tasks</option>
       </select>
     </div>
-    <div class="form-group"><label>Mentor Name (optional)</label><input id="batch-mentor-input" type="text" placeholder="e.g. Dr. John Smith" /></div>
+    <div class="form-group"><label>Mentor Name (optional)</label>
+      <select id="batch-mentor-input">
+        <option value="">— Select Mentor —</option>
+        <option>Noufal Latheef</option>
+        <option>Jaison Philip Varghese</option>
+        <option>Steffy Francis</option>
+        <option>Jija Thankam Mathew</option>
+        <option>Parth S Mavani</option>
+        <option>Nehla K Shihab</option>
+        <option>Manu Krishnan C</option>
+        <option>John J Antony</option>
+        <option>Nirmal P John</option>
+        <option>Aneesh Y</option>
+      </select>
+    </div>
     <div class="form-group"><label>Description (optional)</label><input id="batch-desc-input" type="text" placeholder="Short description" /></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
