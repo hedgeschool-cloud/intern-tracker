@@ -1480,12 +1480,62 @@ function hideSidebar() {
   main.style.marginLeft = '0px';
   topbar.style.left = '0px';
 }
+function showSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const main = document.getElementById('main-content');
+  const topbar = document.getElementById('global-topbar');
+  const tab = document.getElementById('sidebar-tab');
+  if (!sidebar) return;
+  sidebar.style.left = '0';
+  main.style.marginLeft = isMobile() ? '0' : '260px';
+  if (topbar) topbar.style.left = isMobile() ? '0' : '260px';
+  if (tab) { tab.style.left = '260px'; tab.textContent = '◀'; }
+}
+function hideSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const main = document.getElementById('main-content');
+  const topbar = document.getElementById('global-topbar');
+  const tab = document.getElementById('sidebar-tab');
+  if (!sidebar) return;
+  sidebar.style.left = '-260px';
+  main.style.marginLeft = '0px';
+  if (topbar) topbar.style.left = '0px';
+  if (tab) { tab.style.left = '0px'; tab.textContent = '☰'; }
+}
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+// Mouse hover for desktop
 document.addEventListener('mousemove', (e) => {
-  if (e.clientX <= 8) {
-    showSidebar();
-  } else if (e.clientX > 280) {
-    hideSidebar();
-  }
+  if (isMobile()) return;
+  if (e.clientX <= 8) showSidebar();
+  else if (e.clientX > 280) hideSidebar();
+});
+// Tab button for mobile - injected on load
+window.addEventListener('load', () => {
+  const tab = document.createElement('button');
+  tab.id = 'sidebar-tab';
+  tab.textContent = '☰';
+  tab.style.cssText = `
+    position:fixed; top:50%; left:0px; transform:translateY(-50%);
+    z-index:9999; background:var(--accent); color:#fff;
+    border:none; border-radius:0 8px 8px 0;
+    width:28px; height:56px; font-size:16px; cursor:pointer;
+    box-shadow:2px 0 8px rgba(124,58,237,.4);
+    transition:left .25s ease; display:none;
+  `;
+  tab.onclick = () => {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar.style.left === '0px' || sidebar.style.left === '0') hideSidebar();
+    else showSidebar();
+  };
+  document.body.appendChild(tab);
+  // Show tab only on mobile
+  if (isMobile()) tab.style.display = 'block';
+  window.addEventListener('resize', () => {
+    tab.style.display = isMobile() ? 'block' : 'none';
+    if (!isMobile()) hideSidebar();
+  });
 });
 // ══════════════════════════════════════════════
 function calcAttendance(attendance, dayCount) {
