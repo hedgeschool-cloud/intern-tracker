@@ -1857,6 +1857,8 @@ async function renderBatchDetailAsync(batchId) {
               <tr>
                 <th>#</th>
                 <th>Intern Name</th>
+                <th>Phone</th>
+                <th>Email</th>
                 <th>Aggregate</th>
                 <th>Process</th>
                 <th>Progress</th>
@@ -1881,6 +1883,8 @@ async function renderBatchDetailAsync(batchId) {
       html += `<tr>
         <td style="color:var(--muted)">${idx+1}</td>
         <td><span style="cursor:pointer;color:var(--accent);font-weight:600" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">${intern.name}</span></td>
+        <td style="font-size:12px;color:var(--muted)">${intern.phone||'—'}</td>
+        <td style="font-size:12px;color:var(--muted)">${intern.email||'—'}</td>
         <td><span class="score-pill" style="background:${pctBg(sc.aggregate)};color:${pctColor(sc.aggregate)}">${sc.aggregate}%</span></td>
         <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${sc.processScore}%</span></td>
         <td><span class="score-pill" style="background:rgba(22,163,74,.12);color:var(--green)">${sc.progressScore}%</span></td>
