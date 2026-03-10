@@ -799,12 +799,13 @@ window.createBatch = async () => {
   const stream = document.getElementById('batch-stream-input').value;
   const duration = parseInt(document.getElementById('batch-duration-input').value) || 30;
   const desc = document.getElementById('batch-desc-input').value.trim();
+  const mentor = document.getElementById('batch-mentor-input')?.value.trim() || '';
   if (!name) return showToast('⚠️ Batch name required', 'warn');
   if (!stream) return showToast('⚠️ Please select a stream', 'warn');
   const cfg = DURATION_CONFIG[duration];
   const id = 'batch_' + Date.now();
   await setDoc(doc(db, 'batches', id), {
-    name, stream, duration, description: desc,
+    name, stream, duration, description: desc, mentor,
     taskCount: cfg.tasks, dayCount: cfg.attendance,
     hrclubCount: cfg.hrclub, dailyreportCount: cfg.dailyreport,
     createdAt: serverTimestamp(), internCount: 0
@@ -1668,8 +1669,10 @@ async function renderBatchDetailAsync(batchId) {
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
         ${batch.stream ? `<span class="tag" style="background:rgba(124,58,237,.12);color:var(--accent)">🎓 ${batch.stream}</span>` : ''}
         <span class="tag">📋 ${batch.taskCount||10} tasks & attendance slots</span>
+        ${batch.mentor ? `<span class="tag" style="background:rgba(22,163,74,.12);color:var(--green)">👤 Mentor: ${batch.mentor}</span>` : ''}
         <button class="btn btn-green btn-sm" onclick="exportBatch('${batchId}')">📥 Export Full Report</button>
         ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditTasksModal('${batchId}',${batch.taskCount||10})">⚙️ Edit Tasks</button>` : ''}
+        ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditMentorModal('${batchId}','${(batch.mentor||'').replace(/'/g,\'')}')">✏️ Edit Mentor</button>` : ''}
       </div>
     </div>
 
@@ -1834,6 +1837,7 @@ async function renderInternDetailAsync(param) {
         <div>
           <div style="font-size:24px; font-weight:800; font-family:'Syne',sans-serif">${intern.name}</div>
           <div class="text-muted">${batch?.name}</div>
+          ${batch?.mentor ? `<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:2px">👤 Mentor: ${batch.mentor}</div>` : ''}
         </div>
         <div style="margin-left:auto; display:flex; gap:10px; align-items:center">
           ${intern.projectTitle ? `<span style="font-size:13px;color:var(--muted)">📁 ${intern.projectTitle}</span>` : ''}
@@ -2431,6 +2435,31 @@ function renderUsers() {
 // ══════════════════════════════════════════════
 // MODALS
 // ══════════════════════════════════════════════
+window.showEditMentorModal = (batchId, currentMentor) => {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">👤 Edit Mentor</div>
+    <div class="form-group">
+      <label>Mentor Name</label>
+      <input id="mentor-name-input" type="text" value="${currentMentor}" placeholder="e.g. Dr. John Smith" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMentor('${batchId}')">Save</button>
+    </div>
+  `;
+  document.getElementById('modal-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('mentor-name-input')?.focus(), 50);
+};
+
+window.saveMentor = async (batchId) => {
+  const mentor = document.getElementById('mentor-name-input').value.trim();
+  await updateDoc(doc(db, 'batches', batchId), { mentor });
+  await loadBatches();
+  closeModal();
+  showToast('✅ Mentor updated!');
+  navigate('batch-detail', batchId);
+};
+
 window.showCreateBatchModal = () => {
   document.getElementById('modal-content').innerHTML = `
     <div class="modal-title">📦 Create New Batch</div>
@@ -2457,6 +2486,7 @@ window.showCreateBatchModal = () => {
         <option value="60">60 Days — 32 att, 8 HR, 29 DR, 30 tasks</option>
       </select>
     </div>
+    <div class="form-group"><label>Mentor Name (optional)</label><input id="batch-mentor-input" type="text" placeholder="e.g. Dr. John Smith" /></div>
     <div class="form-group"><label>Description (optional)</label><input id="batch-desc-input" type="text" placeholder="Short description" /></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
