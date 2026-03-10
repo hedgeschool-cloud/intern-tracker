@@ -1672,7 +1672,7 @@ async function renderBatchDetailAsync(batchId) {
         ${batch.mentor ? `<span class="tag" style="background:rgba(22,163,74,.12);color:var(--green)">👤 Mentor: ${batch.mentor}</span>` : ''}
         <button class="btn btn-green btn-sm" onclick="exportBatch('${batchId}')">📥 Export Full Report</button>
         ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditTasksModal('${batchId}',${batch.taskCount||10})">⚙️ Edit Tasks</button>` : ''}
-        ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditMentorModal('${batchId}','${(batch.mentor||'').replace(/'/g,\'')}')">✏️ Edit Mentor</button>` : ''}
+        ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="showEditMentorModal('${batchId}')">✏️ Edit Mentor</button>` : ''}
       </div>
     </div>
 
@@ -2435,7 +2435,9 @@ function renderUsers() {
 // ══════════════════════════════════════════════
 // MODALS
 // ══════════════════════════════════════════════
-window.showEditMentorModal = (batchId, currentMentor) => {
+window.showEditMentorModal = (batchId) => {
+  const batch = _state.batches.find(b => b.id === batchId);
+  const currentMentor = batch?.mentor || '';
   document.getElementById('modal-content').innerHTML = `
     <div class="modal-title">👤 Edit Mentor</div>
     <div class="form-group">
