@@ -591,7 +591,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged
+  signOut, onAuthStateChanged, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs,
@@ -2564,7 +2564,10 @@ async function renderUsersAsync() {
               <td class="text-muted">${u.email}</td>
               <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-mentor'}">${u.role}</span></td>
               <td>
-                ${u.id !== _state.user.uid ? `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">🚫 Revoke</button>` : '<span class="text-muted text-sm">You</span>'}
+                <div style="display:flex;gap:8px;align-items:center">
+                  <button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.12);color:var(--accent);border:1px solid rgba(124,58,237,.2)" onclick="resetUserPassword('${u.email}','${u.name}')">🔑 Reset Password</button>
+                  ${u.id !== _state.user.uid ? `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">🚫 Revoke</button>` : '<span class="text-muted text-sm">You</span>'}
+                </div>
               </td>
             </tr>`).join('')}
           </tbody>
@@ -2846,6 +2849,16 @@ window.exportMentorReport = async (mentorName) => {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([drHeaders, ...drRows]), 'Daily Reports');
   XLSX.writeFile(wb, mentorName.replace(/\s+/g,'_') + '_FullReport_' + new Date().toISOString().slice(0,10) + '.xlsx');
   showToast('📥 Full mentor report exported!');
+};
+
+window.resetUserPassword = async (email, name) => {
+  if (!confirm(`Send a password reset email to ${name} (${email})?`)) return;
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showToast(`✅ Password reset email sent to ${name}!`);
+  } catch (err) {
+    showToast('⚠️ Failed to send reset email: ' + err.message, 'error');
+  }
 };
 
 function renderUsers() {
