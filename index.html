@@ -531,6 +531,9 @@
     <div class="sidebar-item" onclick="navigate('scorecard')" id="nav-scorecard">
       <span class="icon">🏆</span> Score Card
     </div>
+    <div class="sidebar-item" onclick="navigate('mentors')" id="nav-mentors">
+      <span class="icon">👨‍🏫</span> Mentors
+    </div>
 
     <div class="sidebar-section" id="admin-nav" style="display:none">
       <div class="sidebar-section-label">Admin</div>
@@ -774,6 +777,8 @@ window.navigate = (page, param) => {
   else if (page === 'reports') mc.innerHTML = renderReports();
   else if (page === 'scorecard') { mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderScorecardAsync().then(h => { document.getElementById('main-content').innerHTML = h; }); }
   else if (page === 'users') mc.innerHTML = renderUsers();
+  else if (page === 'mentors') { mc.innerHTML = renderMentorList(); }
+  else if (page === 'mentor-detail') { mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderMentorDetailAsync(param).then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); }); }
   attachPageEvents();
 };
 
@@ -2425,6 +2430,222 @@ window.rejectUser = async (userId) => {
   await updateDoc(doc(db, 'users', userId), { status: 'rejected' });
   showToast('🚫 User rejected.');
   navigate('users');
+};
+
+function renderMentorList() {
+  // Get all unique mentors from batches
+  const mentorMap = {};
+  for (const batch of _state.batches) {
+    const name = batch.mentor?.trim();
+    if (!name) continue;
+    if (!mentorMap[name]) mentorMap[name] = { batches: [], internCount: 0 };
+    mentorMap[name].batches.push(batch);
+    mentorMap[name].internCount += batch.internCount || 0;
+  }
+  const mentors = Object.entries(mentorMap);
+
+  let html = `
+    <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div class="page-title">👨‍🏫 Mentors</div>
+      <div class="page-sub">All mentors and their batches</div>
+    </div>
+  `;
+
+  if (mentors.length === 0) {
+    return html + `<div class="empty-state"><div class="icon">👨‍🏫</div><h3>No mentors yet</h3><p>Add mentor names when creating or editing batches</p></div>`;
+  }
+
+  // Dropdown selector
+  html += `
+    <div class="card mb-24">
+      <div class="form-group" style="margin:0;max-width:400px">
+        <label>Select a Mentor</label>
+        <select onchange="if(this.value) navigate('mentor-detail', this.value)" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);width:100%;cursor:pointer">
+          <option value="">— Choose a mentor —</option>
+          ${mentors.map(([name]) => `<option value="${name}">${name}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+  `;
+
+  for (const [name, data] of mentors) {
+    html += `
+      <div class="card" style="cursor:pointer;transition:box-shadow .2s" onclick="navigate('mentor-detail','${name}')" onmouseover="this.style.boxShadow='0 4px 20px rgba(124,58,237,.15)'" onmouseout="this.style.boxShadow=''">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:800;flex-shrink:0">${name.charAt(0).toUpperCase()}</div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--text)">${name}</div>
+            <div style="font-size:12px;color:var(--muted)">Mentor</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px">
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--accent)">${data.batches.length}</div>
+            <div style="font-size:11px;color:var(--muted)">Batches</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--green)">${data.internCount}</div>
+            <div style="font-size:11px;color:var(--muted)">Interns</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  html += `</div>`;
+  return html;
+}
+
+async function renderMentorDetailAsync(mentorName) {
+  // Get all batches for this mentor
+  const batches = _state.batches.filter(b => b.mentor?.trim() === mentorName);
+
+  // Load all interns for all batches
+  let allInterns = [];
+  for (const batch of batches) {
+    const interns = await getInterns(batch.id);
+    for (const intern of interns) allInterns.push({ intern, batch });
+  }
+  const totalInterns = allInterns.length;
+
+  let html = `
+    <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="navigate('mentors')">← Back to Mentors</button>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:800;flex-shrink:0">${mentorName.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="page-title" style="margin:0">${mentorName}</div>
+          <div class="page-sub" style="margin:0">Mentor</div>
+        </div>
+        <button class="btn btn-green btn-sm" style="margin-left:auto" onclick="exportMentorReport('${mentorName}')">📥 Export Full Report</button>
+      </div>
+    </div>
+
+    <div class="summary-cards" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:24px">
+      <div class="summary-card">
+        <div class="num" style="color:var(--accent)">${batches.length}</div>
+        <div class="lbl">Total Batches</div>
+      </div>
+      <div class="summary-card">
+        <div class="num" style="color:var(--green)">${totalInterns}</div>
+        <div class="lbl">Total Interns</div>
+      </div>
+    </div>
+  `;
+
+  // Batches section
+  html += `<h3 style="font-size:16px;font-weight:700;margin-bottom:16px">📦 Batches</h3>`;
+  html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:32px">`;
+  for (const batch of batches) {
+    html += `
+      <div class="card" style="cursor:pointer;transition:box-shadow .2s" onclick="navigate('batch-detail','${batch.id}')" onmouseover="this.style.boxShadow='0 4px 20px rgba(124,58,237,.15)'" onmouseout="this.style.boxShadow=''">
+        <div style="font-size:18px;font-weight:800;margin-bottom:8px">${batch.name}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+          ${batch.stream ? `<span class="tag" style="background:rgba(124,58,237,.12);color:var(--accent)">🎓 ${batch.stream}</span>` : ''}
+          <span class="tag">📋 ${batch.taskCount||10} tasks</span>
+          <span class="tag">⏱ ${batch.duration||30} days</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted)">${batch.internCount||0} Interns</div>
+      </div>
+    `;
+  }
+  html += `</div>`;
+
+  // Scorecard table for all interns under this mentor
+  if (allInterns.length > 0) {
+    const ranked = allInterns.map(({intern, batch}) => ({ intern, batch, sc: calcScorecard(intern, batch) }))
+      .sort((a, b) => b.sc.aggregate - a.sc.aggregate);
+
+    html += `
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:16px">🏆 Intern Rankings</h3>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th><th>Intern</th><th>Batch</th><th>Stream</th>
+                <th>Aggregate</th><th>Process</th><th>Progress</th>
+                <th>Attendance</th><th>Tasks</th><th>Zappyvue</th><th>Tech Interview</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ranked.map((e, i) => {
+                const r = i+1;
+                const rc = r===1?'rank-1':r===2?'rank-2':r===3?'rank-3':'rank-other';
+                const rl = r<=3?['🥇','🥈','🥉'][r-1]:r;
+                const gradeColor = g => g==='A'?'rgba(22,163,74,.2)':g==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)';
+                const gradeText = g => g==='A'?'var(--green)':g==='B'?'var(--yellow)':'var(--red)';
+                return `<tr>
+                  <td><div class="rank-badge ${rc}">${rl}</div></td>
+                  <td><span style="cursor:pointer;color:var(--accent);font-weight:600" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
+                  <td><span class="tag" style="cursor:pointer" onclick="navigate('batch-detail','${e.batch.id}')">${e.batch.name}</span></td>
+                  <td style="font-size:12px;color:var(--muted)">${e.batch.stream||'—'}</td>
+                  <td><span class="score-pill" style="background:${pctBg(e.sc.aggregate)};color:${pctColor(e.sc.aggregate)}">${e.sc.aggregate}%</span></td>
+                  <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${e.sc.processScore}%</span></td>
+                  <td><span class="score-pill" style="background:rgba(22,163,74,.12);color:var(--green)">${e.sc.progressScore}%</span></td>
+                  <td><span class="score-pill" style="background:${pctBg(e.sc.attPct)};color:${pctColor(e.sc.attPct)}">${e.sc.attPct}%</span></td>
+                  <td><span class="score-pill" style="background:${pctBg(e.sc.taskScore)};color:${pctColor(e.sc.taskScore)}">${e.sc.taskScore}%</span></td>
+                  <td>${e.intern.zappyvueGrade ? `<span class="score-pill" style="background:${gradeColor(e.intern.zappyvueGrade)};color:${gradeText(e.intern.zappyvueGrade)}">${e.intern.zappyvueGrade}</span>` : '—'}</td>
+                  <td>${e.intern.technicalInterviewGrade ? `<span class="score-pill" style="background:${gradeColor(e.intern.technicalInterviewGrade)};color:${gradeText(e.intern.technicalInterviewGrade)}">${e.intern.technicalInterviewGrade}</span>` : '—'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+  return html;
+}
+
+window.exportMentorReport = async (mentorName) => {
+  const batches = _state.batches.filter(b => b.mentor?.trim() === mentorName);
+  let allEntries = [];
+  for (const batch of batches) {
+    const interns = await getInterns(batch.id);
+    for (const intern of interns) {
+      const sc = calcScorecard(intern, batch);
+      allEntries.push({ intern, batch, sc });
+    }
+  }
+  allEntries.sort((a, b) => b.sc.aggregate - a.sc.aggregate);
+
+  const scoreHeaders = ['Rank','Intern','Batch','Stream','Project Title','Gender',
+    'Aggregate %','Process %','Progress %','Attendance %','HR/Club %','Daily Report %',
+    'Project Quality %','Task Score %','Social Contest %','Zappyvue Grade','Tech Interview Grade'];
+  const scoreRows = allEntries.map((e, i) => [
+    i+1, e.intern.name, e.batch.name, e.batch.stream||'',
+    e.intern.projectTitle||'', e.intern.gender||'',
+    e.sc.aggregate+'%', e.sc.processScore+'%', e.sc.progressScore+'%',
+    e.sc.attPct+'%', e.sc.hrPct+'%', e.sc.drPct+'%',
+    e.sc.projectQuality+'%', e.sc.taskScore+'%', e.sc.socialContest+'%',
+    e.intern.zappyvueGrade||'', e.intern.technicalInterviewGrade||''
+  ]);
+
+  const maxTasks = Math.max(...allEntries.map(e => e.batch.taskCount||10));
+  const taskHeaders = ['Intern','Batch',...Array.from({length:maxTasks},(_,i)=>'Task '+(i+1))];
+  const taskRows = allEntries.map(e => {
+    const tc = e.batch.taskCount||10;
+    const row = [e.intern.name, e.batch.name];
+    for (let i=1; i<=maxTasks; i++) row.push(i<=tc ? (e.intern.tasks?.['task'+i]??'') : '—');
+    return row;
+  });
+
+  const maxDays = Math.max(...allEntries.map(e => e.batch.dayCount||30));
+  const attHeaders = ['Intern','Batch','Attendance %',...Array.from({length:maxDays},(_,i)=>'Day '+(i+1))];
+  const attRows = allEntries.map(e => {
+    const dc = e.batch.dayCount||30;
+    const row = [e.intern.name, e.batch.name, e.sc.attPct+'%'];
+    for (let i=1; i<=maxDays; i++) row.push(i<=dc ? (e.intern.attendance?.['day'+i]?'Present':'Absent') : '—');
+    return row;
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([scoreHeaders, ...scoreRows]), 'Score Card');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([taskHeaders, ...taskRows]), 'Task Scores');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([attHeaders, ...attRows]), 'Attendance');
+  XLSX.writeFile(wb, mentorName.replace(/\s+/g,'_') + '_FullReport_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  showToast('📥 Mentor report exported!');
 };
 
 function renderUsers() {
