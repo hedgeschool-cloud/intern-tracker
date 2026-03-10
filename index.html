@@ -908,6 +908,8 @@ window.addIntern = async (batchId) => {
   if (_state.userDoc.role !== 'admin') return showToast('⛔ Admin only', 'error');
   const nameEl = document.getElementById('new-intern-name');
   const name = nameEl.value.trim();
+  const phone = document.getElementById('new-intern-phone')?.value.trim() || '';
+  const email = document.getElementById('new-intern-email')?.value.trim() || '';
   if (!name) return showToast('⚠️ Enter intern name', 'warn');
   const id = 'intern_' + Date.now();
   const batch = _state.batches.find(b => b.id === batchId);
@@ -920,12 +922,14 @@ window.addIntern = async (batchId) => {
   const hrclub = {}; for (let i = 1; i <= hrCount; i++) hrclub['hr' + i] = false;
   const dailyreport = {}; for (let i = 1; i <= drCount; i++) dailyreport['dr' + i] = false;
   await setDoc(doc(db, 'batches', batchId, 'interns', id), {
-    name, tasks, attendance, hrclub, dailyreport,
+    name, phone, email, tasks, attendance, hrclub, dailyreport,
     projectQuality: '', socialContest: '',
     createdAt: serverTimestamp()
   });
   await updateDoc(doc(db, 'batches', batchId), { internCount: (batch?.internCount || 0) + 1 });
   nameEl.value = '';
+  const phoneEl = document.getElementById('new-intern-phone'); if(phoneEl) phoneEl.value = '';
+  const emailEl = document.getElementById('new-intern-email'); if(emailEl) emailEl.value = '';
   showToast('✅ ' + name + ' added!');
   navigate('batch-detail', batchId);
 };
@@ -960,32 +964,57 @@ window.handleImportFile = async (batchId, file) => {
   const batch = _state.batches.find(b => b.id === batchId);
   const taskCount = batch?.taskCount || 10;
   const dayCount = batch?.dayCount || 30;
-  let names = [];
+  const hrCount = batch?.hrclubCount || 4;
+  const drCount = batch?.dailyreportCount || 17;
+
   const ext = file.name.split('.').pop().toLowerCase();
+  let rows = [];
 
   if (ext === 'csv') {
     const text = await file.text();
-    names = text.split('\n').map(r => r.split(',')[0].replace(/"/g,'').trim()).filter(Boolean).filter(n => n.toLowerCase() !== 'name');
+    rows = text.split('\n').map(r => r.split(',').map(c => c.replace(/"/g,'').trim())).filter(r => r.some(c => c));
   } else {
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf);
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-    names = rows.map(r => (r[0] || '').toString().trim()).filter(Boolean).filter(n => n.toLowerCase() !== 'name');
+    rows = XLSX.utils.sheet_to_json(ws, { header: 1 }).map(r => r.map(c => (c||'').toString().trim()));
   }
 
-  if (!names.length) return showToast('⚠️ No names found in file', 'warn');
+  if (!rows.length) return showToast('⚠️ File is empty', 'warn');
+
+  // Detect header row and column indices — case-insensitive, flexible matching
+  const headerRow = rows[0].map(h => h.toLowerCase().replace(/[\s_\-\.]/g, ''));
+  const findCol = (...keywords) => headerRow.findIndex(h => keywords.some(k => h.includes(k)));
+
+  const nameCol  = findCol('name');
+  const phoneCol = findCol('phone', 'mobile', 'contact', 'tel');
+  const emailCol = findCol('email', 'mail');
+
+  // If no header found, assume first column is name
+  const dataRows = nameCol >= 0 ? rows.slice(1) : rows;
+  const ni = nameCol >= 0 ? nameCol : 0;
+  const pi = phoneCol;
+  const ei = emailCol;
+
+  const interns = dataRows
+    .map(r => ({
+      name:  (r[ni] || '').trim(),
+      phone: pi >= 0 ? (r[pi] || '').trim() : '',
+      email: ei >= 0 ? (r[ei] || '').trim() : ''
+    }))
+    .filter(i => i.name && i.name.toLowerCase() !== 'name');
+
+  if (!interns.length) return showToast('⚠️ No names found in file', 'warn');
+
   let added = 0;
-  const hrCount = batch?.hrclubCount || 4;
-  const drCount = batch?.dailyreportCount || 17;
-  for (const name of names) {
+  for (const { name, phone, email } of interns) {
     const id = 'intern_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
     const tasks = {}; for (let i = 1; i <= taskCount; i++) tasks['task' + i] = '';
     const attendance = {}; for (let i = 1; i <= dayCount; i++) attendance['day' + i] = false;
     const hrclub = {}; for (let i = 1; i <= hrCount; i++) hrclub['hr' + i] = false;
     const dailyreport = {}; for (let i = 1; i <= drCount; i++) dailyreport['dr' + i] = false;
     await setDoc(doc(db, 'batches', batchId, 'interns', id), {
-      name, tasks, attendance, hrclub, dailyreport,
+      name, phone, email, tasks, attendance, hrclub, dailyreport,
       projectQuality: '', socialContest: '', createdAt: serverTimestamp()
     });
     added++;
@@ -1008,7 +1037,7 @@ window.exportBatch = async (batchId) => {
 
   // Sheet 1: Scorecard Summary
   const scoreHeaders = [
-    'Name', 'Stream', 'Project Title', 'Gender',
+    'Name', 'Phone', 'Email', 'Stream', 'Project Title', 'Gender',
     'Aggregate %', 'Process %', 'Progress %',
     'Attendance %', 'HR/Club %', 'Daily Report %',
     'Project Quality %', 'Task Score %', 'Social Contest %',
@@ -1017,7 +1046,7 @@ window.exportBatch = async (batchId) => {
   const scoreRows = interns.map(intern => {
     const sc = calcScorecard(intern, batch);
     return [
-      intern.name, batch.stream || '', intern.projectTitle || '', intern.gender || '',
+      intern.name, intern.phone||'', intern.email||'', batch.stream || '', intern.projectTitle || '', intern.gender || '',
       sc.aggregate + '%', sc.processScore + '%', sc.progressScore + '%',
       sc.attPct + '%', sc.hrPct + '%', sc.drPct + '%',
       sc.projectQuality + '%', sc.taskScore + '%', sc.socialContest + '%',
@@ -1407,6 +1436,8 @@ async function renderScorecardAsync() {
             <tr>
               <th>Rank</th>
               <th>Intern</th>
+              <th>Phone</th>
+              <th>Email</th>
               <th>Batch</th>
               <th>Stream</th>
               <th>Aggregate</th>
@@ -1431,6 +1462,8 @@ async function renderScorecardAsync() {
               return `<tr>
                 <td><div class="rank-badge ${rankClass}">${rankLabel}</div></td>
                 <td><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
+                <td style="font-size:12px;color:var(--muted)">${e.intern.phone||'—'}</td>
+                <td style="font-size:12px;color:var(--muted)">${e.intern.email||'—'}</td>
                 <td><span class="tag" style="cursor:pointer;color:var(--accent)" onclick="navigate('batch-detail','${e.batch.id}')">${e.batch.name}</span></td>
                 <td><span style="font-size:12px;color:var(--muted)">${e.batch.stream || '—'}</span></td>
                 <td><span class="score-pill" style="background:${pctBg(e.sc.aggregate)};color:${pctColor(e.sc.aggregate)}">${e.sc.aggregate}%</span></td>
@@ -1468,14 +1501,14 @@ window.exportScorecard = async () => {
 
   // Sheet 1: Full Scorecard Rankings
   const scoreHeaders = [
-    'Rank','Intern Name','Batch','Stream','Project Title','Gender','Evaluation Keywords',
+    'Rank','Intern Name','Phone','Email','Batch','Stream','Project Title','Gender','Evaluation Keywords',
     'Aggregate %','Process Score %','Progress Score %',
     'Attendance %','HR/Club %','Daily Report %',
     'Project Quality %','Task Score %','Social Contest %',
     'Zappyvue Grade','Technical Interview Grade'
   ];
   const scoreRows = allEntries.map((e, i) => [
-    i+1, e.intern.name, e.batch.name, e.batch.stream||'',
+    i+1, e.intern.name, e.intern.phone||'', e.intern.email||'', e.batch.name, e.batch.stream||'',
     e.intern.projectTitle||'', e.intern.gender||'', e.intern.evalKeywords||'',
     e.sc.aggregate+'%', e.sc.processScore+'%', e.sc.progressScore+'%',
     e.sc.attPct+'%', e.sc.hrPct+'%', e.sc.drPct+'%',
@@ -1748,10 +1781,14 @@ async function renderBatchDetailAsync(batchId) {
         <h3 style="font-size:16px; font-weight:700">Add Interns</h3>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;gap:8px;align-items:center;max-width:500px">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:700px">
           <input id="new-intern-name" type="text" placeholder="Full name"
-            style="flex:1;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none"
+            style="flex:2;min-width:140px;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none"
             onkeydown="if(event.key==='Enter') addIntern('${batchId}')" />
+          <input id="new-intern-phone" type="tel" placeholder="Phone number"
+            style="flex:1;min-width:130px;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none" />
+          <input id="new-intern-email" type="email" placeholder="Email ID"
+            style="flex:2;min-width:160px;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none" />
           <button class="btn btn-primary" style="white-space:nowrap;flex-shrink:0" onclick="addIntern('${batchId}')">+ Add Intern</button>
         </div>
         <div>
@@ -1790,7 +1827,7 @@ async function renderBatchDetailAsync(batchId) {
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Rank</th><th>Intern</th><th>Aggregate</th><th>Process</th><th>Progress</th></tr></thead>
+            <thead><tr><th>Rank</th><th>Intern</th><th>Phone</th><th>Email</th><th>Aggregate</th><th>Process</th><th>Progress</th></tr></thead>
             <tbody>
               ${rankedInterns.map((i, idx) => {
                 const r = idx+1;
@@ -1799,6 +1836,8 @@ async function renderBatchDetailAsync(batchId) {
                 return `<tr>
                   <td><div class="rank-badge ${rc}">${rl}</div></td>
                   <td><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${batch.id}',internId:'${i.id}'})">${i.name}</span></td>
+                  <td style="font-size:12px;color:var(--muted)">${i.phone||'—'}</td>
+                  <td style="font-size:12px;color:var(--muted)">${i.email||'—'}</td>
                   <td><span class="score-pill" style="background:${pctBg(i.sc.aggregate)};color:${pctColor(i.sc.aggregate)}">${i.sc.aggregate}%</span></td>
                   <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${i.sc.processScore}%</span></td>
                   <td><span class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green)">${i.sc.progressScore}%</span></td>
@@ -1903,6 +1942,8 @@ async function renderInternDetailAsync(param) {
           <div style="font-size:24px; font-weight:800; font-family:'Syne',sans-serif">${intern.name}</div>
           <div class="text-muted">${batch?.name}</div>
           ${batch?.mentor ? `<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:2px">👤 Mentor: ${batch.mentor}</div>` : ''}
+          ${intern.phone ? `<div style="font-size:13px;color:var(--muted);margin-top:2px">📞 ${intern.phone}</div>` : ''}
+          ${intern.email ? `<div style="font-size:13px;color:var(--muted);margin-top:2px">✉️ ${intern.email}</div>` : ''}
         </div>
         <div style="margin-left:auto; display:flex; gap:10px; align-items:center">
           ${intern.projectTitle ? `<span style="font-size:13px;color:var(--muted)">📁 ${intern.projectTitle}</span>` : ''}
@@ -1981,6 +2022,26 @@ async function renderInternDetailAsync(param) {
               ${present ? '✅' : '❌'}
             </div>`;
           }).join('')}
+        </div>
+      </div>
+
+      <!-- PHONE + EMAIL -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+        <div class="card">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">📞 Phone Number</h3>
+          <input type="tel" placeholder="Enter phone number..."
+            value="${intern.phone || ''}"
+            style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--accent)'"
+            onblur="this.style.borderColor='var(--border)'; updateSingleField('${batchId}','${internId}','phone',this.value)" />
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">✉️ Email ID</h3>
+          <input type="email" placeholder="Enter email address..."
+            value="${intern.email || ''}"
+            style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--accent)'"
+            onblur="this.style.borderColor='var(--border)'; updateSingleField('${batchId}','${internId}','email',this.value)" />
         </div>
       </div>
 
@@ -2671,11 +2732,11 @@ window.exportMentorReport = async (mentorName) => {
   allEntries.sort((a, b) => b.sc.aggregate - a.sc.aggregate);
 
   // Sheet 1: Full Scorecard
-  const scoreHeaders = ['Rank','Intern','Batch','Stream','Project Title','Gender','Evaluation Keywords',
+  const scoreHeaders = ['Rank','Intern','Phone','Email','Batch','Stream','Project Title','Gender','Evaluation Keywords',
     'Aggregate %','Process %','Progress %','Attendance %','HR/Club %','Daily Report %',
     'Project Quality %','Task Score %','Social Contest %','Zappyvue Grade','Tech Interview Grade'];
   const scoreRows = allEntries.map((e, i) => [
-    i+1, e.intern.name, e.batch.name, e.batch.stream||'',
+    i+1, e.intern.name, e.intern.phone||'', e.intern.email||'', e.batch.name, e.batch.stream||'',
     e.intern.projectTitle||'', e.intern.gender||'', e.intern.evalKeywords||'',
     e.sc.aggregate+'%', e.sc.processScore+'%', e.sc.progressScore+'%',
     e.sc.attPct+'%', e.sc.hrPct+'%', e.sc.drPct+'%',
