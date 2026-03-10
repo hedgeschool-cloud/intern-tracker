@@ -1832,8 +1832,8 @@ async function renderBatchDetailAsync(batchId) {
     html += `
       <div class="card mb-16">
         <div style="display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none" onclick="window.toggleRankings()">
-          <span id="rankings-arrow" style="font-size:11px;color:var(--accent);font-weight:700;background:rgba(124,58,237,.12);padding:3px 10px;border-radius:20px;white-space:nowrap">▶ Show</span>
           <h3 style="font-size:15px;font-weight:700;margin:0">🏆 Batch Rankings <span style="font-size:12px;color:var(--muted);font-weight:400">(${rankedInterns.length} interns)</span></h3>
+          <span id="rankings-arrow" style="font-size:11px;color:var(--accent);font-weight:600">▶</span>
         </div>
         <div id="rankings-body" class="rankings-collapsed" style="margin-top:12px">
         <div class="table-wrap">
@@ -2881,11 +2881,11 @@ window.toggleRankings = () => {
   if (isHidden) {
     body.classList.remove('rankings-collapsed');
     body.classList.add('rankings-shown');
-    arrow.innerHTML = '▼ Hide';
+    arrow.innerHTML = '▼';
   } else {
     body.classList.remove('rankings-shown');
     body.classList.add('rankings-collapsed');
-    arrow.innerHTML = '▶ Show';
+    arrow.innerHTML = '▶';
   }
 };
 
