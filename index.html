@@ -1958,6 +1958,7 @@ async function renderInternDetailAsync(param) {
         </div>
         <div style="margin-left:auto; display:flex; gap:10px; align-items:center">
           ${intern.projectTitle ? `<span style="font-size:13px;color:var(--muted)">📁 ${intern.projectTitle}</span>` : ''}
+          ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="showEditInternModal('${batchId}','${internId}')">✏️ Edit</button>` : ''}
           <button class="btn btn-primary btn-sm" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
           <button class="btn btn-green btn-sm" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
           <button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
@@ -2155,6 +2156,7 @@ async function renderInternDetailAsync(param) {
 
       <!-- BOTTOM ACTION BUTTONS -->
       <div style="display:flex;gap:12px;justify-content:center;padding:32px 0 16px;border-top:1px solid var(--border);margin-top:24px">
+        ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="showEditInternModal('${batchId}','${internId}')">✏️ Edit Intern</button>` : ''}
         <button class="btn btn-primary" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
         <button class="btn btn-green" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
         <button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:#5b21b6;border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
@@ -2813,6 +2815,41 @@ function renderUsers() {
 // ══════════════════════════════════════════════
 // MODALS
 // ══════════════════════════════════════════════
+window.showEditInternModal = async (batchId, internId) => {
+  if (_state.userDoc.role !== 'admin') return showToast('⛔ Admin only', 'error');
+  const internSnap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
+  const intern = internSnap.data();
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">✏️ Edit Intern</div>
+    <div class="form-group"><label>Full Name</label>
+      <input id="ei-name" type="text" value="${intern.name || ''}" placeholder="Full name" />
+    </div>
+    <div class="form-group"><label>Phone Number</label>
+      <input id="ei-phone" type="tel" value="${intern.phone || ''}" placeholder="Phone number" />
+    </div>
+    <div class="form-group"><label>Email ID</label>
+      <input id="ei-email" type="email" value="${intern.email || ''}" placeholder="Email address" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditIntern('${batchId}','${internId}')">Save Changes</button>
+    </div>
+  `;
+  document.getElementById('modal-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('ei-name')?.focus(), 50);
+};
+
+window.saveEditIntern = async (batchId, internId) => {
+  const name = document.getElementById('ei-name').value.trim();
+  const phone = document.getElementById('ei-phone').value.trim();
+  const email = document.getElementById('ei-email').value.trim();
+  if (!name) return showToast('⚠️ Name cannot be empty', 'warn');
+  await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { name, phone, email });
+  closeModal();
+  showToast('✅ Intern details updated!');
+  navigate('intern-detail', { batchId, internId });
+};
+
 window.showEditBatchModal = (batchId) => {
   const batch = _state.batches.find(b => b.id === batchId);
   if (!batch) return;
