@@ -818,7 +818,18 @@ window.navigate = (page, param) => {
 // ══════════════════════════════════════════════
 async function loadBatches() {
   const snap = await getDocs(query(collection(db, 'batches'), orderBy('createdAt', 'desc')));
-  _state.batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Fetch live intern counts for all batches
+  await Promise.all(batches.map(async batch => {
+    const internSnap = await getDocs(collection(db, 'batches', batch.id, 'interns'));
+    const liveCount = internSnap.size;
+    // Sync to Firestore if count is out of date
+    if (batch.internCount !== liveCount) {
+      await updateDoc(doc(db, 'batches', batch.id), { internCount: liveCount });
+      batch.internCount = liveCount;
+    }
+  }));
+  _state.batches = batches;
   refreshMentorDropdown();
   if (_state.page === 'dashboard') navigate('dashboard');
   if (_state.page === 'batches') navigate('batches');
