@@ -909,6 +909,10 @@ window.deleteIntern = async (batchId, internId, internName) => {
   if (_state.userDoc.role !== 'admin') return showToast('⛔ Admin only', 'error');
   if (!confirm('Remove ' + internName + ' from this batch?')) return;
   await deleteDoc(doc(db, 'batches', batchId, 'interns', internId));
+  const batch = _state.batches.find(b => b.id === batchId);
+  const newCount = Math.max(0, (batch?.internCount || 1) - 1);
+  await updateDoc(doc(db, 'batches', batchId), { internCount: newCount });
+  await loadBatches();
   showToast('🗑️ ' + internName + ' removed');
   navigate('batch-detail', batchId);
 };
