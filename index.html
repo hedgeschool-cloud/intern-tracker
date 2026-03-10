@@ -805,34 +805,48 @@ window.navigate = (page, param) => {
   else if (page === 'batches') mc.innerHTML = renderBatchList();
   else if (page === 'batch-detail') { _state.currentBatch = param; mc.innerHTML = renderBatchDetail(param); }
   else if (page === 'intern-detail') { _state.currentIntern = param; mc.innerHTML = renderInternDetail(param); }
+  else if (page === 'mentor-detail') { _state.currentMentor = param; mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderMentorDetailAsync(param).then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); }); return; }
   else if (page === 'reports') mc.innerHTML = renderReports();
   else if (page === 'scorecard') { mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderScorecardAsync().then(h => { document.getElementById('main-content').innerHTML = h; }); }
   else if (page === 'users') mc.innerHTML = renderUsers();
   else if (page === 'mentors') { mc.innerHTML = renderMentorList(); }
-  else if (page === 'mentor-detail') { mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderMentorDetailAsync(param).then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); }); }
   attachPageEvents();
 };
 
 // ══════════════════════════════════════════════
 // FIRESTORE — BATCHES
 // ══════════════════════════════════════════════
+let _batchesUnsubscribe = null;
+
 async function loadBatches() {
-  const snap = await getDocs(query(collection(db, 'batches'), orderBy('createdAt', 'desc')));
-  const batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  // Fetch live intern counts for all batches
-  await Promise.all(batches.map(async batch => {
-    const internSnap = await getDocs(collection(db, 'batches', batch.id, 'interns'));
-    const liveCount = internSnap.size;
-    // Sync to Firestore if count is out of date
-    if (batch.internCount !== liveCount) {
-      await updateDoc(doc(db, 'batches', batch.id), { internCount: liveCount });
-      batch.internCount = liveCount;
-    }
-  }));
-  _state.batches = batches;
-  refreshMentorDropdown();
-  if (_state.page === 'dashboard') navigate('dashboard');
-  if (_state.page === 'batches') navigate('batches');
+  // If already listening, just re-render
+  if (_batchesUnsubscribe) {
+    if (_state.page === 'dashboard') navigate('dashboard');
+    if (_state.page === 'batches') navigate('batches');
+    return;
+  }
+  // Set up real-time listener
+  _batchesUnsubscribe = onSnapshot(query(collection(db, 'batches'), orderBy('createdAt', 'desc')), async snap => {
+    const batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Fetch live intern counts
+    await Promise.all(batches.map(async batch => {
+      const internSnap = await getDocs(collection(db, 'batches', batch.id, 'interns'));
+      const liveCount = internSnap.size;
+      if (batch.internCount !== liveCount) {
+        await updateDoc(doc(db, 'batches', batch.id), { internCount: liveCount });
+        batch.internCount = liveCount;
+      }
+    }));
+    _state.batches = batches;
+    refreshMentorDropdown();
+    // Re-render current page with fresh data
+    if (_state.page === 'dashboard') navigate('dashboard');
+    else if (_state.page === 'batches') navigate('batches');
+    else if (_state.page === 'batch-detail') navigate('batch-detail', _state.currentBatch);
+    else if (_state.page === 'scorecard') navigate('scorecard');
+    else if (_state.page === 'mentors') navigate('mentors');
+    else if (_state.page === 'mentor-detail') navigate('mentor-detail', _state.currentMentor);
+  });
 }
 
 // Duration config
