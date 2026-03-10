@@ -1827,7 +1827,15 @@ async function renderBatchDetailAsync(batchId) {
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Rank</th><th>Intern</th><th>Phone</th><th>Email</th><th>Aggregate</th><th>Process</th><th>Progress</th></tr></thead>
+            <thead><tr>
+              <th style="width:60px">Rank</th>
+              <th style="width:140px">Intern</th>
+              <th style="width:120px">Phone</th>
+              <th style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Email</th>
+              <th style="width:90px">Aggregate</th>
+              <th style="width:80px">Process</th>
+              <th style="width:80px">Progress</th>
+            </tr></thead>
             <tbody>
               ${rankedInterns.map((i, idx) => {
                 const r = idx+1;
@@ -1837,7 +1845,7 @@ async function renderBatchDetailAsync(batchId) {
                   <td><div class="rank-badge ${rc}">${rl}</div></td>
                   <td><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${batch.id}',internId:'${i.id}'})">${i.name}</span></td>
                   <td style="font-size:12px;color:var(--muted)">${i.phone||'—'}</td>
-                  <td style="font-size:12px;color:var(--muted)">${i.email||'—'}</td>
+                  <td style="font-size:12px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.email||'—'}</td>
                   <td><span class="score-pill" style="background:${pctBg(i.sc.aggregate)};color:${pctColor(i.sc.aggregate)}">${i.sc.aggregate}%</span></td>
                   <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${i.sc.processScore}%</span></td>
                   <td><span class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green)">${i.sc.progressScore}%</span></td>
