@@ -2849,20 +2849,33 @@ window.rejectUser = async (userId) => {
 // ANALYTICS PAGE
 // ══════════════════════════════════════════════
 function renderAnalytics() {
-  const mentorNames = [...new Set(_state.batches.map(b => b.mentor).filter(Boolean))].sort();
+  // Show loading state, then populate dropdown from Firestore users
+  setTimeout(async () => {
+    try {
+      const snap = await getDocs(collection(db, 'users'));
+      const users = snap.docs.map(d => d.data())
+        .filter(u => u.role === 'mentor' && u.status === 'approved')
+        .sort((a, b) => a.name.localeCompare(b.name));
+      const sel = document.getElementById('analytics-mentor');
+      if (sel) {
+        sel.innerHTML = '<option value="">— Select User —</option>' +
+          users.map(u => `<option value="${u.name}">${u.name} (${u.email})</option>`).join('');
+      }
+    } catch(e) { console.error(e); }
+  }, 0);
+
   return `
     <div class="topbar">
       <div class="page-title">📈 Analytics</div>
-      <div class="page-sub">Mentor Activity Report Generator</div>
+      <div class="page-sub">User Activity Report Generator</div>
     </div>
     <div class="card mb-24">
       <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">🔍 Generate Activity Report</h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
         <div>
-          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">SELECT MENTOR</label>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">SELECT USER</label>
           <select id="analytics-mentor" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none">
-            <option value="">— Select Mentor —</option>
-            ${mentorNames.map(n => `<option value="${n}">${n}</option>`).join('')}
+            <option value="">Loading users...</option>
           </select>
         </div>
         <div></div>
