@@ -3649,6 +3649,7 @@ window.batchToggleAtt = async (batchId, internId, key, el) => {
     lastUpdatedAttendance: ts,
     lastUpdatedAttendanceBy: by
   });
+  invalidateInternsCache(batchId);
   logActivity('Attendance', { batchId, internId, field: 'attendance.' + key, value: newVal ? 'Present' : 'Absent' });
   // Update tooltip
   const now = new Date();
@@ -3672,6 +3673,7 @@ window.batchToggleDR = async (batchId, internId, key, el) => {
     lastUpdatedDailyreport: ts,
     lastUpdatedDailyreportBy: by
   });
+  invalidateInternsCache(batchId);
   logActivity('Daily Report', { batchId, internId, field: 'dailyreport.' + key, value: newVal ? 'Marked' : 'Unmarked' });
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
@@ -3769,6 +3771,7 @@ window.handleBatchAttImport = async (batchId, file, inputEl) => {
   }
 
   if (inputEl) inputEl.value = '';
+  invalidateInternsCache(batchId);
   showToast('✅ Updated ' + updated + ' interns' + (skipped ? ', skipped ' + skipped : '') + '!');
   navigate('batch-detail', batchId);
 };
