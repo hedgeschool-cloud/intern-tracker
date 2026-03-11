@@ -2970,17 +2970,31 @@ async function buildAnalyticsPDF(mentor, startDate, endDate, logs) {
   };
 
   // ── HEADER ──
+  const headerH = 36;
   pdf.setFillColor(124, 58, 237);
-  pdf.rect(0, 0, pageW, 28, 'F');
+  pdf.rect(0, 0, pageW, headerH, 'F');
+
+  // Logo (left-aligned, vertically centred in header)
+  const logoSize = 24; // mm square
+  const logoX = margin;
+  const logoY = (headerH - logoSize) / 2;
+  try {
+    const logoB64 = document.querySelector('#auth-screen img[alt="Hedge School Logo"]')?.src ||
+      document.querySelector('img[alt="Bull Logo"]')?.src ||
+      document.querySelector('img[src^="data:image/png"]')?.src;
+    if (logoB64) pdf.addImage(logoB64, 'JPEG', logoX, logoY, logoSize, logoSize);
+  } catch(e) { /* skip logo if unavailable */ }
+
+  // Centered text block
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(13);
-  pdf.text('ANALYTICS REPORT', margin, 12);
+  pdf.setFontSize(14);
+  pdf.text('ANALYTICS REPORT', pageW / 2, 12, { align: 'center' });
   pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Hedge School of Applied Economics — Internship Tracker', margin, 19);
-  pdf.text('Generated: ' + fmtDT(new Date()), margin, 25);
-  y = 36;
+  pdf.text('Hedge School of Applied Economics \u2014 Internship Tracker', pageW / 2, 20, { align: 'center' });
+  pdf.text('Generated: ' + fmtDT(new Date()), pageW / 2, 27, { align: 'center' });
+  y = headerH + 8;
 
   // ── TITLE ──
   pdf.setTextColor(30, 27, 75);
