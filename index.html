@@ -1182,7 +1182,7 @@ window.exportBatch = async (batchId) => {
 
   // Sheet 1: Scorecard Summary
   const scoreHeaders = [
-    'Hedge ID', 'Name', 'Phone', 'Email', 'Stream', 'Project Title', 'Gender',
+    'Name', 'Hedge ID', 'Phone', 'Email', 'Stream', 'Project Title', 'Gender',
     'Aggregate %', 'Process %', 'Progress %',
     'Attendance %', 'HR/Club %', 'Daily Report %',
     'Project Quality %', 'Task Score %', 'Social Contest %',
@@ -1191,7 +1191,7 @@ window.exportBatch = async (batchId) => {
   const scoreRows = interns.map(intern => {
     const sc = calcScorecard(intern, batch);
     return [
-      intern.hedgeId||'', intern.name, intern.phone||'', intern.email||'', batch.stream || '', intern.projectTitle || '', intern.gender || '',
+      intern.name, intern.hedgeId||'', intern.phone||'', intern.email||'', batch.stream || '', intern.projectTitle || '', intern.gender || '',
       sc.aggregate + '%', sc.processScore + '%', sc.progressScore + '%',
       sc.attPct + '%', sc.hrPct + '%', sc.drPct + '%',
       sc.projectQuality + '%', sc.taskScore + '%', sc.socialContest + '%',
@@ -1256,6 +1256,7 @@ window.exportIntern = async (batchId, internId) => {
   const summaryRows = [
     ['Field', 'Value'],
     ['Intern Name', intern.name],
+    ['Hedge ID', intern.hedgeId || ''],
     ['Batch', batch.name],
     ['Stream', batch.stream || ''],
     ['Project Title', intern.projectTitle || ''],
@@ -2618,6 +2619,15 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   pdf.setFontSize(11);
   pdf.setTextColor(50, 50, 50);
   pdf.text('of ' + name, margin, 59);
+
+  // Hedge ID badge next to name
+  if (intern.hedgeId) {
+    const nameWidth = pdf.getTextWidth('of ' + name);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.setTextColor(109, 40, 217);
+    pdf.text('[ ' + intern.hedgeId + ' ]', margin + nameWidth + 4, 59);
+  }
 
   // Date on right
   pdf.setFontSize(9);
