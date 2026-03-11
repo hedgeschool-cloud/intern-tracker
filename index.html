@@ -1032,14 +1032,14 @@ window.deleteIntern = async (batchId, internId, internName) => {
 window.updateAttendance = async (batchId, internId, day, val) => {
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
     ['attendance.' + day]: val,
-    lastUpdatedAttendance: new Date().toISOString(),
+    lastUpdatedAttendance: serverTimestamp(),
     lastUpdatedAttendanceBy: _state.userDoc?.name || 'Unknown'
   });
 };
 
 window.updateMark = async (batchId, internId, task, val) => {
   const num = val === '' ? '' : Math.max(0, Math.min(100, parseFloat(val) || 0));
-  const ts = new Date().toISOString();
+  const ts = serverTimestamp();
   const by = _state.userDoc?.name || 'Unknown';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
     ['tasks.' + task]: num,
@@ -2148,15 +2148,15 @@ async function renderInternDetailAsync(param) {
           <h3 style="font-size:15px;font-weight:700">📅 Attendance <span style="font-size:12px;color:var(--muted)">(${attCount} slots • 20% weight)</span></h3>
           <span class="score-pill" style="background:${pctBg(sc.attPct)};color:${pctColor(sc.attPct)}">${sc.attPct}% → ${sc.attendance}pts</span>
         </div>
-        ${_state.userDoc.role === 'admin' && intern.lastUpdatedAttendance ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${new Date(intern.lastUpdatedAttendance).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.lastUpdatedAttendance).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedAttendanceBy||'Unknown'}</strong></div>` : ''}
+        ${_state.userDoc.role === 'admin' && intern.lastUpdatedAttendance ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${tsToDate(intern.lastUpdatedAttendance).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.lastUpdatedAttendance).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedAttendanceBy||'Unknown'}</strong></div>` : ''}
         <div class="slots-grid">
           ${Array.from({length: attCount}, (_,i) => {
             const key = 'day'+(i+1);
             const present = intern.attendance?.[key] || false;
             const attTs = intern.slotTs?.['attendance_'+key];
             const attBy = intern.slotBy?.['attendance_'+key];
-            const attDate = attTs ? new Date(attTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
-            const attTime = attTs ? new Date(attTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
+            const attDate = attTs ? tsToDate(attTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+            const attTime = attTs ? tsToDate(attTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
             const isAdmin = _state.userDoc.role==='admin';
             return `<div class="toggle-slot ${present ? 'active' : ''} ${isAdmin && attTs ? 'has-ts' : ''}" onclick="toggleField('${batchId}','${internId}','attendance.${key}',this)">
               ${present ? '✅' : '❌'}
@@ -2172,15 +2172,15 @@ async function renderInternDetailAsync(param) {
           <h3 style="font-size:15px;font-weight:700">🎯 HR/Club Activities <span style="font-size:12px;color:var(--muted)">(${hrCount} slots • 15% weight)</span></h3>
           <span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${sc.hrPct}% → ${sc.hrclub}pts</span>
         </div>
-        ${_state.userDoc.role === 'admin' && intern.lastUpdatedHrclub ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${new Date(intern.lastUpdatedHrclub).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.lastUpdatedHrclub).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedHrclubBy||'Unknown'}</strong></div>` : ''}
+        ${_state.userDoc.role === 'admin' && intern.lastUpdatedHrclub ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${tsToDate(intern.lastUpdatedHrclub).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.lastUpdatedHrclub).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedHrclubBy||'Unknown'}</strong></div>` : ''}
         <div class="slots-grid">
           ${Array.from({length: hrCount}, (_,i) => {
             const key = 'hr'+(i+1);
             const present = intern.hrclub?.[key] || false;
             const hrTs = intern.slotTs?.['hrclub_'+key];
             const hrBy = intern.slotBy?.['hrclub_'+key];
-            const hrDate = hrTs ? new Date(hrTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
-            const hrTime = hrTs ? new Date(hrTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
+            const hrDate = hrTs ? tsToDate(hrTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+            const hrTime = hrTs ? tsToDate(hrTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
             const isAdminHr = _state.userDoc.role==='admin';
             return `<div class="toggle-slot ${present ? 'active' : ''} ${isAdminHr && hrTs ? 'has-ts' : ''}" onclick="toggleField('${batchId}','${internId}','hrclub.${key}',this)">
               ${present ? '✅' : '❌'}
@@ -2196,15 +2196,15 @@ async function renderInternDetailAsync(param) {
           <h3 style="font-size:15px;font-weight:700">📝 Daily Report <span style="font-size:12px;color:var(--muted)">(${drCount} slots • 15% weight)</span></h3>
           <span class="score-pill" style="background:rgba(245,158,11,.15);color:var(--yellow)">${sc.drPct}% → ${sc.dailyreport}pts</span>
         </div>
-        ${_state.userDoc.role === 'admin' && intern.lastUpdatedDailyreport ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${new Date(intern.lastUpdatedDailyreport).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.lastUpdatedDailyreport).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedDailyreportBy||'Unknown'}</strong></div>` : ''}
+        ${_state.userDoc.role === 'admin' && intern.lastUpdatedDailyreport ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${tsToDate(intern.lastUpdatedDailyreport).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.lastUpdatedDailyreport).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedDailyreportBy||'Unknown'}</strong></div>` : ''}
         <div class="slots-grid">
           ${Array.from({length: drCount}, (_,i) => {
             const key = 'dr'+(i+1);
             const present = intern.dailyreport?.[key] || false;
             const drTs = intern.slotTs?.['dailyreport_'+key];
             const drBy = intern.slotBy?.['dailyreport_'+key];
-            const drDate = drTs ? new Date(drTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
-            const drTime = drTs ? new Date(drTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
+            const drDate = drTs ? tsToDate(drTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+            const drTime = drTs ? tsToDate(drTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
             const isAdminDr = _state.userDoc.role==='admin';
             return `<div class="toggle-slot ${present ? 'active' : ''} ${isAdminDr && drTs ? 'has-ts' : ''}" onclick="toggleField('${batchId}','${internId}','dailyreport.${key}',this)">
               ${present ? '✅' : '❌'}
@@ -2253,7 +2253,7 @@ async function renderInternDetailAsync(param) {
           style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
           onfocus="this.style.borderColor='var(--accent)'" 
           onblur="this.style.borderColor='var(--border)'; updateProjectTitle('${batchId}','${internId}',this.value)" />
-          ${_state.userDoc.role==='admin' && intern.tsProjectTitle ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${new Date(intern.tsProjectTitle).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.tsProjectTitle).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byProjectTitle||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.tsProjectTitle ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsProjectTitle).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsProjectTitle).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byProjectTitle||''}</span></div>` : ''}
         </div>
       </div>
 
@@ -2266,7 +2266,7 @@ async function renderInternDetailAsync(param) {
           style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
           onfocus="this.style.borderColor='var(--accent)'"
           onblur="this.style.borderColor='var(--border)'; updateEvalKeywords('${batchId}','${internId}',this.value)" />
-        ${_state.userDoc.role==='admin' && intern.tsEvalKeywords ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${new Date(intern.tsEvalKeywords).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.tsEvalKeywords).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywords||''}</span></div>` : ''}
+        ${_state.userDoc.role==='admin' && intern.tsEvalKeywords ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsEvalKeywords).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsEvalKeywords).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywords||''}</span></div>` : ''}
       </div>
 
       <!-- GRADES SECTION -->
@@ -2327,14 +2327,14 @@ async function renderInternDetailAsync(param) {
           <h3 style="font-size:15px;font-weight:700">✅ Task Scores <span style="font-size:12px;color:var(--muted)">(${taskCount} tasks • 30% weight)</span></h3>
           <span class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green)">${sc.taskScore}pts / 30</span>
         </div>
-        ${_state.userDoc.role === 'admin' && intern.lastUpdatedTasks ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${new Date(intern.lastUpdatedTasks).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.lastUpdatedTasks).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedTasksBy||'Unknown'}</strong></div>` : ''}
+        ${_state.userDoc.role === 'admin' && intern.lastUpdatedTasks ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${tsToDate(intern.lastUpdatedTasks).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.lastUpdatedTasks).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedTasksBy||'Unknown'}</strong></div>` : ''}
         <div class="marks-grid">
           ${Array.from({length: taskCount}, (_,i) => {
             const key = 'task'+(i+1);
             const taskTs = intern.taskTs?.[key];
             const taskBy = intern.taskBy?.[key];
-            const taskDate = taskTs ? new Date(taskTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
-            const taskTime = taskTs ? new Date(taskTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
+            const taskDate = taskTs ? tsToDate(taskTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+            const taskTime = taskTs ? tsToDate(taskTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : '';
             const isAdminTask = _state.userDoc.role==='admin';
             return `<div class="mark-card" style="position:relative;${isAdminTask && taskTs ? 'border-bottom:3px solid #7c3aed' : ''}">
               <label>Task ${i+1}</label>
@@ -2370,6 +2370,15 @@ function fmtTimestamp(iso, by) {
   </div>`;
 }
 
+
+// Convert Firestore Timestamp or ISO string to Date safely
+function tsToDate(val) {
+  if (!val) return null;
+  if (typeof val === 'object' && val.toDate) return val.toDate(); // Firestore Timestamp
+  if (typeof val === 'string') return new Date(val); // legacy ISO string
+  return null;
+}
+
 function renderInternDetail(param) {
   renderInternDetailAsync(param).then(html => {
     document.getElementById('main-content').innerHTML = html;
@@ -2386,7 +2395,7 @@ window.toggleAttendance = async (batchId, internId, day, el) => {
   el.querySelector('.day-icon').textContent = newVal ? '✅' : '❌';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
     ['attendance.' + day]: newVal,
-    lastUpdatedAttendance: new Date().toISOString(),
+    lastUpdatedAttendance: serverTimestamp(),
     lastUpdatedAttendanceBy: _state.userDoc?.name || 'Unknown'
   });
   showToast('✅ Attendance saved!');
@@ -2397,7 +2406,7 @@ window.toggleField = async (batchId, internId, fieldPath, el) => {
   const newVal = !current;
   el.classList.toggle('active', newVal);
   el.textContent = newVal ? '✅' : '❌';
-  const ts = new Date().toISOString();
+  const ts = serverTimestamp();
   const by = _state.userDoc?.name || 'Unknown';
   const isHR = fieldPath.startsWith('hrclub');
   const isDR = fieldPath.startsWith('dailyreport');
@@ -2606,13 +2615,13 @@ window.exportEvaluationPDF = async (batchId, internId) => {
 };
 
 window.updateEvalKeywords = async (batchId, internId, val) => {
-  const ts = new Date().toISOString(), by = _state.userDoc?.name || 'Unknown';
+  const ts = serverTimestamp(), by = _state.userDoc?.name || 'Unknown';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { evalKeywords: val.trim(), tsEvalKeywords: ts, byEvalKeywords: by });
   if (val.trim()) showToast('✅ Keywords saved!');
 };
 
 window.updateProjectTitle = async (batchId, internId, val) => {
-  const ts = new Date().toISOString(), by = _state.userDoc?.name || 'Unknown';
+  const ts = serverTimestamp(), by = _state.userDoc?.name || 'Unknown';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { projectTitle: val.trim(), tsProjectTitle: ts, byProjectTitle: by });
   if (val.trim()) showToast('✅ Project title saved!');
 };
@@ -2625,7 +2634,7 @@ window.updateSingleField = async (batchId, internId, field, val) => {
   } else {
     saveVal = val === '' ? '' : Math.max(0, Math.min(100, parseFloat(val) || 0));
   }
-  const ts = new Date().toISOString(), by = _state.userDoc?.name || 'Unknown';
+  const ts = serverTimestamp(), by = _state.userDoc?.name || 'Unknown';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
     [field]: saveVal,
     ['ts_' + field]: ts,
