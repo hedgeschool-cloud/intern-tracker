@@ -2854,7 +2854,7 @@ function renderAnalytics() {
     try {
       const snap = await getDocs(collection(db, 'users'));
       const users = snap.docs.map(d => d.data())
-        .filter(u => (u.role === 'mentor' || u.role === 'admin') && u.status === 'approved')
+        .filter(u => (u.role === 'mentor' || u.role === 'admin') && (u.status === 'approved' || u.role === 'admin'))
         .sort((a, b) => a.name.localeCompare(b.name));
       const sel = document.getElementById('analytics-mentor');
       if (sel) {
