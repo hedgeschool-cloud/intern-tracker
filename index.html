@@ -384,8 +384,11 @@
     .global-topbar {
       position: fixed; top: 0; left: 0px; right: 0; height: 60px;
       background: var(--surface); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; padding: 0 32px 0 56px; gap: 16px; z-index: 99;
+      display: flex; align-items: center; padding: 0 16px 0 56px; gap: 12px; z-index: 160;
       transition: left .25s ease;
+    }
+    @media (max-width: 768px) {
+      .global-topbar { padding: 0 12px 0 12px !important; left: 0 !important; }
     }
     .search-wrap { position: relative; flex: 1; max-width: 480px; }
     .search-input {
@@ -1805,7 +1808,7 @@ function showSidebar() {
   if (!sidebar) return;
   sidebar.style.left = '0';
   if (isMobile()) {
-    // On mobile: overlay mode — don't shift content, show backdrop
+    // On mobile: overlay mode — don't shift content or topbar, show backdrop
     let backdrop = document.getElementById('sidebar-backdrop');
     if (!backdrop) {
       backdrop = document.createElement('div');
@@ -1820,7 +1823,6 @@ function showSidebar() {
     main.style.marginLeft = '260px';
     if (topbar) topbar.style.left = '260px';
   }
-  if (tab) { tab.style.left = '260px'; tab.textContent = '◀'; }
   if (hbtn) hbtn.textContent = '✕';
 }
 function hideSidebar() {
@@ -1831,11 +1833,12 @@ function hideSidebar() {
   const hbtn = document.getElementById('hamburger-btn');
   if (!sidebar) return;
   sidebar.style.left = '-260px';
-  main.style.marginLeft = '0px';
-  if (topbar) topbar.style.left = '0px';
+  if (!isMobile()) {
+    main.style.marginLeft = '0px';
+    if (topbar) topbar.style.left = '0px';
+  }
   const backdrop = document.getElementById('sidebar-backdrop');
   if (backdrop) backdrop.style.display = 'none';
-  if (tab) { tab.style.left = '0px'; tab.textContent = '☰'; }
   if (hbtn) hbtn.textContent = '☰';
 }
 function isMobile() {
