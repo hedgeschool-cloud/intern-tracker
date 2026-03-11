@@ -2483,7 +2483,7 @@ async function renderInternDetailAsync(param) {
             <option value="male" ${intern.gender==='male' ? 'selected' : ''}>Male</option>
             <option value="female" ${intern.gender==='female' ? 'selected' : ''}>Female</option>
           </select>
-          ${_state.userDoc.role==='admin' && intern.ts_gender ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${new Date(intern.ts_gender).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.ts_gender).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_gender||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_gender ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_gender).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_gender).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_gender||''}</span></div>` : ''}
         </div>
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">📁 Project Title</h3>
@@ -2521,7 +2521,7 @@ async function renderInternDetailAsync(param) {
             <option value="C" ${intern.zappyvueGrade==='C' ? 'selected' : ''}>C</option>
           </select>
           ${intern.zappyvueGrade ? `<div style="text-align:center;margin-top:8px"><span class="score-pill" style="background:${intern.zappyvueGrade==='A'?'rgba(34,197,94,.2)':intern.zappyvueGrade==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)'};color:${intern.zappyvueGrade==='A'?'var(--green)':intern.zappyvueGrade==='B'?'var(--yellow)':'var(--red)'}">Grade ${intern.zappyvueGrade}</span></div>` : ''}
-          ${_state.userDoc.role==='admin' && intern.ts_zappyvueGrade ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${new Date(intern.ts_zappyvueGrade).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.ts_zappyvueGrade).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_zappyvueGrade||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_zappyvueGrade ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_zappyvueGrade).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_zappyvueGrade).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_zappyvueGrade||''}</span></div>` : ''}
         </div>
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">💼 Technical Interview Grade</h3>
@@ -2533,7 +2533,7 @@ async function renderInternDetailAsync(param) {
             <option value="C" ${intern.technicalInterviewGrade==='C' ? 'selected' : ''}>C</option>
           </select>
           ${intern.technicalInterviewGrade ? `<div style="text-align:center;margin-top:8px"><span class="score-pill" style="background:${intern.technicalInterviewGrade==='A'?'rgba(34,197,94,.2)':intern.technicalInterviewGrade==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)'};color:${intern.technicalInterviewGrade==='A'?'var(--green)':intern.technicalInterviewGrade==='B'?'var(--yellow)':'var(--red)'}">Grade ${intern.technicalInterviewGrade}</span></div>` : ''}
-          ${_state.userDoc.role==='admin' && intern.ts_technicalInterviewGrade ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${new Date(intern.ts_technicalInterviewGrade).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.ts_technicalInterviewGrade).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_technicalInterviewGrade||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_technicalInterviewGrade ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_technicalInterviewGrade).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_technicalInterviewGrade).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_technicalInterviewGrade||''}</span></div>` : ''}
         </div>
       </div>
 
@@ -2548,7 +2548,7 @@ async function renderInternDetailAsync(param) {
             style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onblur="updateSingleField('${batchId}','${internId}','projectQuality',this.value)" />
           <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.projectQuality}pts / 10</div>
-          ${_state.userDoc.role==='admin' && intern.ts_projectQuality ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${new Date(intern.ts_projectQuality).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.ts_projectQuality).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_projectQuality||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_projectQuality ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_projectQuality).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_projectQuality).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_projectQuality||''}</span></div>` : ''}
         </div>
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">🌐 Social Contest <span style="font-size:12px;color:var(--muted)">(10% weight)</span></h3>
@@ -2556,7 +2556,7 @@ async function renderInternDetailAsync(param) {
             style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onblur="updateSingleField('${batchId}','${internId}','socialContest',this.value)" />
           <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.socialContest}pts / 10</div>
-          ${_state.userDoc.role==='admin' && intern.ts_socialContest ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${new Date(intern.ts_socialContest).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${new Date(intern.ts_socialContest).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_socialContest||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_socialContest ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_socialContest).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_socialContest).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_socialContest||''}</span></div>` : ''}
         </div>
       </div>
 
