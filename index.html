@@ -564,6 +564,9 @@
     <div class="sidebar-item" onclick="navigate('users')" id="nav-users" style="display:none">
       <span class="icon">👥</span> Manage Users
     </div>
+    <div class="sidebar-item" onclick="navigate('analytics')" id="nav-analytics" style="display:none">
+      <span class="icon">📈</span> Analytics
+    </div>
 
     <div class="sidebar-user">
       <div class="user-avatar" id="sidebar-avatar">?</div>
@@ -611,8 +614,8 @@ import {
   signOut, onAuthStateChanged, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, collection, doc, setDoc, getDoc, getDocs,
-  deleteDoc, updateDoc, onSnapshot, query, orderBy, serverTimestamp
+  getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
+  deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ══════════════════════════════════════════════
@@ -673,6 +676,7 @@ window.handleLogin = async () => {
   btn.disabled = true;
   try {
     await signInWithEmailAndPassword(auth, email, pass);
+    // Login will be logged after onAuthStateChanged fires and _state.userDoc is set
   } catch (e) {
     showAuthError(friendlyAuthError(e.code));
     btn.innerHTML = 'Sign In'; btn.disabled = false;
@@ -706,6 +710,7 @@ window.handleRegister = async () => {
 };
 
 window.handleLogout = async () => {
+  logActivity('Logout', {});
   await signOut(auth);
 };
 
@@ -764,6 +769,7 @@ onAuthStateChanged(auth, async user => {
       initSidebar();
       loadBatches();
       navigate('dashboard');
+      logActivity('Login', {});
     }
   } else {
     _state.user = null; _state.userDoc = null;
@@ -783,6 +789,7 @@ function initSidebar() {
   if (u.role === 'admin') {
     document.getElementById('admin-nav').style.display = 'block';
     document.getElementById('nav-users').style.display = 'flex';
+    document.getElementById('nav-analytics').style.display = 'flex';
   }
 }
 
@@ -845,6 +852,7 @@ window.navigate = (page, param) => {
   else if (page === 'reports') mc.innerHTML = renderReports();
   else if (page === 'scorecard') { mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderScorecardAsync().then(h => { document.getElementById('main-content').innerHTML = h; }); }
   else if (page === 'users') mc.innerHTML = renderUsers();
+  else if (page === 'analytics') mc.innerHTML = renderAnalytics();
   else if (page === 'mentors') { mc.innerHTML = renderMentorList(); }
   attachPageEvents();
 };
@@ -1037,6 +1045,31 @@ window.updateAttendance = async (batchId, internId, day, val) => {
   });
 };
 
+// ══════════════════════════════════════════════
+// ACTIVITY LOGGER
+// ══════════════════════════════════════════════
+async function logActivity(action, details) {
+  try {
+    const user = _state.userDoc;
+    if (!user) return;
+    const batch = details.batchId ? _state.batches.find(b => b.id === details.batchId) : null;
+    const intern = details.internId && details.batchId ? 
+      (_state.internsCache[details.batchId] || []).find(i => i.id === details.internId) : null;
+    await addDoc(collection(db, 'activityLogs'), {
+      mentorName: user.name,
+      mentorId: _state.user.uid,
+      action,
+      batchId: details.batchId || null,
+      batchName: batch?.name || null,
+      internId: details.internId || null,
+      internName: intern?.name || null,
+      field: details.field || null,
+      value: details.value !== undefined ? String(details.value) : null,
+      timestamp: serverTimestamp()
+    });
+  } catch(e) { /* silent fail - never block user action */ }
+}
+
 window.updateMark = async (batchId, internId, task, val) => {
   const num = val === '' ? '' : Math.max(0, Math.min(100, parseFloat(val) || 0));
   const ts = serverTimestamp();
@@ -1048,6 +1081,7 @@ window.updateMark = async (batchId, internId, task, val) => {
     lastUpdatedTasks: ts,
     lastUpdatedTasksBy: by
   });
+  logActivity('Task Score', { batchId, internId, field: task, value: num });
   showToast('✅ Mark saved!');
 };
 
@@ -2398,6 +2432,7 @@ window.toggleAttendance = async (batchId, internId, day, el) => {
     lastUpdatedAttendance: serverTimestamp(),
     lastUpdatedAttendanceBy: _state.userDoc?.name || 'Unknown'
   });
+  logActivity('Attendance', { batchId, internId, field: day, value: newVal ? 'Present' : 'Absent' });
   showToast('✅ Attendance saved!');
 };
 
@@ -2421,6 +2456,8 @@ window.toggleField = async (batchId, internId, fieldPath, el) => {
   if (isDR)  { updates.lastUpdatedDailyreport = ts; updates.lastUpdatedDailyreportBy = by; }
   if (isAtt) { updates.lastUpdatedAttendance = ts; updates.lastUpdatedAttendanceBy = by; }
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), updates);
+  const actionType = isHR ? 'HR/Club Activity' : isDR ? 'Daily Report' : 'Attendance';
+  logActivity(actionType, { batchId, internId, field: fieldPath, value: newVal ? 'Marked' : 'Unmarked' });
   showToast('✅ Saved!');
 };
 
@@ -2617,13 +2654,13 @@ window.exportEvaluationPDF = async (batchId, internId) => {
 window.updateEvalKeywords = async (batchId, internId, val) => {
   const ts = serverTimestamp(), by = _state.userDoc?.name || 'Unknown';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { evalKeywords: val.trim(), tsEvalKeywords: ts, byEvalKeywords: by });
-  if (val.trim()) showToast('✅ Keywords saved!');
+  if (val.trim()) { logActivity('Eval Keywords', { batchId, internId, field: 'evalKeywords', value: val.trim() }); showToast('✅ Keywords saved!'); }
 };
 
 window.updateProjectTitle = async (batchId, internId, val) => {
   const ts = serverTimestamp(), by = _state.userDoc?.name || 'Unknown';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { projectTitle: val.trim(), tsProjectTitle: ts, byProjectTitle: by });
-  if (val.trim()) showToast('✅ Project title saved!');
+  if (val.trim()) { logActivity('Project Title', { batchId, internId, field: 'projectTitle', value: val.trim() }); showToast('✅ Project title saved!'); }
 };
 
 window.updateSingleField = async (batchId, internId, field, val) => {
@@ -2640,6 +2677,7 @@ window.updateSingleField = async (batchId, internId, field, val) => {
     ['ts_' + field]: ts,
     ['by_' + field]: by
   });
+  logActivity(gradeFields.includes(field) ? 'Grade/Field' : 'Score', { batchId, internId, field, value: saveVal });
   if (gradeFields.includes(field) && val) {
     showToast('✅ Grade ' + val + ' saved!');
   } else {
@@ -2806,6 +2844,247 @@ window.rejectUser = async (userId) => {
   showToast('🚫 User rejected.');
   navigate('users');
 };
+
+// ══════════════════════════════════════════════
+// ANALYTICS PAGE
+// ══════════════════════════════════════════════
+function renderAnalytics() {
+  const mentorNames = [...new Set(_state.batches.map(b => b.mentor).filter(Boolean))].sort();
+  return `
+    <div class="topbar">
+      <div class="page-title">📈 Analytics</div>
+      <div class="page-sub">Mentor Activity Report Generator</div>
+    </div>
+    <div class="card mb-24">
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">🔍 Generate Activity Report</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">SELECT MENTOR</label>
+          <select id="analytics-mentor" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none">
+            <option value="">— Select Mentor —</option>
+            ${mentorNames.map(n => `<option value="${n}">${n}</option>`).join('')}
+          </select>
+        </div>
+        <div></div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">START DATE & TIME</label>
+          <input type="datetime-local" id="analytics-start" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none" />
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">END DATE & TIME</label>
+          <input type="datetime-local" id="analytics-end" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="generateAnalyticsReport()" style="min-width:180px">
+        📄 Generate PDF Report
+      </button>
+      <div id="analytics-status" style="margin-top:12px;font-size:13px;color:var(--muted)"></div>
+    </div>
+  `;
+}
+
+window.generateAnalyticsReport = async () => {
+  const mentor = document.getElementById('analytics-mentor').value;
+  const startVal = document.getElementById('analytics-start').value;
+  const endVal = document.getElementById('analytics-end').value;
+  const status = document.getElementById('analytics-status');
+
+  if (!mentor) return showToast('⚠️ Please select a mentor', 'warn');
+  if (!startVal || !endVal) return showToast('⚠️ Please select start and end date/time', 'warn');
+
+  const startDate = new Date(startVal);
+  const endDate = new Date(endVal);
+  if (startDate >= endDate) return showToast('⚠️ End must be after start', 'warn');
+
+  status.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block"></span> Fetching activity logs...';
+
+  try {
+    // Efficient server-side filtered query
+    const logsQuery = query(
+      collection(db, 'activityLogs'),
+      where('mentorName', '==', mentor),
+      where('timestamp', '>=', Timestamp.fromDate(startDate)),
+      where('timestamp', '<=', Timestamp.fromDate(endDate)),
+      orderBy('timestamp', 'asc')
+    );
+    const logsSnap = await getDocs(logsQuery);
+    const logs = logsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    status.innerHTML = `Found ${logs.length} activities. Generating PDF...`;
+    await buildAnalyticsPDF(mentor, startDate, endDate, logs);
+    status.innerHTML = `✅ Report generated successfully!`;
+  } catch(e) {
+    console.error(e);
+    status.innerHTML = '⚠️ Error: ' + e.message;
+  }
+};
+
+async function buildAnalyticsPDF(mentor, startDate, endDate, logs) {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageW = 210, pageH = 297, margin = 15, contentW = pageW - margin * 2;
+  let y = margin;
+
+  const fmtDT = (d) => d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+    d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+
+  const fmtInterval = (ms) => {
+    if (ms < 0) return '-';
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    if (h > 0) return `${h}h ${m % 60}m`;
+    if (m > 0) return `${m}m ${s % 60}s`;
+    return `${s}s`;
+  };
+
+  const checkPage = (needed = 10) => {
+    if (y + needed > pageH - margin) { pdf.addPage(); y = margin; }
+  };
+
+  // ── HEADER ──
+  pdf.setFillColor(124, 58, 237);
+  pdf.rect(0, 0, pageW, 28, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(13);
+  pdf.text('ANALYTICS REPORT', margin, 12);
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Hedge School of Applied Economics — Internship Tracker', margin, 19);
+  pdf.text('Generated: ' + fmtDT(new Date()), margin, 25);
+  y = 36;
+
+  // ── TITLE ──
+  pdf.setTextColor(30, 27, 75);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(14);
+  pdf.text('Analytics Report of ' + mentor, margin, y); y += 8;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.setTextColor(100, 100, 120);
+  pdf.text('Period: ' + fmtDT(startDate) + '  →  ' + fmtDT(endDate), margin, y); y += 6;
+  pdf.text('Total Activities: ' + logs.length, margin, y); y += 10;
+
+  // ── SUMMARY LINE ──
+  pdf.setDrawColor(200, 200, 220);
+  pdf.line(margin, y, pageW - margin, y); y += 8;
+
+  if (logs.length === 0) {
+    pdf.setFont('helvetica', 'italic');
+    pdf.setTextColor(150, 150, 170);
+    pdf.setFontSize(11);
+    pdf.text('No activity found for this mentor in the selected period.', margin, y);
+    pdf.save('Analytics_' + mentor.replace(/\s+/g,'_') + '.pdf');
+    return;
+  }
+
+  // ── GROUP BY SESSIONS (Login → Logout) ──
+  const sessions = [];
+  let currentSession = null;
+  for (const log of logs) {
+    const ts = log.timestamp?.toDate ? log.timestamp.toDate() : new Date(log.timestamp);
+    if (log.action === 'Login') {
+      currentSession = { loginTime: ts, logoutTime: null, activities: [] };
+      sessions.push(currentSession);
+    } else if (log.action === 'Logout' && currentSession) {
+      currentSession.logoutTime = ts;
+      currentSession = null;
+    } else {
+      if (!currentSession) {
+        // Activities before first login in range
+        currentSession = { loginTime: null, logoutTime: null, activities: [] };
+        sessions.push(currentSession);
+      }
+      currentSession.activities.push({ ...log, ts });
+    }
+  }
+
+  // ── RENDER SESSIONS ──
+  sessions.forEach((session, si) => {
+    checkPage(20);
+    // Session header
+    pdf.setFillColor(240, 236, 255);
+    pdf.rect(margin, y - 4, contentW, 12, 'F');
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(11);
+    pdf.setTextColor(124, 58, 237);
+    pdf.text(`Session ${si + 1}`, margin + 2, y + 4); y += 12;
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(60, 60, 80);
+    const loginStr = session.loginTime ? '🔐 Login:  ' + fmtDT(session.loginTime) : '🔐 Login: (before report period)';
+    const logoutStr = session.logoutTime ? '🔓 Logout: ' + fmtDT(session.logoutTime) : '🔓 Logout: (still logged in / not recorded)';
+    const duration = session.loginTime && session.logoutTime ? fmtInterval(session.logoutTime - session.loginTime) : '—';
+    pdf.text(loginStr, margin + 2, y); y += 6;
+    pdf.text(logoutStr, margin + 2, y); y += 6;
+    pdf.text('⏱  Session Duration: ' + duration, margin + 2, y); y += 8;
+
+    if (session.activities.length === 0) {
+      pdf.setFont('helvetica', 'italic');
+      pdf.setTextColor(150, 150, 170);
+      pdf.text('No data entry activities in this session.', margin + 4, y); y += 8;
+    } else {
+      // Activity table header
+      checkPage(14);
+      const cols = { no: margin, time: margin + 8, interval: margin + 52, action: margin + 78, batch: margin + 108, intern: margin + 140, detail: margin + 168 };
+      pdf.setFillColor(30, 27, 75);
+      pdf.rect(margin, y - 4, contentW, 8, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('#', cols.no + 1, y + 1);
+      pdf.text('Timestamp', cols.time, y + 1);
+      pdf.text('Interval', cols.interval, y + 1);
+      pdf.text('Action', cols.action, y + 1);
+      pdf.text('Batch', cols.batch, y + 1);
+      pdf.text('Intern', cols.intern, y + 1);
+      pdf.text('Detail', cols.detail, y + 1);
+      y += 8;
+
+      session.activities.forEach((act, ai) => {
+        checkPage(8);
+        const prevTs = ai > 0 ? session.activities[ai - 1].ts : (session.loginTime || act.ts);
+        const interval = fmtInterval(act.ts - prevTs);
+        const rowBg = ai % 2 === 0;
+        if (rowBg) { pdf.setFillColor(248, 244, 255); pdf.rect(margin, y - 3, contentW, 7, 'F'); }
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(40, 40, 60);
+        pdf.text(String(ai + 1), cols.no + 1, y + 1);
+        pdf.text(act.ts.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true }), cols.time, y + 1);
+        pdf.text(interval, cols.interval, y + 1);
+        pdf.text((act.action || '').substring(0, 16), cols.action, y + 1);
+        pdf.text((act.batchName || '—').substring(0, 16), cols.batch, y + 1);
+        pdf.text((act.internName || '—').substring(0, 16), cols.intern, y + 1);
+        const detail = act.field ? act.field + ': ' + (act.value || '') : '';
+        pdf.text(detail.substring(0, 22), cols.detail, y + 1);
+        y += 7;
+      });
+      y += 4;
+    }
+
+    // Session divider
+    checkPage(6);
+    pdf.setDrawColor(200, 200, 220);
+    pdf.line(margin, y, pageW - margin, y); y += 8;
+  });
+
+  // ── FOOTER ──
+  const pageCount = pdf.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    pdf.setPage(i);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(150, 150, 170);
+    pdf.text('Hedge School of Applied Economics — Confidential', margin, pageH - 8);
+    pdf.text('Page ' + i + ' of ' + pageCount, pageW - margin - 20, pageH - 8);
+  }
+
+  pdf.save('Analytics_' + mentor.replace(/\s+/g,'_') + '_' + startDate.toISOString().slice(0,10) + '.pdf');
+  showToast('📄 Analytics PDF generated!');
+}
 
 function renderMentorList() {
   // Get all unique mentors from batches
