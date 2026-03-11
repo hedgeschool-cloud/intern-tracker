@@ -1485,6 +1485,7 @@ async function renderScorecardAsync() {
 
   let html = `
     <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="history.back()" style="margin-bottom:4px">← Back</button>
       <div class="page-title">🏆 Excellence Score Card</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
         <div class="page-sub" style="margin:0">Internship Process & Progress Rankings</div>
@@ -1587,6 +1588,9 @@ async function renderScorecardAsync() {
           </tbody>
         </table>
       </div>
+    </div>
+    <div style="display:flex;justify-content:center;padding:24px 0">
+      <button class="btn btn-ghost" onclick="history.back()">← Back</button>
     </div>
   `;
   return html;
