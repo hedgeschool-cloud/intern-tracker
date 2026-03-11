@@ -2885,21 +2885,23 @@ function renderAnalytics() {
     </div>
     <div class="card mb-24">
       <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">🔍 Generate Activity Report</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div>
+      <div style="margin-bottom:16px">
+        <div style="margin-bottom:14px">
           <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">SELECT USER</label>
-          <select id="analytics-mentor" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none">
+          <select id="analytics-mentor" style="width:100%;max-width:420px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none">
             <option value="">Loading users...</option>
           </select>
         </div>
-        <div></div>
-        <div>
-          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">START DATE & TIME</label>
-          <input type="datetime-local" id="analytics-start" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none" />
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">END DATE & TIME</label>
-          <input type="datetime-local" id="analytics-end" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none" />
+        <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">START DATE & TIME</label>
+            <input type="datetime-local" id="analytics-start" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none" />
+          </div>
+          <div style="padding-bottom:11px;color:var(--muted);font-weight:600;font-size:14px">→</div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">END DATE & TIME</label>
+            <input type="datetime-local" id="analytics-end" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;color:var(--text);outline:none" />
+          </div>
         </div>
       </div>
       <button class="btn btn-primary" onclick="generateAnalyticsReport()" style="min-width:180px">
