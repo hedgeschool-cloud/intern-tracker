@@ -3054,8 +3054,10 @@ async function buildAnalyticsPDF(mentor, startDate, endDate, logs) {
       pdf.text('No data entry activities in this session.', margin + 4, y); y += 8;
     } else {
       // Activity table header
+      // Col positions: #(6) | Time(38) | Interval(18) | Action(22) | Batch(24) | Intern(28) | Detail(rest~54)
       checkPage(14);
-      const cols = { no: margin, time: margin + 8, interval: margin + 52, action: margin + 78, batch: margin + 108, intern: margin + 140, detail: margin + 168 };
+      const cols = { no: margin, time: margin + 6, interval: margin + 44, action: margin + 62, batch: margin + 84, intern: margin + 108, detail: margin + 136 };
+      const detailMaxWidth = pageW - margin - cols.detail; // ~54mm
       pdf.setFillColor(30, 27, 75);
       pdf.rect(margin, y - 4, contentW, 8, 'F');
       pdf.setFont('helvetica', 'bold');
@@ -3071,23 +3073,30 @@ async function buildAnalyticsPDF(mentor, startDate, endDate, logs) {
       y += 8;
 
       session.activities.forEach((act, ai) => {
-        checkPage(8);
         const prevTs = ai > 0 ? session.activities[ai - 1].ts : (session.loginTime || act.ts);
         const interval = fmtInterval(act.ts - prevTs);
+        const detail = act.field ? act.field + ': ' + (act.value !== undefined ? act.value : '') : (act.action || '');
+        // Wrap detail text to fit detailMaxWidth
+        const detailLines = pdf.splitTextToSize(detail, detailMaxWidth);
+        const rowH = Math.max(7, detailLines.length * 5 + 2);
+        checkPage(rowH + 2);
         const rowBg = ai % 2 === 0;
-        if (rowBg) { pdf.setFillColor(248, 244, 255); pdf.rect(margin, y - 3, contentW, 7, 'F'); }
+        if (rowBg) { pdf.setFillColor(248, 244, 255); pdf.rect(margin, y - 3, contentW, rowH, 'F'); }
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(7.5);
         pdf.setTextColor(40, 40, 60);
-        pdf.text(String(ai + 1), cols.no + 1, y + 1);
-        pdf.text(act.ts.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true }), cols.time, y + 1);
-        pdf.text(interval, cols.interval, y + 1);
-        pdf.text((act.action || '').substring(0, 16), cols.action, y + 1);
-        pdf.text((act.batchName || '—').substring(0, 16), cols.batch, y + 1);
-        pdf.text((act.internName || '—').substring(0, 16), cols.intern, y + 1);
-        const detail = act.field ? act.field + ': ' + (act.value || '') : '';
-        pdf.text(detail.substring(0, 22), cols.detail, y + 1);
-        y += 7;
+        const midY = y + (rowH - 7) / 2 + 1;
+        pdf.text(String(ai + 1), cols.no + 1, midY);
+        pdf.text(act.ts.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true }), cols.time, midY);
+        pdf.text(interval, cols.interval, midY);
+        pdf.text((act.action || '').substring(0, 14), cols.action, midY);
+        pdf.text((act.batchName || '—').substring(0, 14), cols.batch, midY);
+        pdf.text((act.internName || '—').substring(0, 16), cols.intern, midY);
+        // Render wrapped detail lines
+        detailLines.forEach((line, li) => {
+          pdf.text(line, cols.detail, y + 1 + li * 5);
+        });
+        y += rowH;
       });
       y += 4;
     }
