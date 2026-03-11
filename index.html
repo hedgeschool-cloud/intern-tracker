@@ -580,8 +580,7 @@
   <div class="global-topbar" id="global-topbar" style="display:none">
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input class="search-input" id="global-search" type="text" placeholder="Search batches or interns..." 
-        oninput="handleGlobalSearch(this.value)" onblur="setTimeout(()=>hideSearchResults(),200)" autocomplete="off" />
+      <input class="search-input" id="global-search" type="text" placeholder="Search batches or interns..." autocomplete="off" />
       <div class="search-results" id="search-results" style="display:none"></div>
     </div>
     <div id="save-bar-area"></div>
@@ -763,6 +762,32 @@ onAuthStateChanged(auth, async user => {
       initSidebar();
       loadBatches();
       navigate('dashboard');
+      // Attach search listeners once after login
+      const searchEl = document.getElementById('global-search');
+      if (searchEl && !searchEl._listenerAttached) {
+        searchEl._listenerAttached = true;
+        searchEl.addEventListener('input', (e) => {
+          const q = e.target.value.trim().toLowerCase();
+          const box = document.getElementById('search-results');
+          if (!q) { box.style.display = 'none'; return; }
+          box.style.display = 'block';
+          box.innerHTML = '<div class="search-empty">Searching...</div>';
+          clearTimeout(window._searchDebounce);
+          window._searchDebounce = setTimeout(() => _doSearch(q), 300);
+        });
+        searchEl.addEventListener('blur', () => {
+          setTimeout(() => {
+            const box = document.getElementById('search-results');
+            if (box) box.style.display = 'none';
+          }, 200);
+        });
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.search-wrap')) {
+            const box = document.getElementById('search-results');
+            if (box) box.style.display = 'none';
+          }
+        });
+      }
     }
   } else {
     _state.user = null; _state.userDoc = null;
@@ -1241,34 +1266,37 @@ window.exportIntern = async (batchId, internId) => {
 // ══════════════════════════════════════════════
 // GLOBAL SEARCH
 // ══════════════════════════════════════════════
-let _searchDebounce = null;
-let _searchToken = 0;
-
 window.handleGlobalSearch = (query) => {
-  clearTimeout(_searchDebounce);
+  const q = (query || '').trim().toLowerCase();
   const box = document.getElementById('search-results');
-  const q = query.trim().toLowerCase();
   if (!q) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   box.innerHTML = '<div class="search-empty">Searching...</div>';
-  _searchDebounce = setTimeout(() => _doSearch(q), 300);
+  clearTimeout(window._searchDebounce);
+  window._searchDebounce = setTimeout(() => _doSearch(q), 300);
 };
 
-async function _doSearch(q) {
-  const token = ++_searchToken;
+window._searchToken = 0;
+window._searchDebounce = null;
+
+function _doSearch(q) {
   const box = document.getElementById('search-results');
+  if (!box) return;
   const results = [];
 
   // Search batches
   for (const batch of _state.batches) {
     if (batch.name.toLowerCase().includes(q)) {
-      results.push({ type: 'batch', icon: '📦', name: batch.name, sub: batch.stream || (batch.internCount + ' interns'), action: () => navigate('batch-detail', batch.id) });
+      results.push({
+        icon: '📦', name: batch.name,
+        sub: batch.stream || (batch.internCount + ' interns'),
+        action: () => navigate('batch-detail', batch.id)
+      });
     }
   }
 
-  // Search interns from cache only (no Firestore calls)
+  // Search interns from in-memory cache - no Firestore
   for (const batch of _state.batches) {
-    if (token !== _searchToken) return;
     const interns = _state.internsCache[batch.id] || [];
     for (const intern of interns) {
       const matchName  = intern.name.toLowerCase().includes(q);
@@ -1278,21 +1306,24 @@ async function _doSearch(q) {
         const details = [
           intern.phone ? `📞 ${intern.phone}` : '',
           intern.email ? `✉️ ${intern.email}` : ''
-        ].filter(Boolean).join('  ·  ');
-        results.push({ type: 'intern', icon: '👤', name: intern.name, sub: '📦 ' + batch.name + (details ? '  ·  ' + details : ''), action: () => navigate('intern-detail', { batchId: batch.id, internId: intern.id }) });
+        ].filter(Boolean).join(' · ');
+        results.push({
+          icon: '👤', name: intern.name,
+          sub: '📦 ' + batch.name + (details ? ' · ' + details : ''),
+          action: () => navigate('intern-detail', { batchId: batch.id, internId: intern.id })
+        });
       }
     }
   }
 
-  if (token !== _searchToken) return;
-
   if (!results.length) {
-    box.innerHTML = '<div class="search-empty">No results found for "' + q + '"</div>';
+    box.innerHTML = '<div class="search-empty">No results for "' + q + '"</div>';
     return;
   }
 
+  window._searchResults = results;
   box.innerHTML = results.map((r, i) => `
-    <div class="search-result-item" onclick="selectSearchResult(${i})">
+    <div class="search-result-item" onclick="window._searchResults[${i}].action();document.getElementById('global-search').value='';document.getElementById('search-results').style.display='none'">
       <div class="search-result-icon">${r.icon}</div>
       <div>
         <div class="search-result-name">${r.name}</div>
@@ -1300,8 +1331,6 @@ async function _doSearch(q) {
       </div>
     </div>
   `).join('');
-
-  window._searchResults = results;
 }
 
 window.selectSearchResult = (i) => {
