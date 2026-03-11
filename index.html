@@ -1056,16 +1056,24 @@ async function logActivity(action, details) {
     const user = _state.userDoc;
     if (!user) return;
     const batch = details.batchId ? _state.batches.find(b => b.id === details.batchId) : null;
-    const intern = details.internId && details.batchId ? 
+    const cachedIntern = details.internId && details.batchId ?
       (_state.internsCache[details.batchId] || []).find(i => i.id === details.internId) : null;
+    const internName = details.internName
+      || cachedIntern?.name
+      || (_state.currentIntern?.internId === details.internId ? _state.currentInternName : null)
+      || null;
+    const batchName = details.batchName
+      || batch?.name
+      || (_state.currentIntern?.batchId === details.batchId ? _state.currentBatchName : null)
+      || null;
     await addDoc(collection(db, 'activityLogs'), {
       mentorName: user.name,
       mentorId: _state.user.uid,
       action,
       batchId: details.batchId || null,
-      batchName: batch?.name || null,
+      batchName,
       internId: details.internId || null,
-      internName: intern?.name || null,
+      internName,
       field: details.field || null,
       value: details.value !== undefined ? String(details.value) : null,
       timestamp: serverTimestamp()
@@ -2129,6 +2137,9 @@ async function renderInternDetailAsync(param) {
   const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
   if (!snap.exists()) return '<div class="empty-state"><h3>Intern not found</h3></div>';
   const intern = snap.data();
+  // Cache intern name and batch name for activity logging
+  _state.currentInternName = intern.name;
+  _state.currentBatchName = batch?.name || null;
   const taskCount = batch?.taskCount || 20;
   const attCount = batch?.dayCount || 16;
   const hrCount = batch?.hrclubCount || 4;
