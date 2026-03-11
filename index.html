@@ -1219,13 +1219,22 @@ window.exportIntern = async (batchId, internId) => {
 // ══════════════════════════════════════════════
 // GLOBAL SEARCH
 // ══════════════════════════════════════════════
-window.handleGlobalSearch = async (query) => {
-  const q = query.trim().toLowerCase();
+let _searchDebounce = null;
+let _searchToken = 0;
+
+window.handleGlobalSearch = (query) => {
+  clearTimeout(_searchDebounce);
   const box = document.getElementById('search-results');
+  const q = query.trim().toLowerCase();
   if (!q) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   box.innerHTML = '<div class="search-empty">Searching...</div>';
+  _searchDebounce = setTimeout(() => _doSearch(q), 300);
+};
 
+async function _doSearch(q) {
+  const token = ++_searchToken; // each search gets a unique token
+  const box = document.getElementById('search-results');
   const results = [];
 
   // Search batches
@@ -1237,6 +1246,7 @@ window.handleGlobalSearch = async (query) => {
 
   // Search interns across all batches
   for (const batch of _state.batches) {
+    if (token !== _searchToken) return; // cancelled — newer search started
     const interns = await getInterns(batch.id);
     for (const intern of interns) {
       const matchName  = intern.name.toLowerCase().includes(q);
@@ -1252,8 +1262,10 @@ window.handleGlobalSearch = async (query) => {
     }
   }
 
+  if (token !== _searchToken) return; // cancelled
+
   if (!results.length) {
-    box.innerHTML = '<div class="search-empty">No results found for "' + query + '"</div>';
+    box.innerHTML = '<div class="search-empty">No results found for "' + q + '"</div>';
     return;
   }
 
@@ -1268,7 +1280,7 @@ window.handleGlobalSearch = async (query) => {
   `).join('');
 
   window._searchResults = results;
-};
+}
 
 window.selectSearchResult = (i) => {
   const r = window._searchResults[i];
