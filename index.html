@@ -604,7 +604,7 @@
 
   <!-- GLOBAL TOPBAR -->
   <div class="global-topbar" id="global-topbar" style="display:none">
-    <button id="hamburger-btn" onclick="(()=>{const s=document.getElementById('sidebar');const open=s.style.left==='0px'||s.style.left==='0';open?hideSidebar():showSidebar();})()" style="display:none;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:20px;cursor:pointer;flex-shrink:0;margin-right:4px">☰</button>
+    <button id="hamburger-btn" onclick="toggleHamburger()" style="display:none;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:20px;cursor:pointer;flex-shrink:0;margin-right:4px">☰</button>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input class="search-input" id="global-search" type="text" placeholder="Search batches or interns..." autocomplete="off" />
@@ -1825,6 +1825,12 @@ function hideSidebar() {
 function isMobile() {
   return window.innerWidth <= 768;
 }
+window.toggleHamburger = function() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  const isOpen = sidebar.style.left === '0px' || sidebar.style.left === '0';
+  if (isOpen) hideSidebar(); else showSidebar();
+};
 // Mouse hover for desktop
 document.addEventListener('mousemove', (e) => {
   if (isMobile()) return;
