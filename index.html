@@ -667,6 +667,9 @@ document.getElementById('reg-role').addEventListener('change', e => {
   document.getElementById('admin-code-group').style.display = e.target.value === 'admin' ? 'block' : 'none';
 });
 
+// Flag to distinguish real logins from session restorations (page refresh)
+let _justSignedIn = false;
+
 window.handleLogin = async () => {
   const email = document.getElementById('login-email').value.trim();
   const pass = document.getElementById('login-password').value;
@@ -675,9 +678,10 @@ window.handleLogin = async () => {
   btn.innerHTML = '<span class="spinner"></span> Signing in...';
   btn.disabled = true;
   try {
+    _justSignedIn = true; // Mark as real login, not a refresh restoration
     await signInWithEmailAndPassword(auth, email, pass);
-    // Login will be logged after onAuthStateChanged fires and _state.userDoc is set
   } catch (e) {
+    _justSignedIn = false;
     showAuthError(friendlyAuthError(e.code));
     btn.innerHTML = 'Sign In'; btn.disabled = false;
   }
@@ -769,7 +773,10 @@ onAuthStateChanged(auth, async user => {
       initSidebar();
       loadBatches();
       navigate('dashboard');
-      logActivity('Login', {});
+      if (_justSignedIn) {
+        logActivity('Login', {});
+        _justSignedIn = false; // Reset flag after logging
+      }
     }
   } else {
     _state.user = null; _state.userDoc = null;
