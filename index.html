@@ -821,6 +821,11 @@ window.navigate = (page, param) => {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   const navEl = document.getElementById('nav-' + page);
   if (navEl) navEl.classList.add('active');
+  // Always keep mobile tab visible after login
+  const _tab = document.getElementById('sidebar-tab');
+  if (_tab && isMobile()) { _tab.style.display = 'block'; }
+  // Auto-close sidebar on mobile when navigating
+  if (isMobile()) hideSidebar();
   const mc = document.getElementById('main-content');
   if (page === 'dashboard') mc.innerHTML = renderDashboard();
   else if (page === 'batches') mc.innerHTML = renderBatchList();
