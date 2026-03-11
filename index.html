@@ -1261,10 +1261,13 @@ window._doSearch = function _doSearch(q) {
 
   // Search batches
   for (const batch of _state.batches) {
-    if (batch.name.toLowerCase().includes(q)) {
+    const matchName = batch.name.toLowerCase().includes(q);
+    const matchDesc = (batch.description || '').toLowerCase().includes(q);
+    const matchStream = (batch.stream || '').toLowerCase().includes(q);
+    if (matchName || matchDesc || matchStream) {
       results.push({
         icon: '📦', name: batch.name,
-        sub: batch.stream || (batch.internCount + ' interns'),
+        sub: batch.description ? batch.description : (batch.stream || (batch.internCount + ' interns')),
         action: () => navigate('batch-detail', batch.id)
       });
     }
