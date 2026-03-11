@@ -2146,7 +2146,7 @@ async function renderBatchDetailAsync(batchId) {
                   const lastStr = lastTs ? (tsToDate(lastTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + ' · ' + (lastBy||'?').split(' ')[0]) : '';
                   const lastFull = lastTs ? ('🕐 ' + tsToDate(lastTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + tsToDate(lastTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + ' by ' + (lastBy||'?')) : '';
                   return `<tr>
-                    <td class="name-col" title="${lastFull}">${intern.name}${lastStr ? `<span style="font-size:9px;color:var(--muted);display:block;line-height:1.2;margin-top:1px">🕐 ${lastStr}</span>` : ''}</td>
+                    <td class="name-col" title="${lastFull}"><span style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">${intern.name}</span>${lastStr ? `<span style="font-size:9px;color:var(--muted);display:block;line-height:1.2;margin-top:1px">🕐 ${lastStr}</span>` : ''}</td>
                     <td class="id-col">${intern.email||'—'}</td>
                     ${Array.from({length: attCount}, (_,i) => {
                       const key = 'day'+(i+1);
@@ -2187,7 +2187,7 @@ async function renderBatchDetailAsync(batchId) {
                   const lastStr = lastTs ? (tsToDate(lastTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + ' · ' + (lastBy||'?').split(' ')[0]) : '';
                   const lastFull = lastTs ? ('🕐 ' + tsToDate(lastTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + tsToDate(lastTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + ' by ' + (lastBy||'?')) : '';
                   return `<tr>
-                    <td class="name-col" title="${lastFull}">${intern.name}${lastStr ? `<span style="font-size:9px;color:var(--muted);display:block;line-height:1.2;margin-top:1px">🕐 ${lastStr}</span>` : ''}</td>
+                    <td class="name-col" title="${lastFull}"><span style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">${intern.name}</span>${lastStr ? `<span style="font-size:9px;color:var(--muted);display:block;line-height:1.2;margin-top:1px">🕐 ${lastStr}</span>` : ''}</td>
                     <td class="id-col">${intern.phone||'—'}</td>
                     ${Array.from({length: drCount2}, (_,i) => {
                       const key = 'dr'+(i+1);
