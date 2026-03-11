@@ -952,10 +952,11 @@ window.createBatch = async () => {
 window.deleteBatch = async (batchId) => {
   if (_state.userDoc.role !== 'admin') return showToast('⛔ Admin only', 'error');
   if (!confirm('Delete this entire batch and ALL intern data? This cannot be undone.')) return;
-  // Delete all interns in batch
+  const batch = _state.batches.find(b => b.id === batchId);
   const snap = await getDocs(collection(db, 'batches', batchId, 'interns'));
   for (const d of snap.docs) await deleteDoc(d.ref);
   await deleteDoc(doc(db, 'batches', batchId));
+  logActivity('Delete Batch', { batchId, batchName: batch?.name, field: 'batch', value: batch?.name });
   await loadBatches();
   showToast('🗑️ Batch deleted');
   navigate('batches');
@@ -1016,6 +1017,7 @@ window.addIntern = async (batchId) => {
     createdAt: serverTimestamp()
   });
   await updateDoc(doc(db, 'batches', batchId), { internCount: (batch?.internCount || 0) + 1 });
+  logActivity('Add Intern', { batchId, internId: id, field: 'name', value: name });
   nameEl.value = '';
   const phoneEl = document.getElementById('new-intern-phone'); if(phoneEl) phoneEl.value = '';
   const emailEl = document.getElementById('new-intern-email'); if(emailEl) emailEl.value = '';
@@ -1031,6 +1033,7 @@ window.deleteIntern = async (batchId, internId, internName) => {
   const batch = _state.batches.find(b => b.id === batchId);
   const newCount = Math.max(0, (batch?.internCount || 1) - 1);
   await updateDoc(doc(db, 'batches', batchId), { internCount: newCount });
+  logActivity('Delete Intern', { batchId, internId, field: 'name', value: internName });
   await loadBatches();
   invalidateInternsCache(batchId);
   showToast('🗑️ ' + internName + ' removed');
@@ -2976,7 +2979,7 @@ async function buildAnalyticsPDF(mentor, startDate, endDate, logs) {
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(10);
   pdf.setTextColor(100, 100, 120);
-  pdf.text('Period: ' + fmtDT(startDate) + '  →  ' + fmtDT(endDate), margin, y); y += 6;
+  pdf.text('Period: ' + fmtDT(startDate) + '  to  ' + fmtDT(endDate), margin, y); y += 6;
   pdf.text('Total Activities: ' + logs.length, margin, y); y += 10;
 
   // ── SUMMARY LINE ──
@@ -3027,12 +3030,12 @@ async function buildAnalyticsPDF(mentor, startDate, endDate, logs) {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(9);
     pdf.setTextColor(60, 60, 80);
-    const loginStr = session.loginTime ? '🔐 Login:  ' + fmtDT(session.loginTime) : '🔐 Login: (before report period)';
-    const logoutStr = session.logoutTime ? '🔓 Logout: ' + fmtDT(session.logoutTime) : '🔓 Logout: (still logged in / not recorded)';
-    const duration = session.loginTime && session.logoutTime ? fmtInterval(session.logoutTime - session.loginTime) : '—';
+    const loginStr = session.loginTime ? '[LOGIN]  ' + fmtDT(session.loginTime) : '[LOGIN]  (before report period)';
+    const logoutStr = session.logoutTime ? '[LOGOUT] ' + fmtDT(session.logoutTime) : '[LOGOUT] (still logged in / not recorded)';
+    const duration = session.loginTime && session.logoutTime ? fmtInterval(session.logoutTime - session.loginTime) : '--';
     pdf.text(loginStr, margin + 2, y); y += 6;
     pdf.text(logoutStr, margin + 2, y); y += 6;
-    pdf.text('⏱  Session Duration: ' + duration, margin + 2, y); y += 8;
+    pdf.text('[DURATION] ' + duration, margin + 2, y); y += 8;
 
     if (session.activities.length === 0) {
       pdf.setFont('helvetica', 'italic');
