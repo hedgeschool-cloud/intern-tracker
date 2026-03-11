@@ -1000,6 +1000,7 @@ window.addIntern = async (batchId) => {
   const name = nameEl.value.trim();
   const phone = document.getElementById('new-intern-phone')?.value.trim() || '';
   const email = document.getElementById('new-intern-email')?.value.trim() || '';
+  const hedgeId = document.getElementById('new-intern-hedgeid')?.value.trim() || '';
   if (!name) return showToast('⚠️ Enter intern name', 'warn');
   const id = 'intern_' + Date.now();
   const batch = _state.batches.find(b => b.id === batchId);
@@ -1012,7 +1013,7 @@ window.addIntern = async (batchId) => {
   const hrclub = {}; for (let i = 1; i <= hrCount; i++) hrclub['hr' + i] = false;
   const dailyreport = {}; for (let i = 1; i <= drCount; i++) dailyreport['dr' + i] = false;
   await setDoc(doc(db, 'batches', batchId, 'interns', id), {
-    name, phone, email, tasks, attendance, hrclub, dailyreport,
+    name, phone, email, hedgeId, tasks, attendance, hrclub, dailyreport,
     projectQuality: '', socialContest: '',
     createdAt: serverTimestamp()
   });
@@ -1021,6 +1022,7 @@ window.addIntern = async (batchId) => {
   nameEl.value = '';
   const phoneEl = document.getElementById('new-intern-phone'); if(phoneEl) phoneEl.value = '';
   const emailEl = document.getElementById('new-intern-email'); if(emailEl) emailEl.value = '';
+  const hidEl = document.getElementById('new-intern-hedgeid'); if(hidEl) hidEl.value = '';
   showToast('✅ ' + name + ' added!');
   invalidateInternsCache(batchId);
   navigate('batch-detail', batchId);
@@ -1126,35 +1128,38 @@ window.handleImportFile = async (batchId, file) => {
   const headerRow = rows[0].map(h => h.toLowerCase().replace(/[\s_\-\.]/g, ''));
   const findCol = (...keywords) => headerRow.findIndex(h => keywords.some(k => h.includes(k)));
 
-  const nameCol  = findCol('name');
-  const phoneCol = findCol('phone', 'mobile', 'contact', 'tel');
-  const emailCol = findCol('email', 'mail');
+  const nameCol   = findCol('name');
+  const phoneCol  = findCol('phone', 'mobile', 'contact', 'tel');
+  const emailCol  = findCol('email', 'mail');
+  const hedgeCol  = findCol('hedgeid', 'hedge', 'internid', 'id', 'uniqueid', 'uid', 'studentid', 'rollno', 'roll');
 
   // If no header found, assume first column is name
   const dataRows = nameCol >= 0 ? rows.slice(1) : rows;
   const ni = nameCol >= 0 ? nameCol : 0;
   const pi = phoneCol;
   const ei = emailCol;
+  const hi = hedgeCol;
 
   const interns = dataRows
     .map(r => ({
-      name:  (r[ni] || '').trim(),
-      phone: pi >= 0 ? (r[pi] || '').trim() : '',
-      email: ei >= 0 ? (r[ei] || '').trim() : ''
+      name:    (r[ni] || '').trim(),
+      phone:   pi >= 0 ? (r[pi] || '').trim() : '',
+      email:   ei >= 0 ? (r[ei] || '').trim() : '',
+      hedgeId: hi >= 0 ? (r[hi] || '').trim() : ''
     }))
     .filter(i => i.name && i.name.toLowerCase() !== 'name');
 
   if (!interns.length) return showToast('⚠️ No names found in file', 'warn');
 
   let added = 0;
-  for (const { name, phone, email } of interns) {
+  for (const { name, phone, email, hedgeId } of interns) {
     const id = 'intern_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
     const tasks = {}; for (let i = 1; i <= taskCount; i++) tasks['task' + i] = '';
     const attendance = {}; for (let i = 1; i <= dayCount; i++) attendance['day' + i] = false;
     const hrclub = {}; for (let i = 1; i <= hrCount; i++) hrclub['hr' + i] = false;
     const dailyreport = {}; for (let i = 1; i <= drCount; i++) dailyreport['dr' + i] = false;
     await setDoc(doc(db, 'batches', batchId, 'interns', id), {
-      name, phone, email, tasks, attendance, hrclub, dailyreport,
+      name, phone, email, hedgeId, tasks, attendance, hrclub, dailyreport,
       projectQuality: '', socialContest: '', createdAt: serverTimestamp()
     });
     added++;
@@ -1177,7 +1182,7 @@ window.exportBatch = async (batchId) => {
 
   // Sheet 1: Scorecard Summary
   const scoreHeaders = [
-    'Name', 'Phone', 'Email', 'Stream', 'Project Title', 'Gender',
+    'Hedge ID', 'Name', 'Phone', 'Email', 'Stream', 'Project Title', 'Gender',
     'Aggregate %', 'Process %', 'Progress %',
     'Attendance %', 'HR/Club %', 'Daily Report %',
     'Project Quality %', 'Task Score %', 'Social Contest %',
@@ -1186,7 +1191,7 @@ window.exportBatch = async (batchId) => {
   const scoreRows = interns.map(intern => {
     const sc = calcScorecard(intern, batch);
     return [
-      intern.name, intern.phone||'', intern.email||'', batch.stream || '', intern.projectTitle || '', intern.gender || '',
+      intern.hedgeId||'', intern.name, intern.phone||'', intern.email||'', batch.stream || '', intern.projectTitle || '', intern.gender || '',
       sc.aggregate + '%', sc.processScore + '%', sc.progressScore + '%',
       sc.attPct + '%', sc.hrPct + '%', sc.drPct + '%',
       sc.projectQuality + '%', sc.taskScore + '%', sc.socialContest + '%',
@@ -1339,11 +1344,13 @@ window._doSearch = function _doSearch(q) {
   for (const batch of _state.batches) {
     const interns = _state.internsCache[batch.id] || [];
     for (const intern of interns) {
-      const matchName  = intern.name.toLowerCase().includes(q);
-      const matchPhone = String(intern.phone || '').toLowerCase().includes(q);
-      const matchEmail = String(intern.email || '').toLowerCase().includes(q);
-      if (matchName || matchPhone || matchEmail) {
+      const matchName   = intern.name.toLowerCase().includes(q);
+      const matchPhone  = String(intern.phone || '').toLowerCase().includes(q);
+      const matchEmail  = String(intern.email || '').toLowerCase().includes(q);
+      const matchHedge  = String(intern.hedgeId || '').toLowerCase().includes(q);
+      if (matchName || matchPhone || matchEmail || matchHedge) {
         const details = [
+          intern.hedgeId ? `🪪 ${intern.hedgeId}` : '',
           intern.phone ? `📞 ${String(intern.phone)}` : '',
           intern.email ? `✉️ ${String(intern.email)}` : ''
         ].filter(Boolean).join(' · ');
@@ -1603,6 +1610,7 @@ async function renderScorecardAsync() {
             <tr>
               <th>Rank</th>
               <th>Intern</th>
+              <th>Hedge ID</th>
               <th>Phone</th>
               <th>Email</th>
               <th>Batch</th>
@@ -1629,6 +1637,7 @@ async function renderScorecardAsync() {
               return `<tr>
                 <td><div class="rank-badge ${rankClass}">${rankLabel}</div></td>
                 <td><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
+                <td style="font-size:12px;color:var(--accent);font-weight:600">${e.intern.hedgeId||'—'}</td>
                 <td style="font-size:12px;color:var(--muted)">${e.intern.phone||'—'}</td>
                 <td style="font-size:12px;color:var(--muted)">${e.intern.email||'—'}</td>
                 <td><span class="tag" style="cursor:pointer;color:var(--accent)" onclick="navigate('batch-detail','${e.batch.id}')">${e.batch.name}</span></td>
@@ -1671,14 +1680,14 @@ window.exportScorecard = async () => {
 
   // Sheet 1: Full Scorecard Rankings
   const scoreHeaders = [
-    'Rank','Intern Name','Phone','Email','Batch','Stream','Project Title','Gender','Evaluation Keywords',
+    'Rank','Intern Name','Hedge ID','Phone','Email','Batch','Stream','Project Title','Gender','Evaluation Keywords',
     'Aggregate %','Process Score %','Progress Score %',
     'Attendance %','HR/Club %','Daily Report %',
     'Project Quality %','Task Score %','Social Contest %',
     'Zappyvue Grade','Technical Interview Grade'
   ];
   const scoreRows = allEntries.map((e, i) => [
-    i+1, e.intern.name, e.intern.phone||'', e.intern.email||'', e.batch.name, e.batch.stream||'',
+    i+1, e.intern.name, e.intern.hedgeId||'', e.intern.phone||'', e.intern.email||'', e.batch.name, e.batch.stream||'',
     e.intern.projectTitle||'', e.intern.gender||'', e.intern.evalKeywords||'',
     e.sc.aggregate+'%', e.sc.processScore+'%', e.sc.progressScore+'%',
     e.sc.attPct+'%', e.sc.hrPct+'%', e.sc.drPct+'%',
@@ -1974,10 +1983,12 @@ async function renderBatchDetailAsync(batchId) {
         <h3 style="font-size:16px; font-weight:700">Add Interns</h3>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:700px">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:900px">
           <input id="new-intern-name" type="text" placeholder="Full name"
             style="flex:2;min-width:140px;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none"
             onkeydown="if(event.key==='Enter') addIntern('${batchId}')" />
+          <input id="new-intern-hedgeid" type="text" placeholder="Hedge ID"
+            style="flex:1;min-width:110px;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none" />
           <input id="new-intern-phone" type="tel" placeholder="Phone number"
             style="flex:1;min-width:130px;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none" />
           <input id="new-intern-email" type="email" placeholder="Email ID"
@@ -2025,6 +2036,7 @@ async function renderBatchDetailAsync(batchId) {
             <thead><tr>
               <th style="width:60px">Rank</th>
               <th style="width:140px">Intern</th>
+              <th>Hedge ID</th>
               <th style="width:120px">Phone</th>
               <th style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Email</th>
               <th style="width:90px">Aggregate</th>
@@ -2039,6 +2051,7 @@ async function renderBatchDetailAsync(batchId) {
                 return `<tr>
                   <td><div class="rank-badge ${rc}">${rl}</div></td>
                   <td><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${batch.id}',internId:'${i.id}'})">${i.name}</span></td>
+                  <td style="font-size:12px;color:var(--muted);font-weight:600">${i.hedgeId||'—'}</td>
                   <td style="font-size:12px;color:var(--muted)">${i.phone||'—'}</td>
                   <td style="font-size:12px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.email||'—'}</td>
                   <td><span class="score-pill" style="background:${pctBg(i.sc.aggregate)};color:${pctColor(i.sc.aggregate)}">${i.sc.aggregate}%</span></td>
@@ -2061,6 +2074,7 @@ async function renderBatchDetailAsync(batchId) {
               <tr>
                 <th>#</th>
                 <th>Intern Name</th>
+                <th>Hedge ID</th>
                 <th>Phone</th>
                 <th>Email</th>
                 <th>Aggregate</th>
@@ -2087,6 +2101,7 @@ async function renderBatchDetailAsync(batchId) {
       html += `<tr>
         <td style="color:var(--muted)">${idx+1}</td>
         <td><span style="cursor:pointer;color:var(--accent);font-weight:600" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">${intern.name}</span></td>
+        <td style="font-size:12px;color:var(--accent);font-weight:600">${intern.hedgeId||'—'}</td>
         <td style="font-size:12px;color:var(--muted)">${intern.phone||'—'}</td>
         <td style="font-size:12px;color:var(--muted)">${intern.email||'—'}</td>
         <td><span class="score-pill" style="background:${pctBg(sc.aggregate)};color:${pctColor(sc.aggregate)}">${sc.aggregate}%</span></td>
@@ -2159,6 +2174,7 @@ async function renderInternDetailAsync(param) {
           ${batch?.mentor ? `<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:2px">👤 Mentor: ${batch.mentor}</div>` : ''}
           ${intern.phone ? `<div style="font-size:13px;color:var(--muted);margin-top:2px">📞 ${intern.phone}</div>` : ''}
           ${intern.email ? `<div style="font-size:13px;color:var(--muted);margin-top:2px">✉️ ${intern.email}</div>` : ''}
+          ${intern.hedgeId ? `<div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:4px;background:rgba(124,58,237,.1);display:inline-block;padding:2px 10px;border-radius:20px;border:1px solid rgba(124,58,237,.25)">🪪 ${intern.hedgeId}</div>` : ''}
         </div>
         <div style="margin-left:auto; display:flex; gap:10px; align-items:center">
           ${intern.projectTitle ? `<span style="font-size:13px;color:var(--muted)">📁 ${intern.projectTitle}</span>` : ''}
@@ -3340,11 +3356,11 @@ window.exportMentorReport = async (mentorName) => {
   allEntries.sort((a, b) => b.sc.aggregate - a.sc.aggregate);
 
   // Sheet 1: Full Scorecard
-  const scoreHeaders = ['Rank','Intern','Phone','Email','Batch','Stream','Project Title','Gender','Evaluation Keywords',
+  const scoreHeaders = ['Rank','Intern','Hedge ID','Phone','Email','Batch','Stream','Project Title','Gender','Evaluation Keywords',
     'Aggregate %','Process %','Progress %','Attendance %','HR/Club %','Daily Report %',
     'Project Quality %','Task Score %','Social Contest %','Zappyvue Grade','Tech Interview Grade'];
   const scoreRows = allEntries.map((e, i) => [
-    i+1, e.intern.name, e.intern.phone||'', e.intern.email||'', e.batch.name, e.batch.stream||'',
+    i+1, e.intern.name, e.intern.hedgeId||'', e.intern.phone||'', e.intern.email||'', e.batch.name, e.batch.stream||'',
     e.intern.projectTitle||'', e.intern.gender||'', e.intern.evalKeywords||'',
     e.sc.aggregate+'%', e.sc.processScore+'%', e.sc.progressScore+'%',
     e.sc.attPct+'%', e.sc.hrPct+'%', e.sc.drPct+'%',
@@ -3429,6 +3445,9 @@ window.showEditInternModal = async (batchId, internId) => {
     <div class="form-group"><label>Full Name</label>
       <input id="ei-name" type="text" value="${intern.name || ''}" placeholder="Full name" />
     </div>
+    <div class="form-group"><label>Hedge ID</label>
+      <input id="ei-hedgeid" type="text" value="${intern.hedgeId || ''}" placeholder="Unique Hedge ID" />
+    </div>
     <div class="form-group"><label>Phone Number</label>
       <input id="ei-phone" type="tel" value="${intern.phone || ''}" placeholder="Phone number" />
     </div>
@@ -3446,10 +3465,11 @@ window.showEditInternModal = async (batchId, internId) => {
 
 window.saveEditIntern = async (batchId, internId) => {
   const name = document.getElementById('ei-name').value.trim();
+  const hedgeId = document.getElementById('ei-hedgeid').value.trim();
   const phone = document.getElementById('ei-phone').value.trim();
   const email = document.getElementById('ei-email').value.trim();
   if (!name) return showToast('⚠️ Name cannot be empty', 'warn');
-  await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { name, phone, email });
+  await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { name, hedgeId, phone, email });
   invalidateInternsCache(batchId);
   closeModal();
   showToast('✅ Intern details updated!');
