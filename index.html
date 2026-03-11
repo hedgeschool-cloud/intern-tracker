@@ -639,6 +639,7 @@ window._state = {
   user: null,
   userDoc: null,
   batches: [],
+  internsCache: {},
   currentBatch: null,
   currentIntern: null,
   page: 'dashboard'
@@ -865,6 +866,7 @@ async function loadBatches() {
     }));
     _state.batches = batches;
     refreshMentorDropdown();
+    warmInternsCache(); // pre-load all interns into cache for instant search
     // Re-render current page with fresh data
     if (_state.page === 'dashboard') navigate('dashboard');
     else if (_state.page === 'batches') navigate('batches');
@@ -943,9 +945,27 @@ window.updateBatchTasks = async (batchId, count) => {
 // ══════════════════════════════════════════════
 // FIRESTORE — INTERNS
 // ══════════════════════════════════════════════
-async function getInterns(batchId) {
+async function getInterns(batchId, forceRefresh = false) {
+  if (!forceRefresh && _state.internsCache[batchId]) return _state.internsCache[batchId];
   const snap = await getDocs(collection(db, 'batches', batchId, 'interns'));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=>a.name.localeCompare(b.name));
+  const interns = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=>a.name.localeCompare(b.name));
+  _state.internsCache[batchId] = interns;
+  return interns;
+}
+
+// Warm up the search cache in background after batches load
+async function warmInternsCache() {
+  for (const batch of _state.batches) {
+    if (!_state.internsCache[batch.id]) {
+      await getInterns(batch.id);
+    }
+  }
+}
+
+// Call this whenever an intern is added/edited/deleted to invalidate cache
+function invalidateInternsCache(batchId) {
+  if (batchId) delete _state.internsCache[batchId];
+  else _state.internsCache = {};
 }
 
 window.addIntern = async (batchId) => {
@@ -975,6 +995,7 @@ window.addIntern = async (batchId) => {
   const phoneEl = document.getElementById('new-intern-phone'); if(phoneEl) phoneEl.value = '';
   const emailEl = document.getElementById('new-intern-email'); if(emailEl) emailEl.value = '';
   showToast('✅ ' + name + ' added!');
+  invalidateInternsCache(batchId);
   navigate('batch-detail', batchId);
 };
 
@@ -986,6 +1007,7 @@ window.deleteIntern = async (batchId, internId, internName) => {
   const newCount = Math.max(0, (batch?.internCount || 1) - 1);
   await updateDoc(doc(db, 'batches', batchId), { internCount: newCount });
   await loadBatches();
+  invalidateInternsCache(batchId);
   showToast('🗑️ ' + internName + ' removed');
   navigate('batch-detail', batchId);
 };
@@ -1233,21 +1255,21 @@ window.handleGlobalSearch = (query) => {
 };
 
 async function _doSearch(q) {
-  const token = ++_searchToken; // each search gets a unique token
+  const token = ++_searchToken;
   const box = document.getElementById('search-results');
   const results = [];
 
   // Search batches
   for (const batch of _state.batches) {
     if (batch.name.toLowerCase().includes(q)) {
-      results.push({ type: 'batch', icon: '📦', name: batch.name, sub: batch.taskCount + ' tasks', action: () => navigate('batch-detail', batch.id) });
+      results.push({ type: 'batch', icon: '📦', name: batch.name, sub: batch.stream || (batch.internCount + ' interns'), action: () => navigate('batch-detail', batch.id) });
     }
   }
 
-  // Search interns across all batches
+  // Search interns from cache only (no Firestore calls)
   for (const batch of _state.batches) {
-    if (token !== _searchToken) return; // cancelled — newer search started
-    const interns = await getInterns(batch.id);
+    if (token !== _searchToken) return;
+    const interns = _state.internsCache[batch.id] || [];
     for (const intern of interns) {
       const matchName  = intern.name.toLowerCase().includes(q);
       const matchPhone = (intern.phone || '').toLowerCase().includes(q);
@@ -1262,7 +1284,7 @@ async function _doSearch(q) {
     }
   }
 
-  if (token !== _searchToken) return; // cancelled
+  if (token !== _searchToken) return;
 
   if (!results.length) {
     box.innerHTML = '<div class="search-empty">No results found for "' + q + '"</div>';
@@ -3003,6 +3025,7 @@ window.saveEditIntern = async (batchId, internId) => {
   const email = document.getElementById('ei-email').value.trim();
   if (!name) return showToast('⚠️ Name cannot be empty', 'warn');
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { name, phone, email });
+  invalidateInternsCache(batchId);
   closeModal();
   showToast('✅ Intern details updated!');
   navigate('intern-detail', { batchId, internId });
