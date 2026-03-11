@@ -641,7 +641,9 @@ window._state = {
   internsCache: {},
   currentBatch: null,
   currentIntern: null,
-  page: 'dashboard'
+  page: 'dashboard',
+  prevPage: null,
+  prevParam: null
 };
 
 // ══════════════════════════════════════════════
@@ -817,6 +819,14 @@ function refreshMentorDropdown() {
   `).join('');
 }
 window.navigate = (page, param) => {
+  // Track previous page for back button
+  if (_state.page !== page) {
+    _state.prevPage = _state.page;
+    _state.prevParam = _state.page === 'batch-detail' ? _state.currentBatch
+                     : _state.page === 'intern-detail' ? _state.currentIntern
+                     : _state.page === 'mentor-detail' ? _state.currentMentor
+                     : null;
+  }
   _state.page = page;
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   const navEl = document.getElementById('nav-' + page);
@@ -837,6 +847,13 @@ window.navigate = (page, param) => {
   else if (page === 'users') mc.innerHTML = renderUsers();
   else if (page === 'mentors') { mc.innerHTML = renderMentorList(); }
   attachPageEvents();
+};
+
+window.goBack = () => {
+  const prev = _state.prevPage;
+  const param = _state.prevParam;
+  if (prev) navigate(prev, param);
+  else navigate('dashboard');
 };
 
 // ══════════════════════════════════════════════
@@ -1485,7 +1502,7 @@ async function renderScorecardAsync() {
 
   let html = `
     <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:8px">
-      <button class="btn btn-ghost btn-sm" onclick="history.back()" style="margin-bottom:4px">← Back</button>
+      <button class="btn btn-ghost btn-sm" onclick="goBack()" style="margin-bottom:4px">← Back</button>
       <div class="page-title">🏆 Excellence Score Card</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
         <div class="page-sub" style="margin:0">Internship Process & Progress Rankings</div>
@@ -1589,8 +1606,8 @@ async function renderScorecardAsync() {
         </table>
       </div>
     </div>
-    <div style="display:flex;justify-content:center;padding:24px 0">
-      <button class="btn btn-ghost" onclick="history.back()">← Back</button>
+    <div style="padding:24px 0">
+      <button class="btn btn-ghost" onclick="goBack()">← Back</button>
     </div>
   `;
   return html;
