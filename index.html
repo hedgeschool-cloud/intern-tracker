@@ -604,6 +604,7 @@
 
   <!-- GLOBAL TOPBAR -->
   <div class="global-topbar" id="global-topbar" style="display:none">
+    <button id="hamburger-btn" onclick="(()=>{const s=document.getElementById('sidebar');const open=s.style.left==='0px'||s.style.left==='0';open?hideSidebar():showSidebar();})()" style="display:none;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:20px;cursor:pointer;flex-shrink:0;margin-right:4px">☰</button>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input class="search-input" id="global-search" type="text" placeholder="Search batches or interns..." autocomplete="off" />
@@ -808,7 +809,9 @@ onAuthStateChanged(auth, async user => {
       document.getElementById('app').style.display = 'flex';
       document.getElementById('global-topbar').style.display = 'flex';
       const tab = document.getElementById('sidebar-tab');
-      if (tab && isMobile()) tab.style.display = 'block';
+      if (tab) tab.style.display = 'none'; // replaced by topbar hamburger
+      const hbtn = document.getElementById('hamburger-btn');
+      if (hbtn) hbtn.style.display = isMobile() ? 'flex' : 'none';
       initSidebar();
       loadBatches();
       navigate('dashboard');
@@ -824,6 +827,8 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('global-topbar').style.display = 'none';
     const tab = document.getElementById('sidebar-tab');
     if (tab) tab.style.display = 'none';
+    const hbtn2 = document.getElementById('hamburger-btn');
+    if (hbtn2) hbtn2.style.display = 'none';
   }
 });
 
@@ -884,9 +889,6 @@ window.navigate = (page, param) => {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   const navEl = document.getElementById('nav-' + page);
   if (navEl) navEl.classList.add('active');
-  // Always keep mobile tab visible after login
-  const _tab = document.getElementById('sidebar-tab');
-  if (_tab && isMobile()) { _tab.style.display = 'block'; }
   // Auto-close sidebar on mobile when navigating
   if (isMobile()) hideSidebar();
   const mc = document.getElementById('main-content');
@@ -1799,22 +1801,26 @@ function showSidebar() {
   const main = document.getElementById('main-content');
   const topbar = document.getElementById('global-topbar');
   const tab = document.getElementById('sidebar-tab');
+  const hbtn = document.getElementById('hamburger-btn');
   if (!sidebar) return;
   sidebar.style.left = '0';
   main.style.marginLeft = isMobile() ? '0' : '260px';
   if (topbar) topbar.style.left = isMobile() ? '0' : '260px';
   if (tab) { tab.style.left = '260px'; tab.textContent = '◀'; }
+  if (hbtn) hbtn.textContent = '✕';
 }
 function hideSidebar() {
   const sidebar = document.getElementById('sidebar');
   const main = document.getElementById('main-content');
   const topbar = document.getElementById('global-topbar');
   const tab = document.getElementById('sidebar-tab');
+  const hbtn = document.getElementById('hamburger-btn');
   if (!sidebar) return;
   sidebar.style.left = '-260px';
   main.style.marginLeft = '0px';
   if (topbar) topbar.style.left = '0px';
   if (tab) { tab.style.left = '0px'; tab.textContent = '☰'; }
+  if (hbtn) hbtn.textContent = '☰';
 }
 function isMobile() {
   return window.innerWidth <= 768;
@@ -1847,7 +1853,9 @@ window.addEventListener('load', () => {
   // Always start hidden - shown only after login
   tab.style.display = 'none';
   window.addEventListener('resize', () => {
-    tab.style.display = isMobile() ? 'block' : 'none';
+    tab.style.display = 'none'; // replaced by topbar hamburger
+    const _hbtn = document.getElementById('hamburger-btn');
+    if (_hbtn) _hbtn.style.display = isMobile() ? 'flex' : 'none';
     if (!isMobile()) hideSidebar();
   });
 
