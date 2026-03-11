@@ -762,32 +762,6 @@ onAuthStateChanged(auth, async user => {
       initSidebar();
       loadBatches();
       navigate('dashboard');
-      // Attach search listeners once after login
-      const searchEl = document.getElementById('global-search');
-      if (searchEl && !searchEl._listenerAttached) {
-        searchEl._listenerAttached = true;
-        searchEl.addEventListener('input', (e) => {
-          const q = e.target.value.trim().toLowerCase();
-          const box = document.getElementById('search-results');
-          if (!q) { box.style.display = 'none'; return; }
-          box.style.display = 'block';
-          box.innerHTML = '<div class="search-empty">Searching...</div>';
-          clearTimeout(window._searchDebounce);
-          window._searchDebounce = setTimeout(() => _doSearch(q), 300);
-        });
-        searchEl.addEventListener('blur', () => {
-          setTimeout(() => {
-            const box = document.getElementById('search-results');
-            if (box) box.style.display = 'none';
-          }, 200);
-        });
-        document.addEventListener('click', (e) => {
-          if (!e.target.closest('.search-wrap')) {
-            const box = document.getElementById('search-results');
-            if (box) box.style.display = 'none';
-          }
-        });
-      }
     }
   } else {
     _state.user = null; _state.userDoc = null;
@@ -880,7 +854,7 @@ async function loadBatches() {
   // Set up real-time listener
   _batchesUnsubscribe = onSnapshot(query(collection(db, 'batches'), orderBy('createdAt', 'desc')), async snap => {
     const batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Fetch live intern counts
+    // Fetch live intern counts AND populate search cache in one go
     await Promise.all(batches.map(async batch => {
       const internSnap = await getDocs(collection(db, 'batches', batch.id, 'interns'));
       const liveCount = internSnap.size;
@@ -888,10 +862,11 @@ async function loadBatches() {
         await updateDoc(doc(db, 'batches', batch.id), { internCount: liveCount });
         batch.internCount = liveCount;
       }
+      // Populate search cache directly from this fetch
+      _state.internsCache[batch.id] = internSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.name.localeCompare(b.name));
     }));
     _state.batches = batches;
     refreshMentorDropdown();
-    warmInternsCache(); // pre-load all interns into cache for instant search
     // Re-render current page with fresh data
     if (_state.page === 'dashboard') navigate('dashboard');
     else if (_state.page === 'batches') navigate('batches');
@@ -1279,7 +1254,7 @@ window.handleGlobalSearch = (query) => {
 window._searchToken = 0;
 window._searchDebounce = null;
 
-function _doSearch(q) {
+window._doSearch = function _doSearch(q) {
   const box = document.getElementById('search-results');
   if (!box) return;
   const results = [];
@@ -1750,6 +1725,28 @@ window.addEventListener('load', () => {
     tab.style.display = isMobile() ? 'block' : 'none';
     if (!isMobile()) hideSidebar();
   });
+
+  // ── SEARCH LISTENER (attached once on load, always works) ──
+  const searchEl = document.getElementById('global-search');
+  const searchBox = document.getElementById('search-results');
+  if (searchEl) {
+    searchEl.addEventListener('input', function() {
+      const q = this.value.trim().toLowerCase();
+      if (!q) { searchBox.style.display = 'none'; return; }
+      searchBox.style.display = 'block';
+      searchBox.innerHTML = '<div class="search-empty">Searching...</div>';
+      clearTimeout(window._searchDebounce);
+      window._searchDebounce = setTimeout(function() { _doSearch(q); }, 300);
+    });
+    searchEl.addEventListener('blur', function() {
+      setTimeout(function() { searchBox.style.display = 'none'; }, 200);
+    });
+    document.addEventListener('mousedown', function(e) {
+      if (!e.target.closest('.search-wrap')) {
+        searchBox.style.display = 'none';
+      }
+    });
+  }
 });
 // ══════════════════════════════════════════════
 function calcAttendance(attendance, dayCount) {
