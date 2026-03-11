@@ -395,6 +395,15 @@
       outline: none; transition: border-color .2s;
     }
     .search-input:focus { border-color: var(--accent); }
+    .refresh-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--muted); font-size: 17px;
+      cursor: pointer; transition: all .2s; flex-shrink: 0;
+    }
+    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(124,58,237,.08); }
+    .refresh-btn.spinning svg { animation: spin-once .6s ease; }
+    @keyframes spin-once { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; }
     .search-results {
       position: absolute; top: calc(100% + 8px); left: 0; right: 0;
@@ -586,6 +595,12 @@
       <input class="search-input" id="global-search" type="text" placeholder="Search batches or interns..." autocomplete="off" />
       <div class="search-results" id="search-results" style="display:none"></div>
     </div>
+    <button class="refresh-btn" id="refresh-btn" title="Refresh app data" onclick="handleAppRefresh()">
+      <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+    </button>
     <div id="save-bar-area"></div>
   </div>
 
@@ -711,6 +726,16 @@ window.handleRegister = async () => {
     showAuthError(friendlyAuthError(e.code));
     btn.innerHTML = 'Create Account'; btn.disabled = false;
   }
+};
+
+window.handleAppRefresh = async () => {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  btn.disabled = true;
+  setTimeout(() => { btn.classList.remove('spinning'); btn.disabled = false; }, 650);
+  await loadBatches();
+  navigate(_state.page || 'dashboard', _state.currentBatch || _state.currentIntern || _state.currentMentor || null);
+  showToast('🔄 App refreshed!');
 };
 
 window.handleLogout = async () => {
