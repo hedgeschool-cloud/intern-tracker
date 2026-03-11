@@ -435,6 +435,20 @@
 
     .rankings-collapsed { display: none !important; }
     .rankings-shown { display: block !important; }
+    .batch-entry-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .batch-entry-table th { background: rgba(124,58,237,.1); color: var(--accent); font-weight: 700; padding: 8px 10px; text-align: center; white-space: nowrap; border: 1px solid var(--border); position: sticky; top: 0; z-index: 2; }
+    .batch-entry-table th.name-col { text-align: left; min-width: 140px; position: sticky; left: 0; z-index: 3; background: rgba(124,58,237,.1); }
+    .batch-entry-table th.id-col { text-align: left; min-width: 140px; position: sticky; left: 140px; z-index: 3; background: rgba(124,58,237,.1); }
+    .batch-entry-table td { padding: 6px 8px; border: 1px solid var(--border); vertical-align: middle; text-align: center; }
+    .batch-entry-table td.name-col { text-align: left; font-weight: 600; color: var(--text); position: sticky; left: 0; z-index: 1; background: var(--surface); white-space: nowrap; }
+    .batch-entry-table td.id-col { text-align: left; font-size: 12px; color: var(--muted); position: sticky; left: 140px; z-index: 1; background: var(--surface); white-space: nowrap; }
+    .batch-entry-table tr:hover td { background: rgba(124,58,237,.03); }
+    .batch-entry-table tr:hover td.name-col, .batch-entry-table tr:hover td.id-col { background: rgba(124,58,237,.06); }
+    .mini-toggle { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: rgba(220,38,38,.08); cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
+    .mini-toggle.active { background: rgba(34,197,94,.15); border-color: var(--green); }
+    .mini-toggle:hover { transform: scale(1.15); }
+    .batch-entry-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border); }
+    .att-import-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 
     .main-content { padding-top: 92px !important; }
 
@@ -2099,7 +2113,98 @@ async function renderBatchDetailAsync(batchId) {
       </div>
     `;
 
+    // ── BATCH ATTENDANCE ENTRY ──
+    const attCount = batch.dayCount || 30;
+    const drCount2 = batch.dailyreportCount || 17;
+    const isAdmin2 = _state.userDoc.role === 'admin';
+
     html += `
+      <div class="card mb-16">
+        <div style="display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none" onclick="window.toggleBatchSection('att-entry')">
+          <h3 style="font-size:15px;font-weight:700;margin:0">📅 Batch Attendance Entry <span style="font-size:12px;color:var(--muted);font-weight:400">(${interns.length} interns · ${attCount} days)</span></h3>
+          <span id="att-entry-arrow" style="font-size:11px;color:var(--accent);font-weight:600">▶</span>
+        </div>
+        <div id="att-entry-body" class="rankings-collapsed" style="margin-top:14px">
+          <div class="att-import-bar">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+              📂 Import Attendance
+              <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleBatchAttImport('${batchId}', this.files[0], this)" />
+            </label>
+            <span style="font-size:12px;color:var(--muted)">Excel/CSV with Name, Email, Day columns (e.g. Day 1, Day 2… or Present/Absent)</span>
+          </div>
+          <div class="batch-entry-wrap">
+            <table class="batch-entry-table">
+              <thead><tr>
+                <th class="name-col">Name</th>
+                <th class="id-col">Email</th>
+                ${Array.from({length: attCount}, (_,i) => `<th>D${i+1}</th>`).join('')}
+              </tr></thead>
+              <tbody>
+                ${interns.map(intern => {
+                  const lastTs = intern.lastUpdatedAttendance;
+                  const lastBy = intern.lastUpdatedAttendanceBy;
+                  const lastStr = lastTs ? (' · 🕐 ' + tsToDate(lastTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + tsToDate(lastTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + ' by ' + (lastBy||'?')) : '';
+                  return `<tr>
+                    <td class="name-col" title="${lastStr ? 'Last updated' + lastStr : ''}">${intern.name}${lastStr ? `<span style="font-size:10px;color:var(--muted);display:block">${lastStr}</span>` : ''}</td>
+                    <td class="id-col" style="font-size:11px">${intern.email||'—'}</td>
+                    ${Array.from({length: attCount}, (_,i) => {
+                      const key = 'day'+(i+1);
+                      const present = intern.attendance?.[key] || false;
+                      const slotTs = intern.slotTs?.['attendance_'+key];
+                      const slotBy = intern.slotBy?.['attendance_'+key];
+                      const tip = slotTs ? (tsToDate(slotTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + tsToDate(slotTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + ' · ' + (slotBy||'?')) : '';
+                      return `<td><div class="mini-toggle ${present?'active':''}" title="${tip}" onclick="batchToggleAtt('${batchId}','${intern.id}','${key}',this)">${present?'✅':'❌'}</div></td>`;
+                    }).join('')}
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    \`;
+
+    // ── BATCH DAILY REPORT ENTRY ──
+    html += \`
+      <div class="card mb-16">
+        <div style="display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none" onclick="window.toggleBatchSection('dr-entry')">
+          <h3 style="font-size:15px;font-weight:700;margin:0">📝 Batch Daily Report Entry <span style="font-size:12px;color:var(--muted);font-weight:400">(${interns.length} interns · ${drCount2} slots)</span></h3>
+          <span id="dr-entry-arrow" style="font-size:11px;color:var(--accent);font-weight:600">▶</span>
+        </div>
+        <div id="dr-entry-body" class="rankings-collapsed" style="margin-top:14px">
+          <div class="batch-entry-wrap">
+            <table class="batch-entry-table">
+              <thead><tr>
+                <th class="name-col">Name</th>
+                <th class="id-col">Phone</th>
+                ${Array.from({length: drCount2}, (_,i) => `<th>DR${i+1}</th>`).join('')}
+              </tr></thead>
+              <tbody>
+                ${interns.map(intern => {
+                  const lastTs = intern.lastUpdatedDailyreport;
+                  const lastBy = intern.lastUpdatedDailyreportBy;
+                  const lastStr = lastTs ? (' · 🕐 ' + tsToDate(lastTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + tsToDate(lastTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + ' by ' + (lastBy||'?')) : '';
+                  return `<tr>
+                    <td class="name-col" title="${lastStr ? 'Last updated' + lastStr : ''}">${intern.name}${lastStr ? `<span style="font-size:10px;color:var(--muted);display:block">${lastStr}</span>` : ''}</td>
+                    <td class="id-col" style="font-size:11px">${intern.phone||'—'}</td>
+                    ${Array.from({length: drCount2}, (_,i) => {
+                      const key = 'dr'+(i+1);
+                      const marked = intern.dailyreport?.[key] || false;
+                      const slotTs = intern.slotTs?.['dailyreport_'+key];
+                      const slotBy = intern.slotBy?.['dailyreport_'+key];
+                      const tip = slotTs ? (tsToDate(slotTs).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + tsToDate(slotTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + ' · ' + (slotBy||'?')) : '';
+                      return `<td><div class="mini-toggle ${marked?'active':''}" title="${tip}" onclick="batchToggleDR('${batchId}','${intern.id}','${key}',this)">${marked?'✅':'❌'}</div></td>`;
+                    }).join('')}
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    \`;
+
+    html += \`
       <div class="card">
         <div class="table-wrap">
           <table>
@@ -3516,6 +3621,156 @@ window.saveEditIntern = async (batchId, internId) => {
   closeModal();
   showToast('✅ Intern details updated!');
   navigate('intern-detail', { batchId, internId });
+};
+
+// ── BATCH SECTION TOGGLE (generic) ──
+window.toggleBatchSection = (id) => {
+  const body = document.getElementById(id + '-body');
+  const arrow = document.getElementById(id + '-arrow');
+  if (!body) return;
+  const hidden = body.classList.contains('rankings-collapsed');
+  body.classList.toggle('rankings-collapsed', !hidden);
+  body.classList.toggle('rankings-shown', hidden);
+  arrow.innerHTML = hidden ? '▼' : '▶';
+};
+
+// ── BATCH ATTENDANCE TOGGLE ──
+window.batchToggleAtt = async (batchId, internId, key, el) => {
+  const cur = el.classList.contains('active');
+  const newVal = !cur;
+  el.classList.toggle('active', newVal);
+  el.textContent = newVal ? '✅' : '❌';
+  const ts = serverTimestamp();
+  const by = _state.userDoc?.name || 'Unknown';
+  await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
+    ['attendance.' + key]: newVal,
+    ['slotTs.attendance_' + key]: ts,
+    ['slotBy.attendance_' + key]: by,
+    lastUpdatedAttendance: ts,
+    lastUpdatedAttendanceBy: by
+  });
+  logActivity('Attendance', { batchId, internId, field: 'attendance.' + key, value: newVal ? 'Present' : 'Absent' });
+  // Update tooltip
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  el.title = dateStr + ' · ' + by;
+  showToast('✅ Attendance saved!');
+};
+
+// ── BATCH DAILY REPORT TOGGLE ──
+window.batchToggleDR = async (batchId, internId, key, el) => {
+  const cur = el.classList.contains('active');
+  const newVal = !cur;
+  el.classList.toggle('active', newVal);
+  el.textContent = newVal ? '✅' : '❌';
+  const ts = serverTimestamp();
+  const by = _state.userDoc?.name || 'Unknown';
+  await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
+    ['dailyreport.' + key]: newVal,
+    ['slotTs.dailyreport_' + key]: ts,
+    ['slotBy.dailyreport_' + key]: by,
+    lastUpdatedDailyreport: ts,
+    lastUpdatedDailyreportBy: by
+  });
+  logActivity('Daily Report', { batchId, internId, field: 'dailyreport.' + key, value: newVal ? 'Marked' : 'Unmarked' });
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' ' + now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  el.title = dateStr + ' · ' + by;
+  showToast('✅ Daily Report saved!');
+};
+
+// ── BATCH ATTENDANCE IMPORT FROM EXCEL/CSV ──
+window.handleBatchAttImport = async (batchId, file, inputEl) => {
+  if (!file) return;
+  const batch = _state.batches.find(b => b.id === batchId);
+  const dayCount = batch?.dayCount || 30;
+  const ext = file.name.split('.').pop().toLowerCase();
+  let rows = [];
+  if (ext === 'csv') {
+    const text = await file.text();
+    rows = text.split('\n').map(r => r.split(',').map(c => c.replace(/"/g,'').trim())).filter(r => r.some(c => c));
+  } else {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    rows = XLSX.utils.sheet_to_json(ws, { header: 1 }).map(r => r.map(c => (c||'').toString().trim()));
+  }
+  if (!rows.length) return showToast('⚠️ File is empty', 'warn');
+
+  // Detect headers — flexible
+  const headerRow = rows[0].map(h => h.toLowerCase().replace(/[\s_\-\.]/g, ''));
+  const findCol = (...kws) => headerRow.findIndex(h => kws.some(k => h.includes(k)));
+  const nameCol  = findCol('name');
+  const emailCol = findCol('email', 'mail');
+
+  // Detect day columns: "day1", "day 1", "d1", "attendance1", etc.
+  // Also handle columns named "Day 1", "Day 2" OR "Present"/"Absent" single col
+  const dayColMap = {}; // dayNumber (1-based) -> col index
+  headerRow.forEach((h, ci) => {
+    const m = h.match(/(?:day|d|attendance)(\d+)/);
+    if (m) dayColMap[parseInt(m[1])] = ci;
+  });
+  // Single "attendance"/"present"/"status" column fallback
+  const singleAttCol = Object.keys(dayColMap).length === 0
+    ? findCol('attendance', 'present', 'status', 'absent')
+    : -1;
+
+  if (nameCol < 0) return showToast('⚠️ Could not find Name column', 'warn');
+
+  const dataRows = rows.slice(1).filter(r => r[nameCol]?.trim());
+  if (!dataRows.length) return showToast('⚠️ No data rows found', 'warn');
+
+  // Fetch current interns for matching
+  const snap = await getDocs(collection(db, 'batches', batchId, 'interns'));
+  const internDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const normalize = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const ts = serverTimestamp();
+  const by = _state.userDoc?.name || 'Unknown';
+  let updated = 0, skipped = 0;
+
+  for (const row of dataRows) {
+    const rowName  = normalize(row[nameCol]);
+    const rowEmail = emailCol >= 0 ? normalize(row[emailCol]) : '';
+
+    // Match intern by name+email or just name
+    let intern = internDocs.find(i =>
+      normalize(i.name) === rowName && (rowEmail === '' || normalize(i.email) === rowEmail)
+    );
+    if (!intern) intern = internDocs.find(i => normalize(i.name) === rowName);
+    if (!intern) { skipped++; continue; }
+
+    const updates = { lastUpdatedAttendance: ts, lastUpdatedAttendanceBy: by };
+
+    if (singleAttCol >= 0) {
+      // Single column: value is "present"/"yes"/"1"/"true" → all days present
+      const val = (row[singleAttCol]||'').toLowerCase();
+      const present = ['present','yes','1','true','p'].includes(val);
+      for (let d = 1; d <= dayCount; d++) {
+        updates['attendance.day'+d] = present;
+        updates['slotTs.attendance_day'+d] = ts;
+        updates['slotBy.attendance_day'+d] = by;
+      }
+    } else {
+      for (const [dayNum, ci] of Object.entries(dayColMap)) {
+        if (parseInt(dayNum) > dayCount) continue;
+        const val = (row[ci]||'').toLowerCase();
+        const present = ['present','yes','1','true','p'].includes(val) ||
+                        (!['absent','no','0','false','a',''].includes(val) && val !== '');
+        updates['attendance.day'+dayNum] = present;
+        updates['slotTs.attendance_day'+dayNum] = ts;
+        updates['slotBy.attendance_day'+dayNum] = by;
+      }
+    }
+
+    await updateDoc(doc(db, 'batches', batchId, 'interns', intern.id), updates);
+    logActivity('Attendance', { batchId, internId: intern.id, field: 'bulk-import', value: 'Imported from file' });
+    updated++;
+  }
+
+  if (inputEl) inputEl.value = '';
+  showToast('✅ Updated ' + updated + ' interns' + (skipped ? ', skipped ' + skipped : '') + '!');
+  navigate('batch-detail', batchId);
 };
 
 window.toggleRankings = () => {
