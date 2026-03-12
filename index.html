@@ -426,15 +426,23 @@
     .search-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 14px; }
 
     /* ── SAVE BAR ── */
-    .save-bar {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; padding: 10px 20px; display: flex; align-items: center; gap: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.4); z-index: 500;
-      animation: slideUp .3s ease;
+    .topbar-save-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 10px; padding: 7px 14px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      animation: fadeInScale .25s ease;
+      white-space: nowrap; flex-shrink: 0;
     }
-    @keyframes slideUp { from { transform: translateX(-50%) translateY(20px); opacity:0; } to { transform: translateX(-50%) translateY(0); opacity:1; } }
-    .save-bar-text { font-size: 13px; color: var(--muted); }
+    .topbar-save-btn:hover { background: #5b21b6; }
+    @keyframes fadeInScale { from { opacity:0; transform:scale(.88); } to { opacity:1; transform:scale(1); } }
+    .topbar-dismiss-btn {
+      background: none; border: 1px solid var(--border); border-radius: 10px;
+      padding: 7px 10px; font-size: 12px; color: var(--muted); cursor: pointer;
+      font-family: 'DM Sans', sans-serif; flex-shrink: 0;
+    }
+    .topbar-dismiss-btn:hover { border-color: var(--accent); color: var(--accent); }
 
     .rankings-collapsed { display: none !important; }
     .rankings-shown { display: block !important; }
@@ -1540,19 +1548,19 @@ window.hideSearchResults = () => {
 // ══════════════════════════════════════════════
 window.showSaveBar = (batchId, internId) => {
   const area = document.getElementById('save-bar-area');
+  if (document.getElementById('topbar-save-btn')) return; // already showing
   area.innerHTML = `
-    <div class="save-bar" id="save-bar">
-      <span class="save-bar-text">💾 Unsaved changes</span>
-      <button class="btn btn-primary btn-sm" onclick="saveCurrentPage('${batchId}','${internId || ''}')">Save</button>
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('save-bar').remove()">Dismiss</button>
-    </div>
+    <button class="topbar-save-btn" id="topbar-save-btn" onclick="saveCurrentPage('${batchId}','${internId || ''}')">
+      💾 Save
+    </button>
+    <button class="topbar-dismiss-btn" onclick="document.getElementById('save-bar-area').innerHTML=''" title="Dismiss">✕</button>
   `;
 };
 
 window.saveCurrentPage = async (batchId, internId) => {
   showToast('✅ Saved successfully!');
-  const bar = document.getElementById('save-bar');
-  if (bar) bar.remove();
+  const area = document.getElementById('save-bar-area');
+  if (area) area.innerHTML = '';
   // Reload current page to reflect saved data
   if (internId) {
     navigate('intern-detail', { batchId, internId });
