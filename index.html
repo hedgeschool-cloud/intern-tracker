@@ -3805,9 +3805,9 @@ window.handleBatchAttImport = async (batchId, file, inputEl) => {
     ? findCol('attendance', 'present', 'status', 'absent')
     : -1;
 
-  if (nameCol < 0) return showToast('⚠️ Could not find Name column', 'warn');
+  if (emailCol < 0) return showToast('⚠️ Could not find Email column', 'warn');
 
-  const dataRows = rows.slice(1).filter(r => r[nameCol]?.trim());
+  const dataRows = rows.slice(1).filter(r => r[emailCol]?.trim());
   if (!dataRows.length) return showToast('⚠️ No data rows found', 'warn');
 
   // Fetch current interns for matching
