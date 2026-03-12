@@ -2568,13 +2568,29 @@ async function renderInternDetailAsync(param) {
       <!-- EVALUATION KEYWORDS -->
       <div class="card" style="margin-bottom:24px">
         <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">🏷️ Evaluation Keywords</h3>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Enter keywords separated by commas — these will be woven into the evaluation PDF (e.g. analytical, proactive, detail-oriented, team player)</p>
-        <input type="text" placeholder="e.g. analytical, proactive, detail-oriented, quick learner..."
-          value="${intern.evalKeywords || ''}"
-          style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
-          onfocus="this.style.borderColor='var(--accent)'"
-          onblur="this.style.borderColor='var(--border)'; updateEvalKeywords('${batchId}','${internId}',this.value)" />
-        ${_state.userDoc.role==='admin' && intern.tsEvalKeywords ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsEvalKeywords).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsEvalKeywords).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywords||''}</span></div>` : ''}
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Enter keywords separated by commas — these will be woven into the evaluation PDF to describe the intern's qualities.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--accent);display:block;margin-bottom:6px">⚙️ Process Keywords</label>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Attendance, HR, Daily Report traits (e.g. punctual, disciplined, consistent)</p>
+            <input type="text" placeholder="e.g. punctual, disciplined, consistent..."
+              value="${intern.evalKeywordsProcess || intern.evalKeywords || ''}"
+              style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
+              onfocus="this.style.borderColor='var(--accent)'"
+              onblur="this.style.borderColor='var(--border)'; updateEvalKeywordsField('${batchId}','${internId}','Process',this.value)" />
+            ${_state.userDoc.role==='admin' && intern.tsEvalKeywordsProcess ? `<div style="margin-top:4px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsEvalKeywordsProcess).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsEvalKeywordsProcess).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywordsProcess||''}</span></div>` : ''}
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--green);display:block;margin-bottom:6px">📈 Progress Keywords</label>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Project, Tasks, Social traits (e.g. analytical, innovative, proactive)</p>
+            <input type="text" placeholder="e.g. analytical, innovative, proactive..."
+              value="${intern.evalKeywordsProgress || ''}"
+              style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
+              onfocus="this.style.borderColor='var(--green)'"
+              onblur="this.style.borderColor='var(--border)'; updateEvalKeywordsField('${batchId}','${internId}','Progress',this.value)" />
+            ${_state.userDoc.role==='admin' && intern.tsEvalKeywordsProgress ? `<div style="margin-top:4px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsEvalKeywordsProgress).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsEvalKeywordsProgress).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywordsProgress||''}</span></div>` : ''}
+          </div>
+        </div>
       </div>
 
       <!-- GRADES SECTION -->
@@ -2816,25 +2832,51 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   const tGrade = intern.technicalInterviewGrade || 'Not assessed';
   const name = intern.name;
 
-  // Parse keywords
-  const rawKeywords = (intern.evalKeywords || '').split(',').map(k => k.trim()).filter(Boolean);
-  const kw1 = rawKeywords[0] || null;
-  const kw2 = rawKeywords[1] || null;
-  const kw3 = rawKeywords[2] || null;
-  const kw4 = rawKeywords[3] || null;
-  const kw5 = rawKeywords[4] || null;
-  const kwExtra = rawKeywords.slice(5);
+  // Parse process & progress keywords (with fallback to legacy single field)
+  const procKws = (intern.evalKeywordsProcess || intern.evalKeywords || '').split(',').map(k => k.trim()).filter(Boolean);
+  const progKws = (intern.evalKeywordsProgress || '').split(',').map(k => k.trim()).filter(Boolean);
+  const allKws  = [...new Set([...procKws, ...progKws])];
 
-  // Build keyword sentence for closing paragraph
-  const kwSentence = rawKeywords.length > 0
-    ? ` Throughout the internship, ${he} consistently exhibited qualities such as ${rawKeywords.join(', ')}, which stood out to the team.`
+  // Varied vocabulary maps — each score band gets multiple synonyms to avoid repetition
+  const attVocab  = { exceptional: 'exemplary', commendable: 'admirable', satisfactory: 'steady', moderate: 'reasonable', developing: 'progressing' };
+  const hrVocab   = { exceptional: 'outstanding', commendable: 'noteworthy', satisfactory: 'consistent', moderate: 'adequate', developing: 'growing' };
+  const drVocab   = { exceptional: 'remarkable', commendable: 'strong', satisfactory: 'reliable', moderate: 'acceptable', developing: 'improving' };
+  const pqVocab   = { exceptional: 'of high calibre', commendable: 'well-executed', satisfactory: 'solid', moderate: 'reasonable', developing: 'showing promise' };
+  const taskVocab = { exceptional: 'excellent', commendable: 'proficient', satisfactory: 'competent', moderate: 'adequate', developing: 'building' };
+  const scVocab   = { exceptional: 'highly proactive', commendable: 'enthusiastic', satisfactory: 'active', moderate: 'moderate', developing: 'emerging' };
+  const ovVocab   = { exceptional: 'outstanding', commendable: 'strong', satisfactory: 'well-rounded', moderate: 'consistent', developing: 'promising' };
+
+  const attDesc  = attVocab[attQ]  || attQ;
+  const hrDesc   = hrVocab[hrQ]    || hrQ;
+  const drDesc   = drVocab[drQ]    || drQ;
+  const pqDesc   = pqVocab[pqQ]    || pqQ;
+  const taskDesc = taskVocab[taskQ] || taskQ;
+  const scDesc   = scVocab[scQ]    || scQ;
+  const ovDesc   = ovVocab[overallQ] || overallQ;
+
+  // Weave process keywords into process paragraph naturally
+  const pk1 = procKws[0] || null;
+  const pk2 = procKws[1] || null;
+  const pk3 = procKws[2] || null;
+  // Weave progress keywords into progress paragraph
+  const pgk1 = progKws[0] || null;
+  const pgk2 = progKws[1] || null;
+  const pgk3 = progKws[2] || null;
+
+  // All keywords for closing sentence
+  const kwSentence = allKws.length > 0
+    ? ` Throughout the internship, ${he} consistently demonstrated qualities such as ${allKws.join(', ')}, which were evident across all areas of ${his} work.`
     : '';
 
   const evalText = [
     `${name} served as an intern in our ${stream.replace(/\s*-\s*\d+\s*days?/i, '').trim()} for a period of ${duration} days. ${intern.projectTitle ? `${His} project title was "${projectTitle}". ` : ''}We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
-    `In terms of process parameters, ${name} demonstrated ${attQ} attendance throughout the internship period, reflecting ${his} ${kw1 ? kw1 + ' and ' : ''}commitment and dedication to the program. ${His} participation in HR and Club Activities was ${hrQ}, indicating ${his} ${kw2 ? kw2 + ' approach and ' : ''}engagement with the broader organisational culture. With respect to Daily Report submissions, ${He} showed ${drQ} consistency, which is a key indicator of ${his} work ethic and accountability.`,
-    `Regarding progress parameters, ${His} Project Quality was found to be ${pqQ}, reflecting the depth of ${kw3 ? kw3 + ' and ' : ''}effort invested in ${his} project work. ${his} performance across assigned tasks was ${taskQ}, demonstrating ${his} ${kw4 ? kw4 + ' and ' : ''}grasp of the subject matter and practical skills. ${His} engagement in the Social Contest component was ${scQ}, showcasing ${his} ${kw5 ? kw5 + ' and ' : ''}initiative beyond core responsibilities.`,
-    `Overall, ${name} demonstrated a ${overallQ} performance across both process and progress dimensions.${kwSentence} We believe ${he} has shown real potential and has made meaningful contributions during the internship. As an area for continued growth, we encourage ${him} to focus on improving ${his} ${weakest.name}, which we believe will further strengthen ${his} professional profile.`,
+
+    `In terms of process parameters, ${name} maintained an ${attDesc} attendance record throughout the internship${pk1 ? ', reflecting ' + his + ' ' + pk1 + ' approach to the program' : ', reflecting ' + his + ' commitment and dedication'}. ${His} participation in HR and Club Activities was ${hrDesc}${pk2 ? ', highlighting ' + his + ' ' + pk2 + ' disposition' : ', indicating ' + his + ' engagement with the broader organisational culture'}. With respect to Daily Report submissions, ${he} displayed ${drDesc} consistency${pk3 ? ', underpinned by ' + his + ' ' + pk3 : ', which is a key indicator of ' + his + ' accountability and work ethic'}.`,
+
+    `Regarding progress parameters, ${His} Project Quality was ${pqDesc}${pgk1 ? ', shaped by ' + his + ' ' + pgk1 + ' approach to the work' : ', reflecting the effort invested in ' + his + ' project'}. ${His} performance across assigned tasks was ${taskDesc}${pgk2 ? ', demonstrating ' + his + ' ' + pgk2 + ' capabilities' : ', showcasing ' + his + ' grasp of the subject matter and practical skills'}. ${His} engagement in the Social Contest component was ${scDesc}${pgk3 ? ', driven by ' + his + ' ' + pgk3 + ' mindset' : ', showcasing ' + his + ' initiative beyond core responsibilities'}.`,
+
+    `Overall, ${name} delivered a ${ovDesc} performance across both process and progress dimensions.${kwSentence} We believe ${he} has demonstrated real potential and made meaningful contributions during this internship. As an area for continued growth, we encourage ${him} to focus on strengthening ${his} ${weakest.name}, which will further enhance ${his} professional profile.`,
+
     `${name}'s Zappyvue assessment grade is ${zGrade} and ${his} Technical Interview grade is ${tGrade}. We wish ${him} all the best in ${his} future endeavours and are confident that the skills and experience gained during this internship will serve ${him} well.`
   ];
 
@@ -2938,6 +2980,21 @@ window.updateEvalKeywords = async (batchId, internId, val) => {
   const ts = serverTimestamp(), by = _state.userDoc?.name || 'Unknown';
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { evalKeywords: val.trim(), tsEvalKeywords: ts, byEvalKeywords: by });
   if (val.trim()) { logActivity('Eval Keywords', { batchId, internId, field: 'evalKeywords', value: val.trim() }); showToast('✅ Keywords saved!'); }
+};
+
+window.updateEvalKeywordsField = async (batchId, internId, type, val) => {
+  const ts = serverTimestamp(), by = _state.userDoc?.name || 'Unknown';
+  const field = type === 'Process' ? 'evalKeywordsProcess' : 'evalKeywordsProgress';
+  await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
+    [field]: val.trim(),
+    ['ts' + field.charAt(0).toUpperCase() + field.slice(1)]: ts,
+    ['by' + field.charAt(0).toUpperCase() + field.slice(1)]: by
+  });
+  if (_state.internsCache[batchId]) {
+    const cached = _state.internsCache[batchId].find(i => i.id === internId);
+    if (cached) cached[field] = val.trim();
+  }
+  if (val.trim()) { logActivity('Eval Keywords', { batchId, internId, field, value: val.trim() }); showToast('✅ Keywords saved!'); }
 };
 
 window.updateProjectTitle = async (batchId, internId, val) => {
