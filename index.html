@@ -450,7 +450,16 @@
     .mini-toggle { width: 24px; height: 24px; border-radius: 5px; border: 1px solid var(--border); background: rgba(220,38,38,.08); cursor: pointer; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
     .mini-toggle.active { background: rgba(34,197,94,.15); border-color: var(--green); }
     .mini-toggle:hover { transform: scale(1.15); }
-    .batch-entry-wrap { overflow-x: auto; max-height: 380px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border); }
+    .batch-entry-wrap { overflow-x: auto; max-height: 380px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+    /* Always-visible, thicker scrollbar so touchpad users can grab it easily */
+    .batch-entry-wrap::-webkit-scrollbar { height: 10px; width: 8px; }
+    .batch-entry-wrap::-webkit-scrollbar-track { background: var(--surface); border-radius: 8px; }
+    .batch-entry-wrap::-webkit-scrollbar-thumb { background: rgba(124,58,237,.35); border-radius: 8px; border: 2px solid var(--surface); }
+    .batch-entry-wrap::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,.6); }
+    /* Scroll hint bar shown just below the frozen columns — visual affordance */
+    .batch-entry-outer { position: relative; }
+    .batch-scroll-hint { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); margin-top:5px; padding-left:4px; user-select:none; }
+    .batch-scroll-hint svg { opacity:.5; }
     .att-import-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 
     .main-content { padding-top: 92px !important; }
@@ -2254,6 +2263,11 @@ async function renderBatchDetailAsync(batchId) {
             </label>
             <span style="font-size:12px;color:var(--muted)">Excel/CSV with Email + Day columns (e.g. Day 1, Day 2… or Present/Absent) — matched by Email ID</span>
           </div>
+          <div class="batch-entry-outer">
+          <div class="batch-scroll-hint">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M15 6l6 6-6 6"/></svg>
+            Scroll horizontally to view all days
+          </div>
           <div class="batch-entry-wrap">
             <table class="batch-entry-table">
               <thead><tr>
@@ -2295,6 +2309,11 @@ async function renderBatchDetailAsync(batchId) {
           <span id="dr-entry-arrow" style="font-size:11px;color:var(--accent);font-weight:600">▶</span>
         </div>
         <div id="dr-entry-body" class="rankings-collapsed" style="margin-top:14px">
+          <div class="batch-entry-outer">
+          <div class="batch-scroll-hint">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M15 6l6 6-6 6"/></svg>
+            Scroll horizontally to view all daily reports
+          </div>
           <div class="batch-entry-wrap">
             <table class="batch-entry-table">
               <thead><tr>
