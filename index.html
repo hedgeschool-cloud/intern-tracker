@@ -760,7 +760,14 @@ window.handleAppRefresh = () => {
   const btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
   btn.disabled = true;
-  // True browser-level reload — identical to pressing F5
+  // Save current position so we can restore after reload
+  const anchor = {
+    page: _state.page || 'dashboard',
+    batchId: _state.currentBatch || null,
+    internId: _state.currentIntern ? (_state.currentIntern.internId || null) : null,
+    mentorId: _state.currentMentor || null
+  };
+  sessionStorage.setItem('refreshAnchor', JSON.stringify(anchor));
   window.location.reload();
 
   btn.classList.remove('spinning');
@@ -829,9 +836,25 @@ onAuthStateChanged(auth, async user => {
       if (hbtn) hbtn.style.display = isMobile() ? 'flex' : 'none';
       initSidebar();
       loadBatches();
-      // Push login sentinel first so back button from dashboard shows auth screen
-      history.replaceState({ page: 'login', param: null }, '', '#login');
-      navigate('dashboard');
+      // Restore position if this was a refresh, otherwise go to dashboard
+      const anchor = sessionStorage.getItem('refreshAnchor');
+      if (anchor) {
+        sessionStorage.removeItem('refreshAnchor');
+        const { page, batchId, internId, mentorId } = JSON.parse(anchor);
+        history.replaceState({ page: 'login', param: null }, '', '#login');
+        if (page === 'intern-detail' && batchId && internId) {
+          navigate('intern-detail', { batchId, internId });
+        } else if (page === 'batch-detail' && batchId) {
+          navigate('batch-detail', batchId);
+        } else if (page === 'mentor-detail' && mentorId) {
+          navigate('mentor-detail', mentorId);
+        } else {
+          navigate(page || 'dashboard');
+        }
+      } else {
+        history.replaceState({ page: 'login', param: null }, '', '#login');
+        navigate('dashboard');
+      }
       if (_justSignedIn) {
         logActivity('Login', {});
         _justSignedIn = false; // Reset flag after logging
