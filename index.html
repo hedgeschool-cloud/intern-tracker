@@ -756,48 +756,12 @@ window.handleRegister = async () => {
   }
 };
 
-window.handleAppRefresh = async () => {
+window.handleAppRefresh = () => {
   const btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
   btn.disabled = true;
-
-  // ── Full deep refresh: tear down listener, wipe all caches, re-fetch everything ──
-  // 1. Kill existing Firestore snapshot listener
-  if (_batchesUnsubscribe) { _batchesUnsubscribe(); _batchesUnsubscribe = null; }
-
-  // 2. Wipe all cached data
-  _state.internsCache = {};
-  _state.batches = [];
-
-  // 3. Re-fetch user doc in case role/name changed
-  try {
-    const uSnap = await getDoc(doc(db, 'users', _state.user.uid));
-    if (uSnap.exists()) _state.userDoc = uSnap.data();
-  } catch(e) {}
-
-  // 4. Re-establish listener and fully reload all batch+intern data from Firestore
-  await new Promise(resolve => {
-    _batchesUnsubscribe = onSnapshot(query(collection(db, 'batches'), orderBy('createdAt', 'desc')), async snap => {
-      const batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      await Promise.all(batches.map(async batch => {
-        const internSnap = await getDocs(collection(db, 'batches', batch.id, 'interns'));
-        const liveCount = internSnap.size;
-        if (batch.internCount !== liveCount) {
-          await updateDoc(doc(db, 'batches', batch.id), { internCount: liveCount });
-          batch.internCount = liveCount;
-        }
-        _state.internsCache[batch.id] = internSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.name.localeCompare(b.name));
-      }));
-      _state.batches = batches;
-      refreshMentorDropdown();
-      resolve();
-    }, () => resolve()); // resolve on error too so we don't hang
-  });
-
-  // 5. Re-render current page with fully fresh data
-  const page = _state.page || 'dashboard';
-  const param = _state.currentBatch || _state.currentIntern || _state.currentMentor || null;
-  navigate(page, param);
+  // True browser-level reload — identical to pressing F5
+  window.location.reload();
 
   btn.classList.remove('spinning');
   btn.disabled = false;
