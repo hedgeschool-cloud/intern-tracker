@@ -2829,7 +2829,7 @@ window.exportEvaluationPDF = async (batchId, internId) => {
     if (pct >= 70) return 'commendable';
     if (pct >= 55) return 'satisfactory';
     if (pct >= 40) return 'moderate';
-    return 'developing';
+    return 'nascent';
   }
 
   const params = [
@@ -2881,13 +2881,19 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   }
 
   // Varied vocabulary maps — each score band gets a distinct synonym
-  const attVocab  = { exceptional: 'exemplary', commendable: 'admirable', satisfactory: 'steady', moderate: 'reasonable', developing: 'progressing' };
-  const hrVocab   = { exceptional: 'outstanding', commendable: 'noteworthy', satisfactory: 'consistent', moderate: 'adequate', developing: 'growing' };
-  const drVocab   = { exceptional: 'remarkable', commendable: 'strong', satisfactory: 'reliable', moderate: 'acceptable', developing: 'improving' };
-  const pqVocab   = { exceptional: 'of high calibre', commendable: 'well-executed', satisfactory: 'solid', moderate: 'reasonable', developing: 'showing promise' };
-  const taskVocab = { exceptional: 'excellent', commendable: 'proficient', satisfactory: 'competent', moderate: 'adequate', developing: 'building' };
-  const scVocab   = { exceptional: 'highly proactive', commendable: 'enthusiastic', satisfactory: 'active', moderate: 'moderate', developing: 'emerging' };
-  const ovVocab   = { exceptional: 'outstanding', commendable: 'strong', satisfactory: 'well-rounded', moderate: 'consistent', developing: 'promising' };
+  // Words chosen to be: natural, grammatically safe, and distinct per band
+  // attDesc used as "a/an ___ attendance record" — must be adjective, no vowel-start issues
+  const attVocab  = { exceptional: 'exemplary',   commendable: 'commendable', satisfactory: 'consistent',  moderate: 'moderate',   nascent: 'initial' };
+  const hrVocab   = { exceptional: 'outstanding',  commendable: 'noteworthy',  satisfactory: 'good',        moderate: 'adequate',   nascent: 'growing' };
+  const drVocab   = { exceptional: 'remarkable',   commendable: 'strong',      satisfactory: 'reliable',    moderate: 'fair',       nascent: 'improving' };
+  // pqDesc used as "Project Quality was ___" — can be adjective or short phrase
+  const pqVocab   = { exceptional: 'of high calibre', commendable: 'well-executed', satisfactory: 'solid', moderate: 'satisfactory', nascent: 'at an early stage' };
+  // taskDesc used as "performance was ___"
+  const taskVocab = { exceptional: 'excellent',    commendable: 'proficient',  satisfactory: 'competent',   moderate: 'adequate',   nascent: 'foundational' };
+  // scDesc used as "engagement was ___"
+  const scVocab   = { exceptional: 'highly active', commendable: 'enthusiastic', satisfactory: 'active',   moderate: 'moderate',   nascent: 'budding' };
+  // ovDesc used as "delivered a ___ performance"
+  const ovVocab   = { exceptional: 'outstanding',  commendable: 'strong',      satisfactory: 'well-rounded', moderate: 'consistent', nascent: 'promising' };
 
   const attDesc  = attVocab[attQ]  || attQ;
   const hrDesc   = hrVocab[hrQ]    || hrQ;
@@ -2896,6 +2902,11 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   const taskDesc = taskVocab[taskQ] || taskQ;
   const scDesc   = scVocab[scQ]    || scQ;
   const ovDesc   = ovVocab[overallQ] || overallQ;
+
+  // Smart "a/an" helper — picks correct article based on first letter
+  function article(word) {
+    return /^[aeiou]/i.test(word.trim()) ? 'an' : 'a';
+  }
 
   // Process keyword phrases (attendance, HR, daily report)
   const pk1 = procKws[0] || null;
@@ -2935,11 +2946,11 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   const evalText = [
     `${name} served as an intern in our ${stream.replace(/\s*-\s*\d+\s*days?/i, '').trim()} for a period of ${duration} days. ${intern.projectTitle ? `${His} project title was "${projectTitle}". ` : ''}We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
 
-    `In terms of process parameters, ${name} maintained an ${attDesc} attendance record throughout the internship${buildClause(pk1, procConnectors[0], ', reflecting ' + his + ' commitment and dedication to the program', his)}. ${His} participation in HR and Club Activities was ${hrDesc}${buildClause(pk2, procConnectors[1], ', indicating ' + his + ' engagement with the broader organisational culture', his)}. With respect to Daily Report submissions, ${he} displayed ${drDesc} consistency${buildClause(pk3, procConnectors[2], ', which is a key indicator of ' + his + ' accountability and work ethic', his)}.`,
+    `In terms of process parameters, ${name} maintained ${article(attDesc)} ${attDesc} attendance record throughout the internship${buildClause(pk1, procConnectors[0], ', reflecting ' + his + ' commitment and dedication to the program', his)}. ${His} participation in HR and Club Activities was ${hrDesc}${buildClause(pk2, procConnectors[1], ', indicating ' + his + ' engagement with the broader organisational culture', his)}. With respect to Daily Report submissions, ${he} displayed ${drDesc} consistency${buildClause(pk3, procConnectors[2], ', which is a key indicator of ' + his + ' accountability and work ethic', his)}.`,
 
     `Regarding progress parameters, ${His} Project Quality was ${pqDesc}${buildClause(pgk1, progConnectors[0], ', reflecting the effort and rigour invested in ' + his + ' project work', his)}. ${His} performance across assigned tasks was ${taskDesc}${buildClause(pgk2, progConnectors[1], ', showcasing ' + his + ' grasp of the subject matter and practical skills', his)}. ${His} engagement in the Social Contest component was ${scDesc}${buildClause(pgk3, progConnectors[2], ', showcasing ' + his + ' initiative beyond core responsibilities', his)}.`,
 
-    `Overall, ${name} delivered a ${ovDesc} performance across both process and progress dimensions.${kwSentence} We believe ${he} has demonstrated real potential and made meaningful contributions during this internship. As an area for continued growth, we encourage ${him} to focus on strengthening ${his} ${weakest.name}, which will further enhance ${his} professional profile.`,
+    `Overall, ${name} delivered ${article(ovDesc)} ${ovDesc} performance across both process and progress dimensions.${kwSentence} We believe ${he} has demonstrated real potential and made meaningful contributions during this internship. As an area for continued growth, we encourage ${him} to focus on strengthening ${his} ${weakest.name}, which will further enhance ${his} professional profile.`,
 
     `${name}'s Zappyvue assessment grade is ${zGrade} and ${his} Technical Interview grade is ${tGrade}. We wish ${him} all the best in ${his} future endeavours and are confident that the skills and experience gained during this internship will serve ${him} well.`
   ];
