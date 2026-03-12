@@ -2837,7 +2837,25 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   const progKws = (intern.evalKeywordsProgress || '').split(',').map(k => k.trim()).filter(Boolean);
   const allKws  = [...new Set([...procKws, ...progKws])];
 
-  // Varied vocabulary maps — each score band gets multiple synonyms to avoid repetition
+  // Smart keyword normaliser — converts any word/phrase into grammatically fluent text
+  // Detects whether kw is adjective-like (1 word) or noun-phrase/sentence (2+ words)
+  // and picks the right sentence structure accordingly
+  function kwPhrase(kw, his_, mode) {
+    if (!kw) return null;
+    const words = kw.trim().split(/\s+/);
+    const isAdj = words.length === 1; // single word → treat as adjective
+    if (mode === 'noun') {
+      // "his <kw>" or "a <kw> approach"
+      return isAdj ? his_ + ' ' + kw + ' approach' : his_ + ' ' + kw;
+    } else if (mode === 'quality') {
+      return isAdj ? his_ + ' ' + kw + ' nature' : his_ + ' ' + kw;
+    } else if (mode === 'trait') {
+      return isAdj ? kw + ' mindset' : kw;
+    }
+    return kw;
+  }
+
+  // Varied vocabulary maps — each score band gets a distinct synonym
   const attVocab  = { exceptional: 'exemplary', commendable: 'admirable', satisfactory: 'steady', moderate: 'reasonable', developing: 'progressing' };
   const hrVocab   = { exceptional: 'outstanding', commendable: 'noteworthy', satisfactory: 'consistent', moderate: 'adequate', developing: 'growing' };
   const drVocab   = { exceptional: 'remarkable', commendable: 'strong', satisfactory: 'reliable', moderate: 'acceptable', developing: 'improving' };
@@ -2854,26 +2872,40 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   const scDesc   = scVocab[scQ]    || scQ;
   const ovDesc   = ovVocab[overallQ] || overallQ;
 
-  // Weave process keywords into process paragraph naturally
+  // Process keyword phrases (attendance, HR, daily report)
   const pk1 = procKws[0] || null;
   const pk2 = procKws[1] || null;
   const pk3 = procKws[2] || null;
-  // Weave progress keywords into progress paragraph
+  // Progress keyword phrases (project, tasks, social)
   const pgk1 = progKws[0] || null;
   const pgk2 = progKws[1] || null;
   const pgk3 = progKws[2] || null;
 
-  // All keywords for closing sentence
+  // Closing keyword sentence — list all keywords naturally
   const kwSentence = allKws.length > 0
-    ? ` Throughout the internship, ${he} consistently demonstrated qualities such as ${allKws.join(', ')}, which were evident across all areas of ${his} work.`
+    ? ` Throughout the internship, ${he} consistently demonstrated ${allKws.length === 1 ? allKws[0] : allKws.slice(0,-1).join(', ') + ' and ' + allKws[allKws.length-1]}, which were evident across all areas of ${his} work.`
     : '';
+
+  // Helper: build process keyword clause — gracefully handles single words and phrases
+  function procClause(kw, connector, fallback) {
+    if (!kw) return fallback;
+    const words = kw.trim().split(/\s+/);
+    if (words.length === 1) return connector + ' ' + his + ' ' + kw + ' disposition';
+    return connector + ' ' + his + ' ' + kw;
+  }
+  function progClause(kw, connector, fallback) {
+    if (!kw) return fallback;
+    const words = kw.trim().split(/\s+/);
+    if (words.length === 1) return connector + ' ' + his + ' ' + kw + ' capabilities';
+    return connector + ' ' + his + ' ' + kw;
+  }
 
   const evalText = [
     `${name} served as an intern in our ${stream.replace(/\s*-\s*\d+\s*days?/i, '').trim()} for a period of ${duration} days. ${intern.projectTitle ? `${His} project title was "${projectTitle}". ` : ''}We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
 
-    `In terms of process parameters, ${name} maintained an ${attDesc} attendance record throughout the internship${pk1 ? ', reflecting ' + his + ' ' + pk1 + ' approach to the program' : ', reflecting ' + his + ' commitment and dedication'}. ${His} participation in HR and Club Activities was ${hrDesc}${pk2 ? ', highlighting ' + his + ' ' + pk2 + ' disposition' : ', indicating ' + his + ' engagement with the broader organisational culture'}. With respect to Daily Report submissions, ${he} displayed ${drDesc} consistency${pk3 ? ', underpinned by ' + his + ' ' + pk3 : ', which is a key indicator of ' + his + ' accountability and work ethic'}.`,
+    `In terms of process parameters, ${name} maintained an ${attDesc} attendance record throughout the internship${procClause(pk1, ', reflecting', ', reflecting ' + his + ' commitment and dedication to the program')}. ${His} participation in HR and Club Activities was ${hrDesc}${procClause(pk2, ', highlighting', ', indicating ' + his + ' engagement with the broader organisational culture')}. With respect to Daily Report submissions, ${he} displayed ${drDesc} consistency${procClause(pk3, ', underpinned by', ', which is a key indicator of ' + his + ' accountability and work ethic')}.`,
 
-    `Regarding progress parameters, ${His} Project Quality was ${pqDesc}${pgk1 ? ', shaped by ' + his + ' ' + pgk1 + ' approach to the work' : ', reflecting the effort invested in ' + his + ' project'}. ${His} performance across assigned tasks was ${taskDesc}${pgk2 ? ', demonstrating ' + his + ' ' + pgk2 + ' capabilities' : ', showcasing ' + his + ' grasp of the subject matter and practical skills'}. ${His} engagement in the Social Contest component was ${scDesc}${pgk3 ? ', driven by ' + his + ' ' + pgk3 + ' mindset' : ', showcasing ' + his + ' initiative beyond core responsibilities'}.`,
+    `Regarding progress parameters, ${His} Project Quality was ${pqDesc}${progClause(pgk1, ', shaped by', ', reflecting the effort and rigour invested in ' + his + ' project work')}. ${His} performance across assigned tasks was ${taskDesc}${progClause(pgk2, ', demonstrating', ', showcasing ' + his + ' grasp of the subject matter and practical skills')}. ${His} engagement in the Social Contest component was ${scDesc}${progClause(pgk3, ', driven by', ', showcasing ' + his + ' initiative beyond core responsibilities')}.`,
 
     `Overall, ${name} delivered a ${ovDesc} performance across both process and progress dimensions.${kwSentence} We believe ${he} has demonstrated real potential and made meaningful contributions during this internship. As an area for continued growth, we encourage ${him} to focus on strengthening ${his} ${weakest.name}, which will further enhance ${his} professional profile.`,
 
