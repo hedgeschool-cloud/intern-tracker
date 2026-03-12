@@ -2929,9 +2929,10 @@ window.updateProjectTitle = async (batchId, internId, val) => {
 };
 
 window.updateSingleField = async (batchId, internId, field, val) => {
-  const gradeFields = ['zappyvueGrade', 'technicalInterviewGrade', 'gender'];
+  const stringFields = ['zappyvueGrade', 'technicalInterviewGrade', 'gender', 'email', 'phone', 'name', 'hedgeId', 'projectTitle'];
+  const gradeFields  = ['zappyvueGrade', 'technicalInterviewGrade', 'gender'];
   let saveVal;
-  if (gradeFields.includes(field)) {
+  if (stringFields.includes(field)) {
     saveVal = val;
   } else {
     saveVal = val === '' ? '' : Math.max(0, Math.min(100, parseFloat(val) || 0));
@@ -2942,11 +2943,16 @@ window.updateSingleField = async (batchId, internId, field, val) => {
     ['ts_' + field]: ts,
     ['by_' + field]: by
   });
+  // Also update the in-memory cache directly so batch pages reflect change immediately
+  if (_state.internsCache[batchId]) {
+    const cached = _state.internsCache[batchId].find(i => i.id === internId);
+    if (cached) cached[field] = saveVal;
+  }
   logActivity(gradeFields.includes(field) ? 'Grade/Field' : 'Score', { batchId, internId, field, value: saveVal });
   if (gradeFields.includes(field) && val) {
-    showToast('✅ Grade ' + val + ' saved!');
+    showToast('✅ Saved!');
   } else {
-    showToast('✅ Score saved!');
+    showToast('✅ Saved!');
   }
 };
 
