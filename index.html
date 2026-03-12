@@ -2504,23 +2504,33 @@ async function renderInternDetailAsync(param) {
         </div>
       </div>
 
-      <!-- PHONE + EMAIL -->
+      <!-- PHONE + EMAIL — editable by admin only -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">📞 Phone Number</h3>
+          ${_state.userDoc.role === 'admin' ? `
           <input type="tel" placeholder="Enter phone number..."
             value="${intern.phone || ''}"
             style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
             onfocus="this.style.borderColor='var(--accent)'"
             onblur="this.style.borderColor='var(--border)'; updateSingleField('${batchId}','${internId}','phone',this.value)" />
+          ` : `
+          <div style="padding:12px;font-size:15px;color:${intern.phone ? 'var(--text)' : 'var(--muted)'};border:1px solid var(--border);border-radius:8px;background:var(--bg)">${intern.phone || '—'}</div>
+          <div style="margin-top:6px;font-size:11px;color:var(--muted)">🔒 Only admins can edit</div>
+          `}
         </div>
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">✉️ Email ID</h3>
+          ${_state.userDoc.role === 'admin' ? `
           <input type="email" placeholder="Enter email address..."
             value="${intern.email || ''}"
             style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
             onfocus="this.style.borderColor='var(--accent)'"
             onblur="this.style.borderColor='var(--border)'; updateSingleField('${batchId}','${internId}','email',this.value)" />
+          ` : `
+          <div style="padding:12px;font-size:15px;color:${intern.email ? 'var(--text)' : 'var(--muted)'};border:1px solid var(--border);border-radius:8px;background:var(--bg)">${intern.email || '—'}</div>
+          <div style="margin-top:6px;font-size:11px;color:var(--muted)">🔒 Only admins can edit</div>
+          `}
         </div>
       </div>
 
