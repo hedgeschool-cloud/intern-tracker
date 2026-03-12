@@ -2883,17 +2883,18 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   // Varied vocabulary maps — each score band gets a distinct synonym
   // Words chosen to be: natural, grammatically safe, and distinct per band
   // attDesc used as "a/an ___ attendance record" — must be adjective, no vowel-start issues
-  const attVocab  = { exceptional: 'exemplary',   commendable: 'commendable', satisfactory: 'consistent',  moderate: 'moderate',   nascent: 'initial' };
-  const hrVocab   = { exceptional: 'outstanding',  commendable: 'noteworthy',  satisfactory: 'good',        moderate: 'adequate',   nascent: 'growing' };
-  const drVocab   = { exceptional: 'remarkable',   commendable: 'strong',      satisfactory: 'reliable',    moderate: 'fair',       nascent: 'improving' };
-  // pqDesc used as "Project Quality was ___" — can be adjective or short phrase
-  const pqVocab   = { exceptional: 'of high calibre', commendable: 'well-executed', satisfactory: 'solid', moderate: 'satisfactory', nascent: 'at an early stage' };
+  // nascent band (below 40% or zero) — always respectful, constructive, never negative
+  const attVocab  = { exceptional: 'exemplary',    commendable: 'commendable',  satisfactory: 'consistent',    moderate: 'moderately regular',  nascent: 'moderately punctual'   };
+  const hrVocab   = { exceptional: 'outstanding',  commendable: 'noteworthy',   satisfactory: 'good',          moderate: 'adequate',            nascent: 'reasonably engaged'    };
+  const drVocab   = { exceptional: 'remarkable',   commendable: 'strong',       satisfactory: 'reliable',      moderate: 'fair',                nascent: 'reasonably consistent' };
+  // pqDesc used as "Project Quality was ___"
+  const pqVocab   = { exceptional: 'of high calibre', commendable: 'well-executed', satisfactory: 'solid',     moderate: 'satisfactory',        nascent: 'showing early promise'  };
   // taskDesc used as "performance was ___"
-  const taskVocab = { exceptional: 'excellent',    commendable: 'proficient',  satisfactory: 'competent',   moderate: 'adequate',   nascent: 'foundational' };
+  const taskVocab = { exceptional: 'excellent',    commendable: 'proficient',   satisfactory: 'competent',     moderate: 'adequate',            nascent: 'showing a willingness to learn' };
   // scDesc used as "engagement was ___"
-  const scVocab   = { exceptional: 'highly active', commendable: 'enthusiastic', satisfactory: 'active',   moderate: 'moderate',   nascent: 'budding' };
+  const scVocab   = { exceptional: 'highly active', commendable: 'enthusiastic', satisfactory: 'active',       moderate: 'moderate',            nascent: 'steadily emerging'     };
   // ovDesc used as "delivered a ___ performance"
-  const ovVocab   = { exceptional: 'outstanding',  commendable: 'strong',      satisfactory: 'well-rounded', moderate: 'consistent', nascent: 'promising' };
+  const ovVocab   = { exceptional: 'outstanding',  commendable: 'strong',       satisfactory: 'well-rounded',  moderate: 'consistent',          nascent: 'promising'             };
 
   const attDesc  = attVocab[attQ]  || attQ;
   const hrDesc   = hrVocab[hrQ]    || hrQ;
