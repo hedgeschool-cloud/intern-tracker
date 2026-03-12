@@ -2216,7 +2216,7 @@ async function renderBatchDetailAsync(batchId) {
               📂 Import Attendance
               <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleBatchAttImport('${batchId}', this.files[0], this)" />
             </label>
-            <span style="font-size:12px;color:var(--muted)">Excel/CSV with Name, Email, Day columns (e.g. Day 1, Day 2… or Present/Absent)</span>
+            <span style="font-size:12px;color:var(--muted)">Excel/CSV with Email + Day columns (e.g. Day 1, Day 2… or Present/Absent) — matched by Email ID</span>
           </div>
           <div class="batch-entry-wrap">
             <table class="batch-entry-table">
@@ -3820,14 +3820,10 @@ window.handleBatchAttImport = async (batchId, file, inputEl) => {
   let updated = 0, skipped = 0;
 
   for (const row of dataRows) {
-    const rowName  = normalize(row[nameCol]);
     const rowEmail = emailCol >= 0 ? normalize(row[emailCol]) : '';
 
-    // Match intern by name+email or just name
-    let intern = internDocs.find(i =>
-      normalize(i.name) === rowName && (rowEmail === '' || normalize(i.email) === rowEmail)
-    );
-    if (!intern) intern = internDocs.find(i => normalize(i.name) === rowName);
+    // Match intern by email only (unique identifier)
+    let intern = rowEmail ? internDocs.find(i => normalize(i.email) === rowEmail) : null;
     if (!intern) { skipped++; continue; }
 
     const updates = { lastUpdatedAttendance: ts, lastUpdatedAttendanceBy: by };
