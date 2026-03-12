@@ -2831,7 +2831,7 @@ window.exportEvaluationPDF = async (batchId, internId) => {
     : '';
 
   const evalText = [
-    `${name} served as an intern in our ${stream} stream for a period of ${duration} days. ${intern.projectTitle ? `${His} project title was "${projectTitle}". ` : ''}We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
+    `${name} served as an intern in our ${stream.replace(/\s*-\s*\d+\s*days?/i, '').trim()} for a period of ${duration} days. ${intern.projectTitle ? `${His} project title was "${projectTitle}". ` : ''}We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
     `In terms of process parameters, ${name} demonstrated ${attQ} attendance throughout the internship period, reflecting ${his} ${kw1 ? kw1 + ' and ' : ''}commitment and dedication to the program. ${His} participation in HR and Club Activities was ${hrQ}, indicating ${his} ${kw2 ? kw2 + ' approach and ' : ''}engagement with the broader organisational culture. With respect to Daily Report submissions, ${He} showed ${drQ} consistency, which is a key indicator of ${his} work ethic and accountability.`,
     `Regarding progress parameters, ${His} Project Quality was found to be ${pqQ}, reflecting the depth of ${kw3 ? kw3 + ' and ' : ''}effort invested in ${his} project work. ${his} performance across assigned tasks was ${taskQ}, demonstrating ${his} ${kw4 ? kw4 + ' and ' : ''}grasp of the subject matter and practical skills. ${His} engagement in the Social Contest component was ${scQ}, showcasing ${his} ${kw5 ? kw5 + ' and ' : ''}initiative beyond core responsibilities.`,
     `Overall, ${name} demonstrated a ${overallQ} performance across both process and progress dimensions.${kwSentence} We believe ${he} has shown real potential and has made meaningful contributions during the internship. As an area for continued growth, we encourage ${him} to focus on improving ${his} ${weakest.name}, which we believe will further strengthen ${his} professional profile.`,
@@ -2858,14 +2858,14 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   pdf.setTextColor(80, 0, 120);
   pdf.text('Personalised Evaluation Sheet', margin, 52);
 
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(11);
   pdf.setTextColor(50, 50, 50);
-  pdf.text('of ' + name, margin, 59);
+  pdf.text(name, margin, 59);
 
   // Hedge ID badge next to name
   if (intern.hedgeId) {
-    const nameWidth = pdf.getTextWidth('of ' + name);
+    const nameWidth = pdf.getTextWidth(name);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(9);
     pdf.setTextColor(109, 40, 217);
