@@ -936,6 +936,11 @@ function renderPage(page, param) {
   const navEl = document.getElementById('nav-' + page);
   if (navEl) navEl.classList.add('active');
   if (isMobile()) hideSidebar();
+  // Clear topbar save button when leaving intern-detail
+  if (page !== 'intern-detail') {
+    const area = document.getElementById('save-bar-area');
+    if (area) area.innerHTML = '';
+  }
   const mc = document.getElementById('main-content');
   if (page === 'dashboard') mc.innerHTML = renderDashboard();
   else if (page === 'batches') mc.innerHTML = renderBatchList();
@@ -2737,9 +2742,14 @@ function tsToDate(val) {
 }
 
 function renderInternDetail(param) {
+  const batchId = param?.batchId || param;
+  const internId = param?.internId || '';
   renderInternDetailAsync(param).then(html => {
     document.getElementById('main-content').innerHTML = html;
     attachPageEvents();
+    // Inject save button in topbar
+    const area = document.getElementById('save-bar-area');
+    if (area) area.innerHTML = `<button class="topbar-save-btn" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>`;
   });
   return `<div style="padding:60px; text-align:center; color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>`;
 }
