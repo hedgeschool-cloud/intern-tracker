@@ -2443,7 +2443,7 @@ async function renderInternDetailAsync(param) {
           ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="showEditInternModal('${batchId}','${internId}')">✏️ Edit</button>` : ''}
           <button class="btn btn-primary btn-sm" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
           <button class="btn btn-green btn-sm" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
-          <button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
+          <button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
         </div>
       </div>
 
@@ -2658,7 +2658,7 @@ async function renderInternDetailAsync(param) {
         ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="showEditInternModal('${batchId}','${internId}')">✏️ Edit Intern</button>` : ''}
         <button class="btn btn-primary" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
         <button class="btn btn-green" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
-        <button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:#5b21b6;border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
+        <button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
       </div>
       <div style="padding:8px 0 24px">
         <button class="btn btn-ghost btn-sm" onclick="navigate('batch-detail','${batchId}')">← Back to ${batch?.name}</button>
