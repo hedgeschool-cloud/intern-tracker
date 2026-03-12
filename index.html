@@ -857,6 +857,8 @@ onAuthStateChanged(auth, async user => {
       if (hbtn) hbtn.style.display = isMobile() ? 'flex' : 'none';
       initSidebar();
       loadBatches();
+      // Push login sentinel first so back button from dashboard shows auth screen
+      history.replaceState({ page: 'login', param: null }, '', '#login');
       navigate('dashboard');
       if (_justSignedIn) {
         logActivity('Login', {});
@@ -919,20 +921,12 @@ function refreshMentorDropdown() {
     </div>
   `).join('');
 }
-window.navigate = (page, param) => {
-  // Track previous page for back button
-  if (_state.page !== page) {
-    _state.prevPage = _state.page;
-    _state.prevParam = _state.page === 'batch-detail' ? _state.currentBatch
-                     : _state.page === 'intern-detail' ? _state.currentIntern
-                     : _state.page === 'mentor-detail' ? _state.currentMentor
-                     : null;
-  }
+// ── INTERNAL RENDER (no history push) ──
+function renderPage(page, param) {
   _state.page = page;
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   const navEl = document.getElementById('nav-' + page);
   if (navEl) navEl.classList.add('active');
-  // Auto-close sidebar on mobile when navigating
   if (isMobile()) hideSidebar();
   const mc = document.getElementById('main-content');
   if (page === 'dashboard') mc.innerHTML = renderDashboard();
@@ -946,13 +940,55 @@ window.navigate = (page, param) => {
   else if (page === 'analytics') mc.innerHTML = renderAnalytics();
   else if (page === 'mentors') { mc.innerHTML = renderMentorList(); }
   attachPageEvents();
+}
+
+// ── NAVIGATE (pushes browser history) ──
+window.navigate = (page, param) => {
+  const state = { page, param };
+  history.pushState(state, '', '#' + page);
+  renderPage(page, param);
 };
 
+// ── BROWSER BACK/FORWARD BUTTON ──
+window.addEventListener('popstate', (e) => {
+  // If no state at all — we've gone back before the app started
+  // Show login screen instead of leaving
+  if (!e.state) {
+    if (_state.user) {
+      // Still logged in — push dashboard back so user stays in app
+      history.pushState({ page: 'dashboard', param: null }, '', '#dashboard');
+      renderPage('dashboard', null);
+    } else {
+      // Not logged in — show auth screen
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('global-topbar').style.display = 'none';
+      const hbtn = document.getElementById('hamburger-btn');
+      if (hbtn) hbtn.style.display = 'none';
+    }
+    return;
+  }
+  const { page, param } = e.state;
+  // If going back to 'login' sentinel — show auth screen
+  if (page === 'login') {
+    if (_state.user) {
+      // Still logged in, don't log out just from back button — go to dashboard
+      history.pushState({ page: 'dashboard', param: null }, '', '#dashboard');
+      renderPage('dashboard', null);
+    } else {
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('global-topbar').style.display = 'none';
+      const hbtn = document.getElementById('hamburger-btn');
+      if (hbtn) hbtn.style.display = 'none';
+    }
+    return;
+  }
+  renderPage(page, param);
+});
+
 window.goBack = () => {
-  const prev = _state.prevPage;
-  const param = _state.prevParam;
-  if (prev) navigate(prev, param);
-  else navigate('dashboard');
+  history.back();
 };
 
 // ══════════════════════════════════════════════
