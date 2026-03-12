@@ -1018,25 +1018,38 @@ const STREAM_DURATION_MAP = {
 
 window.STREAM_DURATION_MAP = STREAM_DURATION_MAP;
 
+window.onStreamChange = (streamVal) => {
+  const duration = STREAM_DURATION_MAP[streamVal] || 30;
+  document.getElementById('batch-duration-input').value = duration;
+  // Auto-fill slot counts from config as a helpful default, user can still override
+  const cfg = DURATION_CONFIG[duration] || DURATION_CONFIG[30];
+  document.getElementById('batch-att-input').value = cfg.attendance;
+  document.getElementById('batch-dr-input').value = cfg.dailyreport;
+};
+
 window.createBatch = async () => {
   const name = document.getElementById('batch-name-input').value.trim();
   const stream = document.getElementById('batch-stream-input').value;
   const duration = parseInt(document.getElementById('batch-duration-input').value) || 30;
   const desc = document.getElementById('batch-desc-input').value.trim();
   const mentor = document.getElementById('batch-mentor-input')?.value.trim() || '';
+  const attSlots = Math.max(1, parseInt(document.getElementById('batch-att-input').value) || 16);
+  const drSlots  = Math.max(1, parseInt(document.getElementById('batch-dr-input').value)  || 17);
   if (!name) return showToast('⚠️ Batch name required', 'warn');
   if (!stream) return showToast('⚠️ Please select a stream', 'warn');
-  const cfg = DURATION_CONFIG[duration];
+  const cfg = DURATION_CONFIG[duration] || DURATION_CONFIG[30];
   const id = 'batch_' + Date.now();
   await setDoc(doc(db, 'batches', id), {
     name, stream, duration, description: desc, mentor,
-    taskCount: cfg.tasks, dayCount: cfg.attendance,
-    hrclubCount: cfg.hrclub, dailyreportCount: cfg.dailyreport,
+    taskCount: cfg.tasks,
+    dayCount: attSlots,
+    hrclubCount: cfg.hrclub,
+    dailyreportCount: drSlots,
     createdAt: serverTimestamp(), internCount: 0
   });
   await loadBatches();
   closeModal();
-  showToast('✅ Batch "' + name + '" created!');
+  showToast('✅ Batch "' + name + '" created with ' + attSlots + ' attendance & ' + drSlots + ' daily report slots!');
   navigate('batch-detail', id);
 };
 
@@ -3900,6 +3913,18 @@ window.showEditBatchModal = (batchId) => {
         ${mentors.map(m => `<option ${batch.mentor===m?'selected':''}>${m}</option>`).join('')}
       </select>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="margin:0">
+        <label>📅 Attendance Slots</label>
+        <input id="eb-att" type="number" min="1" max="120" value="${batch.dayCount||16}" />
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Current: ${batch.dayCount||16} slots</div>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>📝 Daily Report Slots</label>
+        <input id="eb-dr" type="number" min="1" max="120" value="${batch.dailyreportCount||17}" />
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Current: ${batch.dailyreportCount||17} slots</div>
+      </div>
+    </div>
     <div class="form-group"><label>Description (optional)</label><input id="eb-desc" type="text" value="${batch.description||''}" /></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -3916,14 +3941,19 @@ window.saveEditBatch = async (batchId) => {
   const duration = parseInt(document.getElementById('eb-duration').value);
   const mentor = document.getElementById('eb-mentor').value;
   const desc = document.getElementById('eb-desc').value.trim();
+  const attSlots = Math.max(1, parseInt(document.getElementById('eb-att').value) || 16);
+  const drSlots  = Math.max(1, parseInt(document.getElementById('eb-dr').value)  || 17);
   if (!name) return showToast('⚠️ Batch name required', 'warn');
   if (!stream) return showToast('⚠️ Please select a stream', 'warn');
-  const cfg = DURATION_CONFIG[duration];
+  const cfg = DURATION_CONFIG[duration] || DURATION_CONFIG[30];
   await updateDoc(doc(db, 'batches', batchId), {
     name, stream, duration, mentor, description: desc,
-    taskCount: cfg.tasks, dayCount: cfg.attendance,
-    hrclubCount: cfg.hrclub, dailyreportCount: cfg.dailyreport
+    taskCount: cfg.tasks,
+    dayCount: attSlots,
+    hrclubCount: cfg.hrclub,
+    dailyreportCount: drSlots
   });
+  invalidateInternsCache(batchId);
   closeModal();
   showToast('✅ Batch updated!');
 };
@@ -3973,8 +4003,7 @@ window.showCreateBatchModal = () => {
     <div class="form-group"><label>Batch Name</label><input id="batch-name-input" type="text" placeholder="e.g. Batch 2024 A" /></div>
     <div class="form-group">
       <label>Stream & Duration</label>
-      <select id="batch-stream-input" onchange="document.getElementById('batch-duration-input').value=window.STREAM_DURATION_MAP[this.value]||30">
-
+      <select id="batch-stream-input" onchange="window.onStreamChange(this.value)">
         <option value="">— Select Stream —</option>
         <option value="Macro Economic Analysis - 15 days">Macro Economic Analysis — 15 days</option>
         <option value="Equity Research Comparative Model - 30 days">Equity Research Comparative Model — 30 days</option>
@@ -3990,6 +4019,18 @@ window.showCreateBatchModal = () => {
         <option value="Marketing - 60 days">Marketing — 60 days</option>
       </select>
       <input type="hidden" id="batch-duration-input" value="30" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="margin:0">
+        <label>📅 Attendance Slots</label>
+        <input id="batch-att-input" type="number" min="1" max="120" value="16" placeholder="e.g. 16" />
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Number of attendance days</div>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>📝 Daily Report Slots</label>
+        <input id="batch-dr-input" type="number" min="1" max="120" value="17" placeholder="e.g. 17" />
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Number of daily report slots</div>
+      </div>
     </div>
     <div class="form-group"><label>Mentor Name (optional)</label>
       <select id="batch-mentor-input">
