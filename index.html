@@ -2565,31 +2565,56 @@ async function renderInternDetailAsync(param) {
         </div>
       </div>
 
-      <!-- EVALUATION KEYWORDS -->
+      <!-- EVALUATION KEYWORDS TAG PICKER -->
       <div class="card" style="margin-bottom:24px">
-        <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">🏷️ Evaluation Keywords</h3>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Enter keywords separated by commas — these will be woven into the evaluation PDF to describe the intern's qualities.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:4px">🏷️ Evaluation Keywords</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Select words from the dropdowns — they will be woven into the Evaluation PDF automatically.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+          <!-- PROCESS -->
           <div>
-            <label style="font-size:12px;font-weight:700;color:var(--accent);display:block;margin-bottom:6px">⚙️ Process Keywords</label>
-            <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Attendance, HR, Daily Report traits (e.g. punctual, disciplined, consistent)</p>
-            <input type="text" placeholder="e.g. punctual, disciplined, consistent..."
-              value="${intern.evalKeywordsProcess || intern.evalKeywords || ''}"
-              style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
-              onfocus="this.style.borderColor='var(--accent)'"
-              onblur="this.style.borderColor='var(--border)'; updateEvalKeywordsField('${batchId}','${internId}','Process',this.value)" />
-            ${_state.userDoc.role==='admin' && intern.tsEvalKeywordsProcess ? `<div style="margin-top:4px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsEvalKeywordsProcess).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsEvalKeywordsProcess).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywordsProcess||''}</span></div>` : ''}
+            <label style="font-size:12px;font-weight:700;color:var(--accent);display:block;margin-bottom:8px">⚙️ Process Keywords <span style="font-weight:400;color:var(--muted)">(Attendance · HR · Daily Report)</span></label>
+            <div style="position:relative;margin-bottom:8px">
+              <select onchange="kwTagAdd('${batchId}','${internId}','Process',this)" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer">
+                <option value="">＋ Add a keyword...</option>
+                <option>punctual</option><option>disciplined</option><option>consistent</option>
+                <option>dedicated</option><option>responsible</option><option>reliable</option>
+                <option>hardworking</option><option>sincere</option><option>diligent</option>
+                <option>organised</option><option>focused</option><option>committed</option>
+                <option>accountable</option><option>thorough</option><option>meticulous</option>
+              </select>
+            </div>
+            <div id="kw-tags-Process-${internId}" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px">
+              ${(intern.evalKeywordsProcess||'').split(',').map(k=>k.trim()).filter(Boolean).map(k=>`
+                <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(124,58,237,.12);color:var(--accent);border:1px solid rgba(124,58,237,.3);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">
+                  ${k} <span onclick="kwTagRemove('${batchId}','${internId}','Process','${k}')" style="cursor:pointer;font-size:14px;line-height:1;opacity:.7">×</span>
+                </span>`).join('')}
+            </div>
+            ${_state.userDoc.role==='admin' && intern.tsEvalKeywordsProcess ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsEvalKeywordsProcess).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsEvalKeywordsProcess).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywordsProcess||''}</span></div>` : ''}
           </div>
+
+          <!-- PROGRESS -->
           <div>
-            <label style="font-size:12px;font-weight:700;color:var(--green);display:block;margin-bottom:6px">📈 Progress Keywords</label>
-            <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Project, Tasks, Social traits (e.g. analytical, innovative, proactive)</p>
-            <input type="text" placeholder="e.g. analytical, innovative, proactive..."
-              value="${intern.evalKeywordsProgress || ''}"
-              style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s"
-              onfocus="this.style.borderColor='var(--green)'"
-              onblur="this.style.borderColor='var(--border)'; updateEvalKeywordsField('${batchId}','${internId}','Progress',this.value)" />
-            ${_state.userDoc.role==='admin' && intern.tsEvalKeywordsProgress ? `<div style="margin-top:4px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsEvalKeywordsProgress).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsEvalKeywordsProgress).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywordsProgress||''}</span></div>` : ''}
+            <label style="font-size:12px;font-weight:700;color:var(--green);display:block;margin-bottom:8px">📈 Progress Keywords <span style="font-weight:400;color:var(--muted)">(Project · Tasks · Social)</span></label>
+            <div style="position:relative;margin-bottom:8px">
+              <select onchange="kwTagAdd('${batchId}','${internId}','Progress',this)" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer">
+                <option value="">＋ Add a keyword...</option>
+                <option>analytical</option><option>innovative</option><option>proactive</option>
+                <option>creative</option><option>strategic</option><option>detail-oriented</option>
+                <option>resourceful</option><option>motivated</option><option>independent</option>
+                <option>collaborative</option><option>adaptable</option><option>curious</option>
+                <option>insightful</option><option>enterprising</option><option>goal-oriented</option>
+              </select>
+            </div>
+            <div id="kw-tags-Progress-${internId}" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px">
+              ${(intern.evalKeywordsProgress||'').split(',').map(k=>k.trim()).filter(Boolean).map(k=>`
+                <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">
+                  ${k} <span onclick="kwTagRemove('${batchId}','${internId}','Progress','${k}')" style="cursor:pointer;font-size:14px;line-height:1;opacity:.7">×</span>
+                </span>`).join('')}
+            </div>
+            ${_state.userDoc.role==='admin' && intern.tsEvalKeywordsProgress ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.tsEvalKeywordsProgress).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.tsEvalKeywordsProgress).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.byEvalKeywordsProgress||''}</span></div>` : ''}
           </div>
+
         </div>
       </div>
 
@@ -2886,26 +2911,33 @@ window.exportEvaluationPDF = async (batchId, internId) => {
     ? ` Throughout the internship, ${he} consistently demonstrated ${allKws.length === 1 ? allKws[0] : allKws.slice(0,-1).join(', ') + ' and ' + allKws[allKws.length-1]}, which were evident across all areas of ${his} work.`
     : '';
 
-  // Helper: build process keyword clause — gracefully handles single words and phrases
-  function procClause(kw, connector, fallback) {
+  // Smart clause builder — each slot gets a unique connector to avoid repetition
+  // Connectors vary per position so the same word never appears twice in a paragraph
+  const procConnectors = [
+    { pre: ', reflecting ',    suf: ' nature'      },
+    { pre: ', highlighting ',  suf: ' qualities'   },
+    { pre: ', underscored by ', suf: ' conduct'    },
+  ];
+  const progConnectors = [
+    { pre: ', shaped by ',     suf: ' thinking'    },
+    { pre: ', demonstrating ', suf: ' acumen'      },
+    { pre: ', driven by ',     suf: ' initiative'  },
+  ];
+
+  function buildClause(kw, connObj, fallback, his_) {
     if (!kw) return fallback;
     const words = kw.trim().split(/\s+/);
-    if (words.length === 1) return connector + ' ' + his + ' ' + kw + ' disposition';
-    return connector + ' ' + his + ' ' + kw;
-  }
-  function progClause(kw, connector, fallback) {
-    if (!kw) return fallback;
-    const words = kw.trim().split(/\s+/);
-    if (words.length === 1) return connector + ' ' + his + ' ' + kw + ' capabilities';
-    return connector + ' ' + his + ' ' + kw;
+    // Single adjective → append a unique suffix noun; phrase → use as-is
+    if (words.length === 1) return connObj.pre + his_ + ' ' + kw + connObj.suf;
+    return connObj.pre + his_ + ' ' + kw;
   }
 
   const evalText = [
     `${name} served as an intern in our ${stream.replace(/\s*-\s*\d+\s*days?/i, '').trim()} for a period of ${duration} days. ${intern.projectTitle ? `${His} project title was "${projectTitle}". ` : ''}We are pleased to present this personalised evaluation based on ${his} overall performance during the internship.`,
 
-    `In terms of process parameters, ${name} maintained an ${attDesc} attendance record throughout the internship${procClause(pk1, ', reflecting', ', reflecting ' + his + ' commitment and dedication to the program')}. ${His} participation in HR and Club Activities was ${hrDesc}${procClause(pk2, ', highlighting', ', indicating ' + his + ' engagement with the broader organisational culture')}. With respect to Daily Report submissions, ${he} displayed ${drDesc} consistency${procClause(pk3, ', underpinned by', ', which is a key indicator of ' + his + ' accountability and work ethic')}.`,
+    `In terms of process parameters, ${name} maintained an ${attDesc} attendance record throughout the internship${buildClause(pk1, procConnectors[0], ', reflecting ' + his + ' commitment and dedication to the program', his)}. ${His} participation in HR and Club Activities was ${hrDesc}${buildClause(pk2, procConnectors[1], ', indicating ' + his + ' engagement with the broader organisational culture', his)}. With respect to Daily Report submissions, ${he} displayed ${drDesc} consistency${buildClause(pk3, procConnectors[2], ', which is a key indicator of ' + his + ' accountability and work ethic', his)}.`,
 
-    `Regarding progress parameters, ${His} Project Quality was ${pqDesc}${progClause(pgk1, ', shaped by', ', reflecting the effort and rigour invested in ' + his + ' project work')}. ${His} performance across assigned tasks was ${taskDesc}${progClause(pgk2, ', demonstrating', ', showcasing ' + his + ' grasp of the subject matter and practical skills')}. ${His} engagement in the Social Contest component was ${scDesc}${progClause(pgk3, ', driven by', ', showcasing ' + his + ' initiative beyond core responsibilities')}.`,
+    `Regarding progress parameters, ${His} Project Quality was ${pqDesc}${buildClause(pgk1, progConnectors[0], ', reflecting the effort and rigour invested in ' + his + ' project work', his)}. ${His} performance across assigned tasks was ${taskDesc}${buildClause(pgk2, progConnectors[1], ', showcasing ' + his + ' grasp of the subject matter and practical skills', his)}. ${His} engagement in the Social Contest component was ${scDesc}${buildClause(pgk3, progConnectors[2], ', showcasing ' + his + ' initiative beyond core responsibilities', his)}.`,
 
     `Overall, ${name} delivered a ${ovDesc} performance across both process and progress dimensions.${kwSentence} We believe ${he} has demonstrated real potential and made meaningful contributions during this internship. As an area for continued growth, we encourage ${him} to focus on strengthening ${his} ${weakest.name}, which will further enhance ${his} professional profile.`,
 
@@ -3027,6 +3059,50 @@ window.updateEvalKeywordsField = async (batchId, internId, type, val) => {
     if (cached) cached[field] = val.trim();
   }
   if (val.trim()) { logActivity('Eval Keywords', { batchId, internId, field, value: val.trim() }); showToast('✅ Keywords saved!'); }
+};
+
+// ── KEYWORD TAG ADD / REMOVE ──
+window.kwTagAdd = async (batchId, internId, type, selectEl) => {
+  const kw = selectEl.value.trim();
+  selectEl.value = '';
+  if (!kw) return;
+  const field = type === 'Process' ? 'evalKeywordsProcess' : 'evalKeywordsProgress';
+  const cached = (_state.internsCache[batchId] || []).find(i => i.id === internId);
+  const existing = (cached ? cached[field] || '' : '').split(',').map(k => k.trim()).filter(Boolean);
+  if (existing.includes(kw)) { showToast('ℹ️ Already added', 'info'); return; }
+  existing.push(kw);
+  const newVal = existing.join(', ');
+  await updateEvalKeywordsField(batchId, internId, type, newVal);
+  // Re-render tag list
+  const container = document.getElementById('kw-tags-' + type + '-' + internId);
+  if (container) {
+    const color    = type === 'Process' ? 'rgba(124,58,237,.12)' : 'rgba(34,197,94,.12)';
+    const txtColor = type === 'Process' ? 'var(--accent)' : 'var(--green)';
+    const border   = type === 'Process' ? 'rgba(124,58,237,.3)' : 'rgba(34,197,94,.3)';
+    container.innerHTML = existing.map(k => `
+      <span style="display:inline-flex;align-items:center;gap:4px;background:${color};color:${txtColor};border:1px solid ${border};border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">
+        ${k} <span onclick="kwTagRemove('${batchId}','${internId}','${type}','${k}')" style="cursor:pointer;font-size:14px;line-height:1;opacity:.7">×</span>
+      </span>`).join('');
+  }
+};
+
+window.kwTagRemove = async (batchId, internId, type, kw) => {
+  const field = type === 'Process' ? 'evalKeywordsProcess' : 'evalKeywordsProgress';
+  const cached = (_state.internsCache[batchId] || []).find(i => i.id === internId);
+  const existing = (cached ? cached[field] || '' : '').split(',').map(k => k.trim()).filter(Boolean);
+  const newList = existing.filter(k => k !== kw);
+  const newVal = newList.join(', ');
+  await updateEvalKeywordsField(batchId, internId, type, newVal);
+  const container = document.getElementById('kw-tags-' + type + '-' + internId);
+  if (container) {
+    const color    = type === 'Process' ? 'rgba(124,58,237,.12)' : 'rgba(34,197,94,.12)';
+    const txtColor = type === 'Process' ? 'var(--accent)' : 'var(--green)';
+    const border   = type === 'Process' ? 'rgba(124,58,237,.3)' : 'rgba(34,197,94,.3)';
+    container.innerHTML = newList.map(k => `
+      <span style="display:inline-flex;align-items:center;gap:4px;background:${color};color:${txtColor};border:1px solid ${border};border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">
+        ${k} <span onclick="kwTagRemove('${batchId}','${internId}','${type}','${k}')" style="cursor:pointer;font-size:14px;line-height:1;opacity:.7">×</span>
+      </span>`).join('');
+  }
 };
 
 window.updateProjectTitle = async (batchId, internId, val) => {
