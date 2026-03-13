@@ -1747,16 +1747,16 @@ async function renderScorecardAsync() {
   }
 
   html += `
-    <div class="card">
-      <div class="table-wrap">
-        <table class="scorecard-table">
+    <div style="border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="scorecard-table" style="border-collapse:collapse;font-size:14px;width:max-content;min-width:100%">
           <thead>
             <tr>
-              <th class="sc-sticky" style="left:0;background:var(--surface2);min-width:56px">Rank</th>
-              <th class="sc-sticky" style="left:56px;background:var(--surface2);min-width:160px">Intern</th>
-              <th class="sc-sticky" style="left:216px;background:var(--surface2);min-width:110px">Hedge ID</th>
-              <th class="sc-sticky" style="left:326px;background:var(--surface2);min-width:130px">Phone</th>
-              <th class="sc-sticky" style="left:456px;background:var(--surface2);min-width:190px;box-shadow:3px 0 6px rgba(0,0,0,.2)">Email</th>
+              <th class="sc-sticky" style="left:0;background:#ede8f9;min-width:56px;max-width:56px">Rank</th>
+              <th class="sc-sticky" style="left:56px;background:#ede8f9;min-width:160px;max-width:160px">Intern</th>
+              <th class="sc-sticky" style="left:216px;background:#ede8f9;min-width:110px;max-width:110px">Hedge ID</th>
+              <th class="sc-sticky" style="left:326px;background:#ede8f9;min-width:130px;max-width:130px">Phone</th>
+              <th class="sc-sticky" style="left:456px;background:#ede8f9;min-width:190px;max-width:190px;border-right:2px solid var(--accent)">Email</th>
               <th>Batch</th>
               <th>Stream</th>
               <th>Aggregate</th>
@@ -1779,11 +1779,11 @@ async function renderScorecardAsync() {
               const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
               const rankLabel = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank;
               return `<tr>
-                <td class="sc-sticky" style="left:0;background:var(--surface);min-width:56px"><div class="rank-badge ${rankClass}">${rankLabel}</div></td>
-                <td class="sc-sticky" style="left:56px;background:var(--surface);min-width:160px"><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
-                <td class="sc-sticky" style="left:216px;background:var(--surface);min-width:110px;font-size:12px;color:var(--accent);font-weight:600">${e.intern.hedgeId||'—'}</td>
-                <td class="sc-sticky" style="left:326px;background:var(--surface);min-width:130px;font-size:12px;color:var(--muted)">${e.intern.phone||'—'}</td>
-                <td class="sc-sticky" style="left:456px;background:var(--surface);min-width:190px;font-size:12px;color:var(--muted);box-shadow:3px 0 6px rgba(0,0,0,.2)">${e.intern.email||'—'}</td>
+                <td class="sc-sticky" style="left:0;background:#ffffff;min-width:56px;max-width:56px"><div class="rank-badge ${rankClass}">${rankLabel}</div></td>
+                <td class="sc-sticky" style="left:56px;background:#ffffff;min-width:160px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
+                <td class="sc-sticky" style="left:216px;background:#ffffff;min-width:110px;max-width:110px;font-size:12px;color:var(--accent);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.intern.hedgeId||'—'}</td>
+                <td class="sc-sticky" style="left:326px;background:#ffffff;min-width:130px;max-width:130px;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.intern.phone||'—'}</td>
+                <td class="sc-sticky" style="left:456px;background:#ffffff;min-width:190px;max-width:190px;font-size:12px;color:var(--muted);border-right:2px solid var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.intern.email||'—'}</td>
                 <td><span class="tag" style="cursor:pointer;color:var(--accent)" onclick="navigate('batch-detail','${e.batch.id}')">${e.batch.name}</span></td>
                 <td><span style="font-size:12px;color:var(--muted)">${e.batch.stream || '—'}</span></td>
                 <td><span class="score-pill" style="background:${pctBg(e.sc.aggregate)};color:${pctColor(e.sc.aggregate)}">${e.sc.aggregate}%</span></td>
