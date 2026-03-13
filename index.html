@@ -943,6 +943,7 @@ function renderPage(page, param) {
   else if (page === 'analytics') mc.innerHTML = renderAnalytics();
   else if (page === 'mentors') { mc.innerHTML = renderMentorList(); }
   attachPageEvents();
+  ensureHamburger();
 }
 
 // ── NAVIGATE (pushes browser history) ──
@@ -1936,7 +1937,14 @@ function isMobile() {
 }
 function ensureHamburger() {
   const hbtn = document.getElementById('hamburger-btn');
-  if (hbtn) hbtn.style.display = isMobile() ? 'flex' : 'none';
+  if (!hbtn) return;
+  const show = isMobile();
+  hbtn.style.setProperty('display', show ? 'flex' : 'none', 'important');
+  // Belt-and-suspenders: re-check after any async paint
+  setTimeout(() => {
+    const b = document.getElementById('hamburger-btn');
+    if (b) b.style.setProperty('display', isMobile() ? 'flex' : 'none', 'important');
+  }, 100);
 }
 
 window.toggleHamburger = function() {
