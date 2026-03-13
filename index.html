@@ -394,8 +394,10 @@
       display: flex; align-items: center; padding: 0 16px 0 56px; gap: 12px; z-index: 160;
       transition: left .25s ease;
     }
+    #hamburger-btn { display: none; }
     @media (max-width: 768px) {
       .global-topbar { padding: 0 12px 0 12px !important; left: 0 !important; }
+      #hamburger-btn { display: flex !important; }
     }
     .search-wrap { position: relative; flex: 1; max-width: 480px; }
     .search-input {
@@ -618,7 +620,7 @@
 
   <!-- GLOBAL TOPBAR -->
   <div class="global-topbar" id="global-topbar" style="display:none">
-    <button id="hamburger-btn" onclick="toggleHamburger()" style="display:none;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:20px;cursor:pointer;flex-shrink:0;margin-right:4px">☰</button>
+    <button id="hamburger-btn" onclick="toggleHamburger()" style="align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:20px;cursor:pointer;flex-shrink:0;margin-right:4px">☰</button>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input class="search-input" id="global-search" type="text" placeholder="Search batches or interns..." autocomplete="off" />
@@ -833,7 +835,6 @@ onAuthStateChanged(auth, async user => {
       const tab = document.getElementById('sidebar-tab');
       if (tab) tab.style.display = 'none'; // replaced by topbar hamburger
       const hbtn = document.getElementById('hamburger-btn');
-      if (hbtn) hbtn.style.display = isMobile() ? 'flex' : 'none';
       initSidebar();
       loadBatches();
       // Restore position if this was a refresh, otherwise go to dashboard
@@ -925,7 +926,6 @@ function renderPage(page, param) {
   if (isMobile()) hideSidebar();
   // Always ensure hamburger is visible on mobile
   const hbtn = document.getElementById('hamburger-btn');
-  if (hbtn) hbtn.style.display = isMobile() ? 'flex' : 'none';
   // Clear topbar save button when leaving intern-detail
   if (page !== 'intern-detail') {
     const area = document.getElementById('save-bar-area');
@@ -968,7 +968,6 @@ window.addEventListener('popstate', (e) => {
       document.getElementById('app').style.display = 'none';
       document.getElementById('global-topbar').style.display = 'none';
       const hbtn = document.getElementById('hamburger-btn');
-      if (hbtn) hbtn.style.display = 'none';
     }
     return;
   }
@@ -984,7 +983,6 @@ window.addEventListener('popstate', (e) => {
       document.getElementById('app').style.display = 'none';
       document.getElementById('global-topbar').style.display = 'none';
       const hbtn = document.getElementById('hamburger-btn');
-      if (hbtn) hbtn.style.display = 'none';
     }
     return;
   }
@@ -1935,17 +1933,7 @@ function hideSidebar() {
 function isMobile() {
   return window.innerWidth <= 768;
 }
-function ensureHamburger() {
-  const hbtn = document.getElementById('hamburger-btn');
-  if (!hbtn) return;
-  const show = isMobile();
-  hbtn.style.setProperty('display', show ? 'flex' : 'none', 'important');
-  // Belt-and-suspenders: re-check after any async paint
-  setTimeout(() => {
-    const b = document.getElementById('hamburger-btn');
-    if (b) b.style.setProperty('display', isMobile() ? 'flex' : 'none', 'important');
-  }, 100);
-}
+function ensureHamburger() { /* visibility handled by CSS media query */ }
 
 window.toggleHamburger = function() {
   const sidebar = document.getElementById('sidebar');
@@ -1983,7 +1971,6 @@ window.addEventListener('load', () => {
   window.addEventListener('resize', () => {
     tab.style.display = 'none'; // replaced by topbar hamburger
     const _hbtn = document.getElementById('hamburger-btn');
-    if (_hbtn) _hbtn.style.display = isMobile() ? 'flex' : 'none';
     if (!isMobile()) hideSidebar();
   });
 
