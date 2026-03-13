@@ -2097,6 +2097,7 @@ function renderBatchList() {
   return `
     <div class="topbar">
       <div>
+        <button class="btn btn-ghost btn-sm" onclick="goBack()" style="margin-bottom:8px">← Back</button>
         <div class="page-title">📦 Batches</div>
         <div class="page-sub">Manage all intern batches</div>
       </div>
@@ -2118,6 +2119,9 @@ function renderBatchList() {
             </div>
           </div>
         `).join('')}
+      </div>
+      <div style="padding:24px 0 8px">
+        <button class="btn btn-ghost btn-sm" onclick="goBack()">← Back</button>
       </div>
     `}
   `;
