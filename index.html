@@ -106,8 +106,7 @@
     .success-msg { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); color: var(--green); border-radius: 8px; padding: 12px 16px; font-size: 14px; margin-bottom: 16px; }
 
     /* ── LAYOUT ── */
-    html, body { overflow-x: hidden; }
-    #app { display: flex; min-height: 100vh; overflow-x: hidden; }
+    #app { display: flex; min-height: 100vh; }
 
     .sidebar {
       width: 260px; background: var(--surface); border-right: 1px solid var(--border);
@@ -155,7 +154,7 @@
     .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-role { font-size: 11px; color: var(--muted); }
 
-    .main-content { margin-left: 0px; flex: 1; padding: 32px; min-height: 100vh; transition: margin-left .25s ease; position: relative; z-index: 1; overflow-x: auto; }
+    .main-content { margin-left: 0px; flex: 1; padding: 32px; min-height: 100vh; transition: margin-left .25s ease; position: relative; z-index: 1; }
 
     /* ── TOPBAR ── */
     .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
@@ -1753,28 +1752,27 @@ async function renderScorecardAsync() {
   html += `
     <div style="border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px">
       <div class="scorecard-scroll" style="-webkit-overflow-scrolling:touch">
-        <table class="scorecard-table" style="border-collapse:collapse;font-size:14px;width:max-content;min-width:100%">
+        <table class="scorecard-table" style="border-collapse:collapse;font-size:11px;width:100%">
           <thead>
             <tr>
-              <th class="sc-sticky" style="left:0;background:#ede8f9;min-width:56px;max-width:56px">Rank</th>
-              <th class="sc-sticky" style="left:56px;background:#ede8f9;min-width:160px;max-width:160px">Intern</th>
-              <th class="sc-sticky" style="left:216px;background:#ede8f9;min-width:110px;max-width:110px">Hedge ID</th>
-              <th class="sc-sticky" style="left:326px;background:#ede8f9;min-width:130px;max-width:130px">Phone</th>
-              <th class="sc-sticky" style="left:456px;background:#ede8f9;min-width:190px;max-width:190px;border-right:2px solid var(--accent)">Email</th>
-              <th style="white-space:nowrap;min-width:120px">Batch</th>
-              <th style="white-space:nowrap;min-width:160px">Stream</th>
-              <th style="white-space:nowrap;min-width:100px">Aggregate</th>
-              <th style="white-space:nowrap;min-width:90px">Process</th>
-              <th style="white-space:nowrap;min-width:90px">Progress</th>
-              <th style="white-space:nowrap;min-width:100px">Attendance</th>
-              <th style="white-space:nowrap;min-width:80px">HR/Club</th>
-              <th style="white-space:nowrap;min-width:110px">Daily Report</th>
-              <th style="white-space:nowrap;min-width:80px">Project</th>
-              <th style="white-space:nowrap;min-width:70px">Tasks</th>
-              <th style="white-space:nowrap;min-width:70px">Social</th>
-              <th style="white-space:nowrap;min-width:140px">Project Title</th>
-              <th style="white-space:nowrap;min-width:100px">Zappyvue</th>
-              <th style="white-space:nowrap;min-width:120px">Tech Interview</th>
+              <th style="width:36px;padding:8px 6px">Rank</th>
+              <th style="width:100px;padding:8px 6px">Intern</th>
+              <th style="width:70px;padding:8px 6px">Hedge ID</th>
+              <th style="width:90px;padding:8px 6px">Phone</th>
+              <th style="width:110px;padding:8px 6px">Email</th>
+              <th style="width:90px;padding:8px 6px">Stream</th>
+              <th style="width:90px;padding:8px 6px">Batch</th>
+              <th style="width:80px;padding:8px 6px">Aggr.</th>
+              <th style="width:70px;padding:8px 6px">Proc.</th>
+              <th style="width:70px;padding:8px 6px">Prog.</th>
+              <th style="width:80px;padding:8px 6px">Attend.</th>
+              <th style="width:70px;padding:8px 6px">HR/Club</th>
+              <th style="width:80px;padding:8px 6px">D.Report</th>
+              <th style="width:65px;padding:8px 6px">Project</th>
+              <th style="width:55px;padding:8px 6px">Tasks</th>
+              <th style="width:55px;padding:8px 6px">Social</th>
+              <th style="width:60px;padding:8px 6px">Zappy</th>
+              <th style="width:60px;padding:8px 6px">Tech Int.</th>
             </tr>
           </thead>
           <tbody>
@@ -1783,25 +1781,24 @@ async function renderScorecardAsync() {
               const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
               const rankLabel = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank;
               return `<tr>
-                <td class="sc-sticky" style="left:0;background:#ffffff;min-width:56px;max-width:56px"><div class="rank-badge ${rankClass}">${rankLabel}</div></td>
-                <td class="sc-sticky" style="left:56px;background:#ffffff;min-width:160px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
-                <td class="sc-sticky" style="left:216px;background:#ffffff;min-width:110px;max-width:110px;font-size:12px;color:var(--accent);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.intern.hedgeId||'—'}</td>
-                <td class="sc-sticky" style="left:326px;background:#ffffff;min-width:130px;max-width:130px;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.intern.phone||'—'}</td>
-                <td class="sc-sticky" style="left:456px;background:#ffffff;min-width:190px;max-width:190px;font-size:12px;color:var(--muted);border-right:2px solid var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.intern.email||'—'}</td>
-                <td><span class="tag" style="cursor:pointer;color:var(--accent)" onclick="navigate('batch-detail','${e.batch.id}')">${e.batch.name}</span></td>
-                <td><span style="font-size:12px;color:var(--muted)">${e.batch.stream || '—'}</span></td>
-                <td><span class="score-pill" style="background:${pctBg(e.sc.aggregate)};color:${pctColor(e.sc.aggregate)}">${e.sc.aggregate}%</span></td>
-                <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${e.sc.processScore}%</span></td>
-                <td><span class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green)">${e.sc.progressScore}%</span></td>
-                <td>${e.sc.attendance}% <span style="font-size:11px;color:var(--muted)">(${e.sc.attPct}%)</span></td>
-                <td>${e.sc.hrclub}% <span style="font-size:11px;color:var(--muted)">(${e.sc.hrPct}%)</span></td>
-                <td>${e.sc.dailyreport}% <span style="font-size:11px;color:var(--muted)">(${e.sc.drPct}%)</span></td>
-                <td>${e.sc.projectQuality}%</td>
-                <td>${e.sc.taskScore}%</td>
-                <td>${e.sc.socialContest}%</td>
-                <td>${e.intern.projectTitle || '—'}</td>
-                <td>${(() => { const g = e.intern.zappyvueGrade; return g ? '<span class="score-pill" style="background:' + (g==='A'?'rgba(34,197,94,.2)':g==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)') + ';color:' + (g==='A'?'var(--green)':g==='B'?'var(--yellow)':'var(--red)') + '">' + g + '</span>' : '—'; })()}</td>
-                <td>${(() => { const g = e.intern.technicalInterviewGrade; return g ? '<span class="score-pill" style="background:' + (g==='A'?'rgba(34,197,94,.2)':g==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)') + ';color:' + (g==='A'?'var(--green)':g==='B'?'var(--yellow)':'var(--red)') + '">' + g + '</span>' : '—'; })()}</td>
+                <td style="padding:8px 6px;text-align:center"><div class="rank-badge ${rankClass}" style="font-size:11px">${rankLabel}</div></td>
+                <td style="padding:8px 6px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="cursor:pointer;color:var(--accent);font-weight:600;font-size:11px" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
+                <td style="padding:8px 6px;font-size:11px;color:var(--accent);font-weight:600">${e.intern.hedgeId||'—'}</td>
+                <td style="padding:8px 6px;font-size:11px;color:var(--muted)">${e.intern.phone||'—'}</td>
+                <td style="padding:8px 6px;font-size:11px;color:var(--muted);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.intern.email||'—'}</td>
+                <td style="padding:8px 6px;font-size:11px;color:var(--muted);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.batch.stream||'—'}</td>
+                <td style="padding:8px 6px"><span class="tag" style="cursor:pointer;color:var(--accent);font-size:10px;padding:2px 6px" onclick="navigate('batch-detail','${e.batch.id}')">${e.batch.name}</span></td>
+                <td style="padding:8px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(e.sc.aggregate)};color:${pctColor(e.sc.aggregate)};font-size:11px">${e.sc.aggregate}%</span></td>
+                <td style="padding:8px 6px;text-align:center"><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent);font-size:11px">${e.sc.processScore}%</span></td>
+                <td style="padding:8px 6px;text-align:center"><span class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green);font-size:11px">${e.sc.progressScore}%</span></td>
+                <td style="padding:8px 6px;font-size:11px">${e.sc.attendance}% <span style="font-size:10px;color:var(--muted)">(${e.sc.attPct}%)</span></td>
+                <td style="padding:8px 6px;font-size:11px">${e.sc.hrclub}% <span style="font-size:10px;color:var(--muted)">(${e.sc.hrPct}%)</span></td>
+                <td style="padding:8px 6px;font-size:11px">${e.sc.dailyreport}% <span style="font-size:10px;color:var(--muted)">(${e.sc.drPct}%)</span></td>
+                <td style="padding:8px 6px;font-size:11px;text-align:center">${e.sc.projectQuality}%</td>
+                <td style="padding:8px 6px;font-size:11px;text-align:center">${e.sc.taskScore}%</td>
+                <td style="padding:8px 6px;font-size:11px;text-align:center">${e.sc.socialContest}%</td>
+                <td style="padding:8px 6px;text-align:center">${(() => { const g = e.intern.zappyvueGrade; return g ? '<span class="score-pill" style="background:' + (g==='A'?'rgba(34,197,94,.2)':g==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)') + ';color:' + (g==='A'?'var(--green)':g==='B'?'var(--yellow)':'var(--red)') + ';font-size:11px">' + g + '</span>' : '—'; })()}</td>
+                <td style="padding:8px 6px;text-align:center">${(() => { const g = e.intern.technicalInterviewGrade; return g ? '<span class="score-pill" style="background:' + (g==='A'?'rgba(34,197,94,.2)':g==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)') + ';color:' + (g==='A'?'var(--green)':g==='B'?'var(--yellow)':'var(--red)') + ';font-size:11px">' + g + '</span>' : '—'; })()}</td>
               </tr>`;
             }).join('')}
           </tbody>
