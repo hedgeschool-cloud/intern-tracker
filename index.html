@@ -2239,8 +2239,14 @@ function renderBatchList() {
 // RENDER — BATCH DETAIL (async)
 // ══════════════════════════════════════════════
 async function renderBatchDetailAsync(batchId) {
-  const batch = _state.batches.find(b => b.id === batchId);
-  if (!batch) return '<div class="empty-state"><h3>Batch not found</h3></div>';
+  let batch = _state.batches.find(b => b.id === batchId);
+  // If not in state yet (e.g. just created), fetch directly from Firestore
+  if (!batch) {
+    const snap = await getDoc(doc(db, 'batches', batchId));
+    if (!snap.exists()) return '<div class="empty-state"><h3>Batch not found</h3></div>';
+    batch = { id: snap.id, ...snap.data() };
+    _state.batches.push(batch); // add to state so future lookups work
+  }
   const interns = await getInterns(batchId);
 
   let html = `
