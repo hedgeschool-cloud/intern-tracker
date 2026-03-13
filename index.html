@@ -2292,6 +2292,13 @@ async function renderBatchDetailAsync(batchId) {
           <span id="dr-entry-arrow" style="font-size:11px;color:var(--accent);font-weight:600">▶</span>
         </div>
         <div id="dr-entry-body" class="rankings-collapsed" style="margin-top:14px">
+          <div class="att-import-bar">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+              📂 Import Daily Report
+              <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleBatchDRImport('${batchId}', this.files[0], this)" />
+            </label>
+            <span style="font-size:12px;color:var(--muted)">Excel/CSV with Phone + DR columns (e.g. DR 1, DR 2… or Submitted/Not Submitted) — matched by Phone Number</span>
+          </div>
           <div class="batch-entry-wrap">
             <table class="batch-entry-table">
               <thead><tr>
@@ -4054,6 +4061,97 @@ window.handleBatchAttImport = async (batchId, file, inputEl) => {
 
     await updateDoc(doc(db, 'batches', batchId, 'interns', intern.id), updates);
     logActivity('Attendance', { batchId, internId: intern.id, field: 'bulk-import', value: 'Imported from file' });
+    updated++;
+  }
+
+  if (inputEl) inputEl.value = '';
+  invalidateInternsCache(batchId);
+  showToast('✅ Updated ' + updated + ' interns' + (skipped ? ', skipped ' + skipped : '') + '!');
+  navigate('batch-detail', batchId);
+};
+
+window.handleBatchDRImport = async (batchId, file, inputEl) => {
+  if (!file) return;
+  const batch = _state.batches.find(b => b.id === batchId);
+  const drCount = batch?.dailyreportCount || 17;
+  const ext = file.name.split('.').pop().toLowerCase();
+  let rows = [];
+  if (ext === 'csv') {
+    const text = await file.text();
+    rows = text.split('\n').map(r => r.split(',').map(c => c.replace(/"/g,'').trim())).filter(r => r.some(c => c));
+  } else {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    rows = XLSX.utils.sheet_to_json(ws, { header: 1 }).map(r => r.map(c => (c||'').toString().trim()));
+  }
+  if (!rows.length) return showToast('⚠️ File is empty', 'warn');
+
+  // Detect headers
+  const headerRow = rows[0].map(h => h.toLowerCase().replace(/[\s_\-\.]/g, ''));
+  const findCol = (...kws) => headerRow.findIndex(h => kws.some(k => h.includes(k)));
+  const phoneCol = findCol('phone', 'mobile', 'contact', 'number');
+
+  // Detect DR columns: "dr1", "dr 1", "dailyreport1", "report1", etc.
+  const drColMap = {}; // drNumber (1-based) -> col index
+  headerRow.forEach((h, ci) => {
+    const m = h.match(/(?:dr|dailyreport|report|submission)(\d+)/);
+    if (m) drColMap[parseInt(m[1])] = ci;
+  });
+  // Single column fallback
+  const singleDRCol = Object.keys(drColMap).length === 0
+    ? findCol('submitted', 'submission', 'status', 'report', 'dr')
+    : -1;
+
+  if (phoneCol < 0) return showToast('⚠️ Could not find Phone column', 'warn');
+  if (Object.keys(drColMap).length === 0 && singleDRCol < 0) return showToast('⚠️ Could not find DR columns', 'warn');
+
+  const dataRows = rows.slice(1).filter(r => r[phoneCol]?.trim());
+  if (!dataRows.length) return showToast('⚠️ No data rows found', 'warn');
+
+  // Fetch interns
+  const snap = await getDocs(collection(db, 'batches', batchId, 'interns'));
+  const internDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const normalizePhone = s => (s||'').replace(/[^0-9]/g,'').slice(-10);
+  const ts = serverTimestamp();
+  const by = _state.userDoc?.name || 'Unknown';
+  let updated = 0, skipped = 0;
+
+  for (const row of dataRows) {
+    const rowPhone = normalizePhone(row[phoneCol]);
+    if (!rowPhone) { skipped++; continue; }
+
+    // Match intern by last 10 digits of phone
+    const intern = internDocs.find(i => normalizePhone(i.phone) === rowPhone);
+    if (!intern) { skipped++; continue; }
+
+    const updates = { lastUpdatedDailyreport: ts, lastUpdatedDailyreportBy: by };
+
+    if (singleDRCol >= 0) {
+      const val = (row[singleDRCol]||'').toLowerCase();
+      const submitted = ['submitted','yes','1','true','s','present','p'].includes(val);
+      for (let d = 1; d <= drCount; d++) {
+        const key = 'dr'+d;
+        updates['dailyreport.'+key] = submitted;
+        updates['slotTs.dailyreport_'+key] = ts;
+        updates['slotBy.dailyreport_'+key] = by;
+      }
+    } else {
+      for (const [drNum, ci] of Object.entries(drColMap)) {
+        if (parseInt(drNum) > drCount) continue;
+        const val = (row[ci]||'').toLowerCase();
+        const submitted = ['submitted','yes','1','true','s','present','p'].includes(val) ||
+                          (!['notsubmitted','no','0','false','n','absent','a',''].includes(val) && val !== '');
+        const key = 'dr'+drNum;
+        updates['dailyreport.'+key] = submitted;
+        updates['slotTs.dailyreport_'+key] = ts;
+        updates['slotBy.dailyreport_'+key] = by;
+      }
+    }
+
+    await updateDoc(doc(db, 'batches', batchId, 'interns', intern.id), updates);
+    logActivity('DailyReport', { batchId, internId: intern.id, field: 'bulk-import', value: 'Imported from file' });
     updated++;
   }
 
