@@ -2864,7 +2864,17 @@ window.exportEvaluationPDF = async (batchId, internId) => {
   const duration = batch?.duration || 30;
   const zGrade = intern.zappyvueGrade || 'Not assessed';
   const tGrade = intern.technicalInterviewGrade || 'Not assessed';
-  const name = intern.name;
+  // Format name: initials (1-2 chars) stay uppercase, full words get Title Case
+  // e.g. "A M ARUNDHATHY" → "A M Arundhathy", "ADARSH MENON" → "Adarsh Menon"
+  const formatInternName = (raw) => {
+    return (raw || '').split(/\s+/).map(word => {
+      if (!word) return '';
+      return word.length <= 2
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
+  };
+  const name = formatInternName(intern.name);
 
   // Parse process & progress keywords (with fallback to legacy single field)
   const procKws = (intern.evalKeywordsProcess || intern.evalKeywords || '').split(',').map(k => k.trim()).filter(Boolean);
