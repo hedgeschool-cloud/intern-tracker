@@ -338,6 +338,18 @@
     .param-card .p-score { font-size: 20px; font-weight: 800; }
     .param-card .p-max { font-size: 10px; color: var(--muted); }
     .scorecard-table th { white-space: nowrap; }
+    .scorecard-table th.sc-sticky, .scorecard-table td.sc-sticky {
+      position: sticky; z-index: 2; background: var(--surface);
+    }
+    .scorecard-table thead th.sc-sticky { z-index: 3; background: var(--surface); }
+    .scorecard-table tr:hover td.sc-sticky { background: rgba(124,58,237,.04); }
+    /* Left offsets for each frozen column: Rank(40) | Intern(140) | HedgeID(100) | Phone(120) | Email(180) */
+    .sc-col-rank  { left: 0;    min-width: 40px;  max-width: 40px;  }
+    .sc-col-name  { left: 40px; min-width: 140px; max-width: 140px; border-right: 2px solid rgba(124,58,237,.2); }
+    .sc-col-hedge { left: 180px; min-width: 100px; max-width: 100px; }
+    .sc-col-phone { left: 280px; min-width: 120px; max-width: 120px; }
+    .sc-col-email { left: 400px; min-width: 180px; max-width: 180px; border-right: 2px solid rgba(124,58,237,.2); }
+    .sc-col-name, .sc-col-hedge, .sc-col-phone, .sc-col-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .toggle-slot {
       width: 38px; height: 38px; border-radius: 8px; border: 2px solid var(--border);
       display: inline-flex; align-items: center; justify-content: center;
@@ -1749,11 +1761,11 @@ async function renderScorecardAsync() {
         <table class="scorecard-table">
           <thead>
             <tr>
-              <th>Rank</th>
-              <th>Intern</th>
-              <th>Hedge ID</th>
-              <th>Phone</th>
-              <th>Email</th>
+              <th class="sc-sticky sc-col-rank">Rank</th>
+              <th class="sc-sticky sc-col-name">Intern</th>
+              <th class="sc-sticky sc-col-hedge">Hedge ID</th>
+              <th class="sc-sticky sc-col-phone">Phone</th>
+              <th class="sc-sticky sc-col-email">Email</th>
               <th>Batch</th>
               <th>Stream</th>
               <th>Aggregate</th>
@@ -1776,11 +1788,11 @@ async function renderScorecardAsync() {
               const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
               const rankLabel = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank;
               return `<tr>
-                <td><div class="rank-badge ${rankClass}">${rankLabel}</div></td>
-                <td><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
-                <td style="font-size:12px;color:var(--accent);font-weight:600">${e.intern.hedgeId||'—'}</td>
-                <td style="font-size:12px;color:var(--muted)">${e.intern.phone||'—'}</td>
-                <td style="font-size:12px;color:var(--muted)">${e.intern.email||'—'}</td>
+                <td class="sc-sticky sc-col-rank"><div class="rank-badge ${rankClass}">${rankLabel}</div></td>
+                <td class="sc-sticky sc-col-name"><span class="intern-name" style="cursor:pointer;color:var(--accent)" onclick="navigate('intern-detail',{batchId:'${e.batch.id}',internId:'${e.intern.id}'})">${e.intern.name}</span></td>
+                <td class="sc-sticky sc-col-hedge" style="font-size:12px;color:var(--accent);font-weight:600">${e.intern.hedgeId||'—'}</td>
+                <td class="sc-sticky sc-col-phone" style="font-size:12px;color:var(--muted)">${e.intern.phone||'—'}</td>
+                <td class="sc-sticky sc-col-email" style="font-size:12px;color:var(--muted)">${e.intern.email||'—'}</td>
                 <td><span class="tag" style="cursor:pointer;color:var(--accent)" onclick="navigate('batch-detail','${e.batch.id}')">${e.batch.name}</span></td>
                 <td><span style="font-size:12px;color:var(--muted)">${e.batch.stream || '—'}</span></td>
                 <td><span class="score-pill" style="background:${pctBg(e.sc.aggregate)};color:${pctColor(e.sc.aggregate)}">${e.sc.aggregate}%</span></td>
