@@ -928,9 +928,7 @@ function renderPage(page, param) {
     const area = document.getElementById('save-bar-area');
     if (area) area.innerHTML = '';
   }
-  // Restore main-content overflow when leaving scorecard
   const mc = document.getElementById('main-content');
-  if (page !== 'scorecard') mc.style.overflowX = '';
   if (page === 'dashboard') mc.innerHTML = renderDashboard();
   else if (page === 'batches') mc.innerHTML = renderBatchList();
   else if (page === 'batch-detail') { _state.currentBatch = param; mc.innerHTML = renderBatchDetail(param); }
@@ -1696,7 +1694,6 @@ async function renderScorecardAsync() {
   allEntries.sort((a, b) => b.sc.aggregate - a.sc.aggregate);
 
   let html = `
-    <div style="max-width:100%;overflow:hidden">
     <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:8px">
       <button class="btn btn-ghost btn-sm" onclick="goBack()" style="margin-bottom:4px">← Back</button>
       <div class="page-title">🏆 Excellence Score Card</div>
@@ -1747,12 +1744,9 @@ async function renderScorecardAsync() {
   }
 
   html += `
-    <style>
-      #main-content { overflow-x: hidden !important; }
-    </style>
-    <div class="card" style="padding:0">
-      <div id="scorecard-scroll-wrap" style="overflow-x:auto;border-radius:16px;width:100%">
-        <table class="scorecard-table" style="width:max-content;table-layout:auto">
+    <div class="card">
+      <div class="table-wrap">
+        <table class="scorecard-table">
           <thead>
             <tr>
               <th>Rank</th>
@@ -1811,7 +1805,6 @@ async function renderScorecardAsync() {
       <button class="btn btn-ghost" onclick="goBack()">← Back</button>
     </div>
   `;
-  html += '</div>';
   return html;
 }
 
@@ -4297,46 +4290,7 @@ window.showToast = (msg, type='ok') => {
   window._toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3000);
 };
 
-function attachPageEvents() {
-  // Apply sticky columns to scorecard table after DOM renders
-  const table = document.querySelector('.scorecard-table');
-  if (!table) return;
-  const wrap = table.closest('[id="scorecard-scroll-wrap"]') || table.closest('.table-wrap');
-  if (!wrap) return;
-
-  // Get computed background colours from actual elements
-  const theadBg = getComputedStyle(document.querySelector('.scorecard-table thead') || document.body).backgroundColor || '#1e1b2e';
-  const tbodyBg = getComputedStyle(document.getElementById('main-content') || document.body).backgroundColor || '#13111e';
-
-  // Freeze first 5 columns: Rank, Intern, Hedge ID, Phone, Email
-  const FREEZE = 5;
-  const rows = Array.from(table.querySelectorAll('tr'));
-  if (!rows.length) return;
-
-  // Measure actual rendered widths from first row
-  const firstRowCells = rows[0].querySelectorAll('th, td');
-  const offsets = [];
-  let left = 0;
-  for (let i = 0; i < FREEZE; i++) {
-    offsets.push(left);
-    if (firstRowCells[i]) left += firstRowCells[i].getBoundingClientRect().width;
-  }
-
-  // Apply sticky to every row
-  rows.forEach(row => {
-    const isHead = row.parentElement.tagName === 'THEAD';
-    const bg = isHead ? theadBg : tbodyBg;
-    const cells = row.querySelectorAll('th, td');
-    for (let i = 0; i < FREEZE && i < cells.length; i++) {
-      const cell = cells[i];
-      cell.style.position = 'sticky';
-      cell.style.left = offsets[i] + 'px';
-      cell.style.zIndex = isHead ? '3' : '2';
-      cell.style.backgroundColor = bg;
-      if (i === FREEZE - 1) cell.style.boxShadow = '2px 0 6px rgba(0,0,0,.15)';
-    }
-  });
-}
+function attachPageEvents() {}
 
 window.loadBatches = loadBatches;
 
