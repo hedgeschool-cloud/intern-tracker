@@ -2333,28 +2333,28 @@ async function renderBatchDetailAsync(batchId) {
     `;
 
     html += `
-      <div class="card">
+      <div class="card" style="padding:0">
         <div class="table-wrap">
-          <table>
+          <table style="font-size:11px;width:100%">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Intern Name</th>
-                <th>Hedge ID</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Aggregate</th>
-                <th>Process</th>
-                <th>Progress</th>
-                <th>Attendance</th>
-                <th>HR/Club</th>
-                <th>Daily Report</th>
-                <th>Project</th>
-                <th>Tasks</th>
-                <th>Social</th>
-                <th>Zappyvue</th>
-                <th>Tech Interview</th>
-                <th>Actions</th>
+                <th style="padding:8px 6px;width:32px">#</th>
+                <th style="padding:8px 6px;width:110px">Intern</th>
+                <th style="padding:8px 6px;width:80px">Hedge ID</th>
+                <th style="padding:8px 6px;width:90px">Phone</th>
+                <th style="padding:8px 6px;width:130px">Email</th>
+                <th style="padding:8px 6px;width:75px">Aggr.</th>
+                <th style="padding:8px 6px;width:65px">Proc.</th>
+                <th style="padding:8px 6px;width:65px">Prog.</th>
+                <th style="padding:8px 6px;width:75px">Attend.</th>
+                <th style="padding:8px 6px;width:65px">HR/Club</th>
+                <th style="padding:8px 6px;width:75px">D.Report</th>
+                <th style="padding:8px 6px;width:60px">Project</th>
+                <th style="padding:8px 6px;width:50px">Tasks</th>
+                <th style="padding:8px 6px;width:55px">Social</th>
+                <th style="padding:8px 6px;width:60px">Zappy</th>
+                <th style="padding:8px 6px;width:65px">Tech Int.</th>
+                <th style="padding:8px 6px;width:90px">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -2365,27 +2365,27 @@ async function renderBatchDetailAsync(batchId) {
       const gradeColor = (g) => g==='A'?'rgba(22,163,74,.15)':g==='B'?'rgba(217,119,6,.15)':'rgba(220,38,38,.15)';
       const gradeText = (g) => g==='A'?'var(--green)':g==='B'?'var(--yellow)':'var(--red)';
       html += `<tr>
-        <td style="color:var(--muted)">${idx+1}</td>
-        <td><span style="cursor:pointer;color:var(--accent);font-weight:600" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">${intern.name}</span></td>
-        <td style="font-size:12px;color:var(--accent);font-weight:600">${intern.hedgeId||'—'}</td>
-        <td style="font-size:12px;color:var(--muted)">${intern.phone||'—'}</td>
-        <td style="font-size:12px;color:var(--muted)">${intern.email||'—'}</td>
-        <td><span class="score-pill" style="background:${pctBg(sc.aggregate)};color:${pctColor(sc.aggregate)}">${sc.aggregate}%</span></td>
-        <td><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${sc.processScore}%</span></td>
-        <td><span class="score-pill" style="background:rgba(22,163,74,.12);color:var(--green)">${sc.progressScore}%</span></td>
-        <td><span class="score-pill" style="background:${pctBg(sc.attPct)};color:${pctColor(sc.attPct)}">${sc.attPct}%</span></td>
-        <td><span class="score-pill" style="background:${pctBg(sc.hrPct)};color:${pctColor(sc.hrPct)}">${sc.hrPct}%</span></td>
-        <td><span class="score-pill" style="background:${pctBg(sc.drPct)};color:${pctColor(sc.drPct)}">${sc.drPct}%</span></td>
-        <td><span class="score-pill" style="background:${pctBg(sc.projectQuality)};color:${pctColor(sc.projectQuality)}">${sc.projectQuality}%</span></td>
-        <td><span class="score-pill" style="background:${pctBg(sc.taskScore)};color:${pctColor(sc.taskScore)}">${sc.taskScore}%</span></td>
-        <td><span class="score-pill" style="background:${pctBg(sc.socialContest)};color:${pctColor(sc.socialContest)}">${sc.socialContest}%</span></td>
-        <td>${intern.zappyvueGrade ? `<span class="score-pill" style="background:${gradeColor(intern.zappyvueGrade)};color:${gradeText(intern.zappyvueGrade)}">${intern.zappyvueGrade}</span>` : '—'}</td>
-        <td>${intern.technicalInterviewGrade ? `<span class="score-pill" style="background:${gradeColor(intern.technicalInterviewGrade)};color:${gradeText(intern.technicalInterviewGrade)}">${intern.technicalInterviewGrade}</span>` : '—'}</td>
-        <td>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost btn-sm" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">👁 View</button>
-            <button class="btn btn-green btn-sm" onclick="exportIntern('${batchId}','${intern.id}')">📥</button>
-            ${_state.userDoc.role === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteIntern('${batchId}','${intern.id}','${intern.name}')">🗑</button>` : ''}
+        <td style="padding:7px 6px;color:var(--muted)">${idx+1}</td>
+        <td style="padding:7px 6px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="cursor:pointer;color:var(--accent);font-weight:600;font-size:11px" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">${intern.name}</span></td>
+        <td style="padding:7px 6px;color:var(--accent);font-weight:600">${intern.hedgeId||'—'}</td>
+        <td style="padding:7px 6px;color:var(--muted)">${intern.phone||'—'}</td>
+        <td style="padding:7px 6px;color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${intern.email||'—'}</td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(sc.aggregate)};color:${pctColor(sc.aggregate)};font-size:11px">${sc.aggregate}%</span></td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent);font-size:11px">${sc.processScore}%</span></td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:rgba(22,163,74,.12);color:var(--green);font-size:11px">${sc.progressScore}%</span></td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(sc.attPct)};color:${pctColor(sc.attPct)};font-size:11px">${sc.attPct}%</span></td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(sc.hrPct)};color:${pctColor(sc.hrPct)};font-size:11px">${sc.hrPct}%</span></td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(sc.drPct)};color:${pctColor(sc.drPct)};font-size:11px">${sc.drPct}%</span></td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(sc.projectQuality)};color:${pctColor(sc.projectQuality)};font-size:11px">${sc.projectQuality}%</span></td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(sc.taskScore)};color:${pctColor(sc.taskScore)};font-size:11px">${sc.taskScore}%</span></td>
+        <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(sc.socialContest)};color:${pctColor(sc.socialContest)};font-size:11px">${sc.socialContest}%</span></td>
+        <td style="padding:7px 6px;text-align:center">${intern.zappyvueGrade ? `<span class="score-pill" style="background:${gradeColor(intern.zappyvueGrade)};color:${gradeText(intern.zappyvueGrade)};font-size:11px">${intern.zappyvueGrade}</span>` : '—'}</td>
+        <td style="padding:7px 6px;text-align:center">${intern.technicalInterviewGrade ? `<span class="score-pill" style="background:${gradeColor(intern.technicalInterviewGrade)};color:${gradeText(intern.technicalInterviewGrade)};font-size:11px">${intern.technicalInterviewGrade}</span>` : '—'}</td>
+        <td style="padding:7px 6px">
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:11px" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">👁</button>
+            <button class="btn btn-green btn-sm" style="padding:4px 8px;font-size:11px" onclick="exportIntern('${batchId}','${intern.id}')">📥</button>
+            ${_state.userDoc.role === 'admin' ? `<button class="btn btn-danger btn-sm" style="padding:4px 8px;font-size:11px" onclick="deleteIntern('${batchId}','${intern.id}','${intern.name}')">🗑</button>` : ''}
           </div>
         </td>
       </tr>`;
