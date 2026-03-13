@@ -928,7 +928,9 @@ function renderPage(page, param) {
     const area = document.getElementById('save-bar-area');
     if (area) area.innerHTML = '';
   }
+  // Restore main-content overflow when leaving scorecard
   const mc = document.getElementById('main-content');
+  if (page !== 'scorecard') mc.style.overflowX = '';
   if (page === 'dashboard') mc.innerHTML = renderDashboard();
   else if (page === 'batches') mc.innerHTML = renderBatchList();
   else if (page === 'batch-detail') { _state.currentBatch = param; mc.innerHTML = renderBatchDetail(param); }
@@ -1745,9 +1747,12 @@ async function renderScorecardAsync() {
   }
 
   html += `
+    <style>
+      #main-content { overflow-x: hidden !important; }
+    </style>
     <div class="card" style="padding:0">
-      <div style="overflow-x:auto;border-radius:16px" id="scorecard-scroll-wrap">
-        <table class="scorecard-table" style="width:auto;table-layout:auto">
+      <div id="scorecard-scroll-wrap" style="overflow-x:auto;border-radius:16px;width:100%">
+        <table class="scorecard-table" style="width:max-content;table-layout:auto">
           <thead>
             <tr>
               <th>Rank</th>
