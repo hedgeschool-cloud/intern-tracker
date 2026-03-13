@@ -1744,7 +1744,7 @@ async function renderScorecardAsync() {
   }
 
   html += `
-    <div class="card" style="padding:0;overflow:hidden">
+    <div class="card" style="padding:0">
       <div class="table-wrap">
         <table class="scorecard-table" style="width:auto;min-width:100%">
           <thead>
@@ -4297,30 +4297,36 @@ function attachPageEvents() {
   const wrap = table.closest('.table-wrap');
   if (!wrap) return;
 
+  // Get computed background colours from actual elements
+  const theadBg = getComputedStyle(document.querySelector('.scorecard-table thead') || document.body).backgroundColor || '#1e1b2e';
+  const tbodyBg = getComputedStyle(document.getElementById('main-content') || document.body).backgroundColor || '#13111e';
+
   // Freeze first 5 columns: Rank, Intern, Hedge ID, Phone, Email
   const FREEZE = 5;
-  const rows = table.querySelectorAll('tr');
+  const rows = Array.from(table.querySelectorAll('tr'));
   if (!rows.length) return;
 
-  // Measure actual rendered widths from header row
-  const headerCells = rows[0].querySelectorAll('th');
+  // Measure actual rendered widths from first row
+  const firstRowCells = rows[0].querySelectorAll('th, td');
   const offsets = [];
   let left = 0;
   for (let i = 0; i < FREEZE; i++) {
     offsets.push(left);
-    left += headerCells[i] ? headerCells[i].offsetWidth : 0;
+    if (firstRowCells[i]) left += firstRowCells[i].getBoundingClientRect().width;
   }
 
   // Apply sticky to every row
   rows.forEach(row => {
+    const isHead = row.parentElement.tagName === 'THEAD';
+    const bg = isHead ? theadBg : tbodyBg;
     const cells = row.querySelectorAll('th, td');
     for (let i = 0; i < FREEZE && i < cells.length; i++) {
       const cell = cells[i];
       cell.style.position = 'sticky';
       cell.style.left = offsets[i] + 'px';
-      cell.style.zIndex = row.parentElement.tagName === 'THEAD' ? '3' : '2';
-      cell.style.background = row.parentElement.tagName === 'THEAD' ? 'var(--surface2)' : 'var(--surface)';
-      if (i === FREEZE - 1) cell.style.borderRight = '2px solid rgba(124,58,237,.25)';
+      cell.style.zIndex = isHead ? '3' : '2';
+      cell.style.backgroundColor = bg;
+      if (i === FREEZE - 1) cell.style.boxShadow = '2px 0 6px rgba(0,0,0,.15)';
     }
   });
 }
