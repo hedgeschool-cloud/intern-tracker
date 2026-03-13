@@ -737,7 +737,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
-  deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, serverTimestamp
+  deleteDoc, updateDoc, query, orderBy, where, Timestamp, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ══════════════════════════════════════════════
@@ -1075,39 +1075,16 @@ window.goBack = () => {
 // ══════════════════════════════════════════════
 // FIRESTORE — BATCHES
 // ══════════════════════════════════════════════
-let _batchesUnsubscribe = null;
 
 async function loadBatches() {
-  // If already listening, just re-render
-  if (_batchesUnsubscribe) {
-    if (_state.page === 'dashboard') navigate('dashboard');
-    if (_state.page === 'batches') navigate('batches');
-    return;
-  }
-  // Set up real-time listener
-  _batchesUnsubscribe = onSnapshot(query(collection(db, 'batches'), orderBy('createdAt', 'desc')), async snap => {
-    const batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Fetch live intern counts AND populate search cache in one go
-    await Promise.all(batches.map(async batch => {
-      const internSnap = await getDocs(collection(db, 'batches', batch.id, 'interns'));
-      const liveCount = internSnap.size;
-      if (batch.internCount !== liveCount) {
-        await updateDoc(doc(db, 'batches', batch.id), { internCount: liveCount });
-        batch.internCount = liveCount;
-      }
-      // Populate search cache directly from this fetch
-      _state.internsCache[batch.id] = internSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.name.localeCompare(b.name));
-    }));
-    _state.batches = batches;
-    refreshMentorDropdown();
-    // Re-render current page with fresh data
-    if (_state.page === 'dashboard') navigate('dashboard');
-    else if (_state.page === 'batches') navigate('batches');
-    else if (_state.page === 'batch-detail') navigate('batch-detail', _state.currentBatch);
-    else if (_state.page === 'scorecard') navigate('scorecard');
-    else if (_state.page === 'mentors') navigate('mentors');
-    else if (_state.page === 'mentor-detail') navigate('mentor-detail', _state.currentMentor);
-  });
+  // Simple one-time fetch — no real-time listener (saves massive reads)
+  const snap = await getDocs(query(collection(db, 'batches'), orderBy('createdAt', 'desc')));
+  const batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  _state.batches = batches;
+  refreshMentorDropdown();
+  // Re-render current page
+  if (_state.page === 'dashboard') navigate('dashboard');
+  else if (_state.page === 'batches') navigate('batches');
 }
 
 // Duration config
