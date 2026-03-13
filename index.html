@@ -923,6 +923,9 @@ function renderPage(page, param) {
   const navEl = document.getElementById('nav-' + page);
   if (navEl) navEl.classList.add('active');
   if (isMobile()) hideSidebar();
+  // Always ensure hamburger is visible on mobile
+  const hbtn = document.getElementById('hamburger-btn');
+  if (hbtn) hbtn.style.display = isMobile() ? 'flex' : 'none';
   // Clear topbar save button when leaving intern-detail
   if (page !== 'intern-detail') {
     const area = document.getElementById('save-bar-area');
@@ -933,9 +936,9 @@ function renderPage(page, param) {
   else if (page === 'batches') mc.innerHTML = renderBatchList();
   else if (page === 'batch-detail') { _state.currentBatch = param; mc.innerHTML = renderBatchDetail(param); }
   else if (page === 'intern-detail') { _state.currentIntern = param; mc.innerHTML = renderInternDetail(param); }
-  else if (page === 'mentor-detail') { _state.currentMentor = param; mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderMentorDetailAsync(param).then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); }); return; }
+  else if (page === 'mentor-detail') { _state.currentMentor = param; mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderMentorDetailAsync(param).then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); ensureHamburger(); }); return; }
   else if (page === 'reports') mc.innerHTML = renderReports();
-  else if (page === 'scorecard') { mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderScorecardAsync().then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); }); }
+  else if (page === 'scorecard') { mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderScorecardAsync().then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); ensureHamburger(); }); }
   else if (page === 'users') mc.innerHTML = renderUsers();
   else if (page === 'analytics') mc.innerHTML = renderAnalytics();
   else if (page === 'mentors') { mc.innerHTML = renderMentorList(); }
@@ -1931,6 +1934,11 @@ function hideSidebar() {
 function isMobile() {
   return window.innerWidth <= 768;
 }
+function ensureHamburger() {
+  const hbtn = document.getElementById('hamburger-btn');
+  if (hbtn) hbtn.style.display = isMobile() ? 'flex' : 'none';
+}
+
 window.toggleHamburger = function() {
   const sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
@@ -2410,6 +2418,7 @@ function renderBatchDetail(batchId) {
   renderBatchDetailAsync(batchId).then(html => {
     document.getElementById('main-content').innerHTML = html;
     attachPageEvents();
+    ensureHamburger();
   });
   return `<div style="padding:60px; text-align:center; color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span><br><br>Loading batch...</div>`;
 }
@@ -2743,6 +2752,7 @@ function renderInternDetail(param) {
   renderInternDetailAsync(param).then(html => {
     document.getElementById('main-content').innerHTML = html;
     attachPageEvents();
+    ensureHamburger();
     // Inject save button in topbar
     const area = document.getElementById('save-bar-area');
     if (area) area.innerHTML = `<button class="topbar-save-btn" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>`;
