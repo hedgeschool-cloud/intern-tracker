@@ -1694,6 +1694,7 @@ async function renderScorecardAsync() {
   allEntries.sort((a, b) => b.sc.aggregate - a.sc.aggregate);
 
   let html = `
+    <div style="max-width:100%;overflow:hidden">
     <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:8px">
       <button class="btn btn-ghost btn-sm" onclick="goBack()" style="margin-bottom:4px">← Back</button>
       <div class="page-title">🏆 Excellence Score Card</div>
@@ -1745,8 +1746,8 @@ async function renderScorecardAsync() {
 
   html += `
     <div class="card" style="padding:0">
-      <div class="table-wrap">
-        <table class="scorecard-table" style="width:auto;min-width:100%">
+      <div style="overflow-x:auto;border-radius:16px" id="scorecard-scroll-wrap">
+        <table class="scorecard-table" style="width:auto;table-layout:auto">
           <thead>
             <tr>
               <th>Rank</th>
@@ -1805,6 +1806,7 @@ async function renderScorecardAsync() {
       <button class="btn btn-ghost" onclick="goBack()">← Back</button>
     </div>
   `;
+  html += '</div>';
   return html;
 }
 
@@ -4294,7 +4296,7 @@ function attachPageEvents() {
   // Apply sticky columns to scorecard table after DOM renders
   const table = document.querySelector('.scorecard-table');
   if (!table) return;
-  const wrap = table.closest('.table-wrap');
+  const wrap = table.closest('[id="scorecard-scroll-wrap"]') || table.closest('.table-wrap');
   if (!wrap) return;
 
   // Get computed background colours from actual elements
