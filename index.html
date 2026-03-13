@@ -478,6 +478,82 @@
       .global-topbar { z-index: 9000 !important; left: 0 !important; }
       .sidebar { z-index: 8000 !important; top: 0 !important; }
     }
+
+    /* ── PAGE FADE TRANSITION ── */
+    .page-fade { animation: pageFadeIn .3s ease; }
+    @keyframes pageFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── COUNT-UP STAT NUMBERS ── */
+    .count-up { display: inline-block; }
+
+    /* ── STREAM-COLORED BATCH CARDS ── */
+    .batch-card[data-stream="equity"]     { border-top: 3px solid #7c3aed; }
+    .batch-card[data-stream="wealth"]     { border-top: 3px solid #0ea5e9; }
+    .batch-card[data-stream="hr"]         { border-top: 3px solid #16a34a; }
+    .batch-card[data-stream="marketing"]  { border-top: 3px solid #f59e0b; }
+    .batch-card[data-stream="technical"]  { border-top: 3px solid #ef4444; }
+    .batch-card[data-stream="derivative"] { border-top: 3px solid #8b5cf6; }
+    .batch-card[data-stream="macro"]      { border-top: 3px solid #06b6d4; }
+    .batch-card[data-stream="other"]      { border-top: 3px solid #6b7280; }
+
+    /* ── ALTERNATING TABLE ROWS ── */
+    table tbody tr:nth-child(even) td { background: rgba(124,58,237,.025); }
+    table tbody tr:hover td { background: rgba(124,58,237,.06) !important; }
+
+    /* ── ROW HOVER ── */
+    table tbody tr { transition: background .15s; }
+
+    /* ── TOAST UPGRADE ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--text); color: var(--surface); padding: 12px 24px;
+      border-radius: 12px; font-size: 14px; font-weight: 500; z-index: 99999;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2); min-width: 200px; text-align: center;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s ease;
+      opacity: 0;
+    }
+    .toast.toast-show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .toast.toast-success { background: #16a34a; }
+    .toast.toast-error   { background: #dc2626; }
+    .toast.toast-warn    { background: #d97706; }
+
+    /* ── RANK BADGE GLOW (top 3 only) ── */
+    .rank-badge.rank-1 { box-shadow: 0 0 12px rgba(255,215,0,.5); animation: glow1 2s ease-in-out infinite; }
+    .rank-badge.rank-2 { box-shadow: 0 0 10px rgba(192,192,192,.5); animation: glow2 2s ease-in-out infinite; }
+    .rank-badge.rank-3 { box-shadow: 0 0 10px rgba(205,127,50,.4); animation: glow3 2s ease-in-out infinite; }
+    @keyframes glow1 { 0%,100% { box-shadow: 0 0 8px rgba(255,215,0,.4); } 50% { box-shadow: 0 0 20px rgba(255,215,0,.8); } }
+    @keyframes glow2 { 0%,100% { box-shadow: 0 0 6px rgba(192,192,192,.4); } 50% { box-shadow: 0 0 16px rgba(192,192,192,.7); } }
+    @keyframes glow3 { 0%,100% { box-shadow: 0 0 6px rgba(205,127,50,.3); } 50% { box-shadow: 0 0 14px rgba(205,127,50,.6); } }
+
+    /* ── PODIUM ── */
+    .podium-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 16px; margin: 24px 0 32px; }
+    .podium-place { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .podium-avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; }
+    .podium-avatar.p1 { width: 68px; height: 68px; font-size: 26px; background: linear-gradient(135deg,#f59e0b,#fbbf24); box-shadow: 0 4px 20px rgba(245,158,11,.4); }
+    .podium-avatar.p2 { background: linear-gradient(135deg,#9ca3af,#d1d5db); box-shadow: 0 4px 16px rgba(156,163,175,.4); }
+    .podium-avatar.p3 { background: linear-gradient(135deg,#b45309,#d97706); box-shadow: 0 4px 16px rgba(180,83,9,.3); }
+    .podium-name { font-size: 13px; font-weight: 700; color: var(--text); text-align: center; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .podium-score { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .podium-block { border-radius: 10px 10px 0 0; width: 80px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .podium-block.b1 { height: 80px; background: linear-gradient(135deg,rgba(245,158,11,.2),rgba(251,191,36,.3)); border: 2px solid rgba(245,158,11,.4); }
+    .podium-block.b2 { height: 56px; background: linear-gradient(135deg,rgba(156,163,175,.15),rgba(209,213,219,.25)); border: 2px solid rgba(156,163,175,.3); }
+    .podium-block.b3 { height: 40px; background: linear-gradient(135deg,rgba(180,83,9,.15),rgba(217,119,6,.2)); border: 2px solid rgba(180,83,9,.25); }
+
+    /* ── LOADING SKELETON ── */
+    .skeleton { background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton-card { height: 120px; border-radius: 16px; margin-bottom: 16px; }
+    .skeleton-row  { height: 20px; border-radius: 4px; margin-bottom: 10px; }
+
+    /* ── BUTTON PRESS ── */
+    .btn:active { transform: scale(.96); }
+    .batch-card:active { transform: scale(.98); }
   </style>
 </head>
 <body>
@@ -648,7 +724,7 @@
   <div class="modal" id="modal-content"></div>
 </div>
 
-<div id="toast" class="toast" style="display:none"></div>
+<div id="toast" class="toast"></div>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <!-- FIREBASE SDK -->
@@ -932,6 +1008,9 @@ function renderPage(page, param) {
     if (area) area.innerHTML = '';
   }
   const mc = document.getElementById('main-content');
+  mc.classList.remove('page-fade');
+  void mc.offsetWidth; // force reflow
+  mc.classList.add('page-fade');
   if (page === 'dashboard') mc.innerHTML = renderDashboard();
   else if (page === 'batches') mc.innerHTML = renderBatchList();
   else if (page === 'batch-detail') { _state.currentBatch = param; mc.innerHTML = renderBatchDetail(param); }
@@ -1745,6 +1824,24 @@ async function renderScorecardAsync() {
     return html;
   }
 
+  // Podium for top 3
+  if (allEntries.length >= 1) {
+    const top = allEntries.slice(0, Math.min(3, allEntries.length));
+    const order = top.length === 3 ? [top[1],top[0],top[2]] : top.length === 2 ? [top[1],top[0]] : [top[0]];
+    const pCls  = top.length === 3 ? ['p2','p1','p3'] : top.length === 2 ? ['p2','p1'] : ['p1'];
+    const bCls  = top.length === 3 ? ['b2','b1','b3'] : top.length === 2 ? ['b2','b1'] : ['b1'];
+    const medals = ['🥈','🥇','🥉'];
+    html += '<div class="podium-wrap">' + order.map((e,i) => {
+      const rank = allEntries.indexOf(e) + 1;
+      return '<div class="podium-place">' +
+        '<div class="podium-avatar ' + pCls[i] + '">' + e.intern.name.charAt(0).toUpperCase() + '</div>' +
+        '<div class="podium-name">' + e.intern.name.split(' ')[0] + '</div>' +
+        '<div class="podium-score">' + e.sc.aggregate + '%</div>' +
+        '<div class="podium-block ' + bCls[i] + '">' + medals[i] + '</div>' +
+        '</div>';
+    }).join('') + '</div>';
+  }
+
   html += `
     <div style="border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px">
       <div class="scorecard-scroll" style="-webkit-overflow-scrolling:touch">
@@ -2045,15 +2142,15 @@ function renderDashboard() {
 
     <div class="summary-cards">
       <div class="summary-card" onclick="navigate('batches')" style="cursor:pointer" title="Go to Batches">
-        <div class="num" style="color:var(--accent)">${total}</div>
+        <div class="num count-up" style="color:var(--accent)" data-target="${total}">0</div>
         <div class="lbl">Total Batches</div>
       </div>
       <div class="summary-card" onclick="navigate('scorecard')" style="cursor:pointer" title="Go to Scorecard">
-        <div class="num" style="color:var(--green)">${totalInterns}</div>
+        <div class="num count-up" style="color:var(--green)" data-target="${totalInterns}">0</div>
         <div class="lbl">Total Interns</div>
       </div>
       <div class="summary-card">
-        <div class="num" style="color:var(--yellow)">${_state.batches.reduce((s,b)=>s+(b.taskCount||0),0)}</div>
+        <div class="num count-up" style="color:var(--yellow)" data-target="${_state.batches.reduce((s,b)=>s+(b.taskCount||0),0)}">0</div>
         <div class="lbl">Total Tasks Tracked</div>
       </div>
     </div>
@@ -2073,7 +2170,15 @@ function renderDashboard() {
     ` : `
       <div class="batch-grid">
         ${_state.batches.slice(0,6).map(b => `
-          <div class="batch-card" onclick="navigate('batch-detail','${b.id}')">
+          <div class="batch-card" onclick="navigate('batch-detail','${b.id}')" data-stream="${
+            (b.stream||'').toLowerCase().includes('equity') ? 'equity' :
+            (b.stream||'').toLowerCase().includes('wealth') ? 'wealth' :
+            (b.stream||'').toLowerCase().includes('hr') || (b.stream||'').toLowerCase().includes('human') ? 'hr' :
+            (b.stream||'').toLowerCase().includes('market') ? 'marketing' :
+            (b.stream||'').toLowerCase().includes('technical') || (b.stream||'').toLowerCase().includes('tech') ? 'technical' :
+            (b.stream||'').toLowerCase().includes('deriv') ? 'derivative' :
+            (b.stream||'').toLowerCase().includes('macro') ? 'macro' : 'other'
+          }">
             <div class="batch-card-title">${b.name}</div>
             ${b.description ? `<div class="text-muted text-sm" style="margin-bottom:8px">${b.description}</div>` : ''}
             <div style="display:flex; gap:8px; flex-wrap:wrap">
@@ -4399,13 +4504,31 @@ window.closeModalOnOverlay = (e) => { if (e.target === document.getElementById('
 window.showToast = (msg, type='ok') => {
   const el = document.getElementById('toast');
   el.textContent = msg;
+  el.className = 'toast' + (type==='error' ? ' toast-error' : type==='warn' ? ' toast-warn' : ' toast-success');
   el.style.display = 'block';
-  el.style.borderColor = type === 'error' ? 'rgba(239,68,68,.4)' : type === 'warn' ? 'rgba(245,158,11,.4)' : 'var(--border)';
   clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+  clearTimeout(window._toastHideTimer);
+  setTimeout(() => el.classList.add('toast-show'), 10);
+  window._toastTimer = setTimeout(() => {
+    el.classList.remove('toast-show');
+    window._toastHideTimer = setTimeout(() => { el.style.display = 'none'; }, 300);
+  }, 3000);
 };
 
-function attachPageEvents() {}
+function attachPageEvents() {
+  // Count-up animation for dashboard stat numbers
+  document.querySelectorAll('.count-up[data-target]').forEach(el => {
+    const target = parseInt(el.dataset.target) || 0;
+    if (target === 0) { el.textContent = '0'; return; }
+    let step = 0, steps = 40;
+    const inc = target / steps;
+    const timer = setInterval(() => {
+      step++;
+      el.textContent = step >= steps ? target : Math.round(inc * step);
+      if (step >= steps) clearInterval(timer);
+    }, 800 / steps);
+  });
+}
 
 window.loadBatches = loadBatches;
 
