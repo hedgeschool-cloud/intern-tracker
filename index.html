@@ -266,7 +266,8 @@
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
     .summary-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
-    .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: all .2s; }
+    .summary-card[onclick]:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,.15); }
     .summary-card .num { font-size: 28px; font-weight: 800; }
     .summary-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
@@ -2040,11 +2041,11 @@ function renderDashboard() {
     </div>
 
     <div class="summary-cards">
-      <div class="summary-card">
+      <div class="summary-card" onclick="navigate('batches')" style="cursor:pointer" title="Go to Batches">
         <div class="num" style="color:var(--accent)">${total}</div>
         <div class="lbl">Total Batches</div>
       </div>
-      <div class="summary-card">
+      <div class="summary-card" onclick="navigate('scorecard')" style="cursor:pointer" title="Go to Scorecard">
         <div class="num" style="color:var(--green)">${totalInterns}</div>
         <div class="lbl">Total Interns</div>
       </div>
