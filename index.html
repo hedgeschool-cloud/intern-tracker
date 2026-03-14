@@ -764,6 +764,7 @@ window._state = {
   userDoc: null,
   batches: [],
   internsCache: {},
+  usersCache: null,
   currentBatch: null,
   currentIntern: null,
   page: 'dashboard',
@@ -1442,8 +1443,8 @@ window.exportBatch = async (batchId) => {
 
 window.exportIntern = async (batchId, internId) => {
   const batch = _state.batches.find(b => b.id === batchId);
-  const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
-  const intern = snap.data();
+  let intern = (_state.internsCache[batchId] || []).find(i => i.id === internId);
+  if (!intern) { const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId)); intern = snap.data(); }
   const taskCount = batch.taskCount || 10;
   const dayCount = batch.dayCount || 30;
   const hrCount = batch.hrclubCount || 4;
@@ -1609,14 +1610,7 @@ window.showSaveBar = (batchId, internId) => {
 
 window.saveCurrentPage = async (batchId, internId) => {
   showToast('✅ Saved successfully!');
-  const area = document.getElementById('save-bar-area');
-  if (area) area.innerHTML = '';
-  // Reload current page to reflect saved data
-  if (internId) {
-    navigate('intern-detail', { batchId, internId });
-  } else if (batchId) {
-    navigate('batch-detail', batchId);
-  }
+  // No re-navigate needed — cache is already updated by updateSingleField
 };
 
 // ══════════════════════════════════════════════
@@ -2512,9 +2506,16 @@ function renderBatchDetail(batchId) {
 async function renderInternDetailAsync(param) {
   const { batchId, internId } = param;
   const batch = _state.batches.find(b => b.id === batchId);
-  const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
-  if (!snap.exists()) return '<div class="empty-state"><h3>Intern not found</h3></div>';
-  const intern = snap.data();
+  // Use cache first — only fetch from Firestore if not cached
+  let intern = (_state.internsCache[batchId] || []).find(i => i.id === internId);
+  if (!intern) {
+    const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
+    if (!snap.exists()) return '<div class="empty-state"><h3>Intern not found</h3></div>';
+    intern = snap.data();
+    // Add to cache
+    if (!_state.internsCache[batchId]) _state.internsCache[batchId] = [];
+    _state.internsCache[batchId].push({ id: internId, ...intern });
+  }
   // Cache intern name and batch name for activity logging
   _state.currentInternName = intern.name;
   _state.currentBatchName = batch?.name || null;
@@ -2919,8 +2920,8 @@ function justifyText(pdf, text, x, y, maxWidth, lineHeight) {
 
 window.exportEvaluationPDF = async (batchId, internId) => {
   const batch = _state.batches.find(b => b.id === batchId);
-  const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
-  const intern = snap.data();
+  let intern = (_state.internsCache[batchId] || []).find(i => i.id === internId);
+  if (!intern) { const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId)); intern = snap.data(); }
   const sc = calcScorecard(intern, batch);
 
   const gender = intern.gender || 'male';
@@ -3335,8 +3336,11 @@ function renderReports() {
 // RENDER — USERS (admin only)
 // ══════════════════════════════════════════════
 async function renderUsersAsync() {
-  const snap = await getDocs(collection(db, 'users'));
-  const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (!_state.usersCache) {
+    const snap = await getDocs(collection(db, 'users'));
+    _state.usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+  const users = _state.usersCache;
   const pending = users.filter(u => (u.status || 'approved') === 'pending');
   const approved = users.filter(u => (u.status || 'approved') === 'approved');
   const rejected = users.filter(u => u.status === 'rejected');
@@ -3418,12 +3422,14 @@ async function renderUsersAsync() {
 
 window.approveUser = async (userId) => {
   await updateDoc(doc(db, 'users', userId), { status: 'approved' });
+  _state.usersCache = null;
   showToast('✅ User approved! They can now log in.');
   navigate('users');
 };
 
 window.rejectUser = async (userId) => {
   await updateDoc(doc(db, 'users', userId), { status: 'rejected' });
+  _state.usersCache = null;
   showToast('🚫 User rejected.');
   navigate('users');
 };
@@ -3435,8 +3441,12 @@ function renderAnalytics() {
   // Show loading state, then populate dropdown from Firestore users
   setTimeout(async () => {
     try {
-      const snap = await getDocs(collection(db, 'users'));
-      const users = snap.docs.map(d => d.data())
+      // Use cached users if available
+      if (!_state.usersCache) {
+        const snap = await getDocs(collection(db, 'users'));
+        _state.usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
+      const users = _state.usersCache
         .filter(u => (u.role === 'mentor' || u.role === 'admin') && (u.status === 'approved' || u.role === 'admin'))
         .sort((a, b) => a.name.localeCompare(b.name));
       const sel = document.getElementById('analytics-mentor');
@@ -3991,8 +4001,8 @@ function renderUsers() {
 // ══════════════════════════════════════════════
 window.showEditInternModal = async (batchId, internId) => {
   if (_state.userDoc.role !== 'admin') return showToast('⛔ Admin only', 'error');
-  const internSnap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
-  const intern = internSnap.data();
+  let intern = (_state.internsCache[batchId] || []).find(i => i.id === internId);
+  if (!intern) { const internSnap = await getDoc(doc(db, 'batches', batchId, 'interns', internId)); intern = internSnap.data(); }
   document.getElementById('modal-content').innerHTML = `
     <div class="modal-title">✏️ Edit Intern</div>
     <div class="form-group"><label>Full Name</label>
@@ -4128,9 +4138,8 @@ window.handleBatchAttImport = async (batchId, file, inputEl) => {
   const dataRows = rows.slice(1).filter(r => r[emailCol]?.trim());
   if (!dataRows.length) return showToast('⚠️ No data rows found', 'warn');
 
-  // Fetch current interns for matching
-  const snap = await getDocs(collection(db, 'batches', batchId, 'interns'));
-  const internDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Use cache for matching — avoid unnecessary reads
+  const internDocs = _state.internsCache[batchId] || (await getInterns(batchId));
 
   const normalize = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
   const ts = serverTimestamp();
@@ -4217,9 +4226,8 @@ window.handleBatchDRImport = async (batchId, file, inputEl) => {
   const dataRows = rows.slice(1).filter(r => r[phoneCol]?.trim());
   if (!dataRows.length) return showToast('⚠️ No data rows found', 'warn');
 
-  // Fetch interns
-  const snap = await getDocs(collection(db, 'batches', batchId, 'interns'));
-  const internDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Use cache for matching — avoid unnecessary reads
+  const internDocs = _state.internsCache[batchId] || (await getInterns(batchId));
 
   const normalizePhone = s => (s||'').replace(/[^0-9]/g,'').slice(-10);
   const ts = serverTimestamp();
