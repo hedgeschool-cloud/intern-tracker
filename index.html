@@ -1298,6 +1298,7 @@ window.updateMark = async (batchId, internId, task, val) => {
     if (cached) {
       if (!cached.tasks) cached.tasks = {};
       cached.tasks[task] = num;
+      // Timestamps only updated on refresh (always shows Google server time)
       const batch = _state.batches.find(b => b.id === batchId);
       if (batch) refreshScorePills(calcScorecard(cached, batch));
     }
@@ -2854,8 +2855,10 @@ function fmtTimestamp(iso, by) {
 // Convert Firestore Timestamp or ISO string to Date safely
 function tsToDate(val) {
   if (!val) return null;
-  if (typeof val === 'object' && val.toDate) return val.toDate(); // Firestore Timestamp
-  if (typeof val === 'string') return new Date(val); // legacy ISO string
+  if (val instanceof Date) return val;                              // JS Date (from cache)
+  if (typeof val === 'object' && val.toDate) return val.toDate();  // Firestore Timestamp
+  if (typeof val === 'object' && val.seconds) return new Date(val.seconds * 1000); // raw seconds
+  if (typeof val === 'string') return new Date(val);               // legacy ISO string
   return null;
 }
 
@@ -2910,6 +2913,7 @@ window.toggleField = async (batchId, internId, fieldPath, el) => {
   if (_state.internsCache[batchId]) {
     const cached = _state.internsCache[batchId].find(i => i.id === internId);
     if (cached) {
+      // Timestamps only updated on refresh (always shows Google server time)
       const parts = fieldPath.split('.');
       if (parts.length === 2) {
         if (!cached[parts[0]]) cached[parts[0]] = {};
@@ -3325,6 +3329,7 @@ window.updateSingleField = async (batchId, internId, field, val) => {
     const cached = _state.internsCache[batchId].find(i => i.id === internId);
     if (cached) {
       cached[field] = saveVal;
+      // Timestamps only updated on refresh (always shows Google server time)
       // Live score refresh for projectQuality and socialContest
       if (field === 'projectQuality' || field === 'socialContest') {
         const batch = _state.batches.find(b => b.id === batchId);
