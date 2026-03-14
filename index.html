@@ -2551,9 +2551,9 @@ async function renderInternDetailAsync(param) {
 
       <div class="summary-cards" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">
         <div class="summary-card">
-          <div class="num" style="color:${pctColor(sc.aggregate)}">${sc.aggregate}%</div>
+          <div id="score-agg-num" class="num" style="color:${pctColor(sc.aggregate)}">${sc.aggregate}%</div>
           <div class="lbl">Aggregate Score</div>
-          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:${sc.aggregate}%; background:${pctColor(sc.aggregate)}"></div></div>
+          <div class="progress-bar" style="margin-top:10px"><div id="score-agg-bar" class="progress-fill" style="width:${sc.aggregate}%; background:${pctColor(sc.aggregate)}"></div></div>
         </div>
         <div class="summary-card">
           <div class="num" style="color:var(--accent)">${sc.processScore}%</div>
@@ -2574,7 +2574,7 @@ async function renderInternDetailAsync(param) {
       <div class="card mb-16">
         <div class="flex-between mb-8">
           <h3 style="font-size:15px;font-weight:700">📅 Attendance <span style="font-size:12px;color:var(--muted)">(${attCount} slots • 20% weight)</span></h3>
-          <span class="score-pill" style="background:${pctBg(sc.attPct)};color:${pctColor(sc.attPct)}">${sc.attPct}% → ${sc.attendance}pts</span>
+          <span id="score-pill-att" class="score-pill" style="background:${pctBg(sc.attPct)};color:${pctColor(sc.attPct)}">${sc.attPct}% → ${sc.attendance}pts</span>
         </div>
         ${_state.userDoc.role === 'admin' && intern.lastUpdatedAttendance ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${tsToDate(intern.lastUpdatedAttendance).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.lastUpdatedAttendance).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedAttendanceBy||'Unknown'}</strong></div>` : ''}
         <div class="slots-grid">
@@ -2598,7 +2598,7 @@ async function renderInternDetailAsync(param) {
       <div class="card mb-16">
         <div class="flex-between mb-8">
           <h3 style="font-size:15px;font-weight:700">🎯 HR/Club Activities <span style="font-size:12px;color:var(--muted)">(${hrCount} slots • 15% weight)</span></h3>
-          <span class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${sc.hrPct}% → ${sc.hrclub}pts</span>
+          <span id="score-pill-hr" class="score-pill" style="background:rgba(124,58,237,.12);color:var(--accent)">${sc.hrPct}% → ${sc.hrclub}pts</span>
         </div>
         ${_state.userDoc.role === 'admin' && intern.lastUpdatedHrclub ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${tsToDate(intern.lastUpdatedHrclub).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.lastUpdatedHrclub).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedHrclubBy||'Unknown'}</strong></div>` : ''}
         <div class="slots-grid">
@@ -2622,7 +2622,7 @@ async function renderInternDetailAsync(param) {
       <div class="card mb-24">
         <div class="flex-between mb-8">
           <h3 style="font-size:15px;font-weight:700">📝 Daily Report <span style="font-size:12px;color:var(--muted)">(${drCount} slots • 15% weight)</span></h3>
-          <span class="score-pill" style="background:rgba(245,158,11,.15);color:var(--yellow)">${sc.drPct}% → ${sc.dailyreport}pts</span>
+          <span id="score-pill-dr" class="score-pill" style="background:rgba(245,158,11,.15);color:var(--yellow)">${sc.drPct}% → ${sc.dailyreport}pts</span>
         </div>
         ${_state.userDoc.role === 'admin' && intern.lastUpdatedDailyreport ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${tsToDate(intern.lastUpdatedDailyreport).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.lastUpdatedDailyreport).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedDailyreportBy||'Unknown'}</strong></div>` : ''}
         <div class="slots-grid">
@@ -2869,7 +2869,6 @@ window.toggleField = async (batchId, internId, fieldPath, el) => {
   const isHR = fieldPath.startsWith('hrclub');
   const isDR = fieldPath.startsWith('dailyreport');
   const isAtt = fieldPath.startsWith('attendance');
-  const slotKey = fieldPath.replace('.', 'Ts_').replace(/\./g, '_');
   const updates = {
     [fieldPath]: newVal,
     ['slotTs.' + fieldPath.replace('.','_')]: ts,
@@ -2878,6 +2877,32 @@ window.toggleField = async (batchId, internId, fieldPath, el) => {
   if (isHR)  { updates.lastUpdatedHrclub = ts; updates.lastUpdatedHrclubBy = by; }
   if (isDR)  { updates.lastUpdatedDailyreport = ts; updates.lastUpdatedDailyreportBy = by; }
   if (isAtt) { updates.lastUpdatedAttendance = ts; updates.lastUpdatedAttendanceBy = by; }
+  // Update cache immediately so recalc uses latest values
+  if (_state.internsCache[batchId]) {
+    const cached = _state.internsCache[batchId].find(i => i.id === internId);
+    if (cached) {
+      const parts = fieldPath.split('.');
+      if (parts.length === 2) {
+        if (!cached[parts[0]]) cached[parts[0]] = {};
+        cached[parts[0]][parts[1]] = newVal;
+      }
+      // Recalculate scores and update DOM live
+      const batch = _state.batches.find(b => b.id === batchId);
+      if (batch) {
+        const sc = calcScorecard(cached, batch);
+        const attEl = document.getElementById('score-pill-att');
+        const hrEl  = document.getElementById('score-pill-hr');
+        const drEl  = document.getElementById('score-pill-dr');
+        const aggEl = document.getElementById('score-agg-num');
+        const barEl = document.getElementById('score-agg-bar');
+        if (attEl) { attEl.textContent = sc.attPct + '% → ' + sc.attendance + 'pts'; attEl.style.background = pctBg(sc.attPct); attEl.style.color = pctColor(sc.attPct); }
+        if (hrEl)  { hrEl.textContent  = sc.hrPct  + '% → ' + sc.hrclub    + 'pts'; }
+        if (drEl)  { drEl.textContent  = sc.drPct  + '% → ' + sc.dailyreport + 'pts'; }
+        if (aggEl) { aggEl.textContent = sc.aggregate + '%'; aggEl.style.color = pctColor(sc.aggregate); }
+        if (barEl) { barEl.style.width = sc.aggregate + '%'; barEl.style.background = pctColor(sc.aggregate); }
+      }
+    }
+  }
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), updates);
   const actionType = isHR ? 'HR/Club Activity' : isDR ? 'Daily Report' : 'Attendance';
   logActivity(actionType, { batchId, internId, field: fieldPath, value: newVal ? 'Marked' : 'Unmarked' });
