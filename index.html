@@ -913,7 +913,8 @@ onAuthStateChanged(auth, async user => {
       if (tab) tab.style.display = 'none'; // replaced by topbar hamburger
       const hbtn = document.getElementById('hamburger-btn');
       initSidebar();
-      loadBatches();
+      // Await loadBatches so _state.batches is populated before any navigation
+      await loadBatches();
       // Restore position if this was a refresh, otherwise go to dashboard
       const anchor = sessionStorage.getItem('refreshAnchor');
       if (anchor) {
