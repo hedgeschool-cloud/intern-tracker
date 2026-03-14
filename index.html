@@ -1293,15 +1293,7 @@ window.updateMark = async (batchId, internId, task, val) => {
       if (!cached.tasks) cached.tasks = {};
       cached.tasks[task] = num;
       const batch = _state.batches.find(b => b.id === batchId);
-      if (batch) {
-        const sc = calcScorecard(cached, batch);
-        const taskEl = document.getElementById('score-pill-task');
-        const aggEl  = document.getElementById('score-agg-num');
-        const barEl  = document.getElementById('score-agg-bar');
-        if (taskEl) taskEl.textContent = sc.taskScore + 'pts / 30';
-        if (aggEl)  { aggEl.textContent = sc.aggregate + '%'; aggEl.style.color = pctColor(sc.aggregate); }
-        if (barEl)  { barEl.style.width = sc.aggregate + '%'; barEl.style.background = pctColor(sc.aggregate); }
-      }
+      if (batch) refreshScorePills(calcScorecard(cached, batch));
     }
   }
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
@@ -2574,14 +2566,14 @@ async function renderInternDetailAsync(param) {
           <div class="progress-bar" style="margin-top:10px"><div id="score-agg-bar" class="progress-fill" style="width:${sc.aggregate}%; background:${pctColor(sc.aggregate)}"></div></div>
         </div>
         <div class="summary-card">
-          <div class="num" style="color:var(--accent)">${sc.processScore}%</div>
+          <div id="score-process-num" class="num" style="color:var(--accent)">${sc.processScore}%</div>
           <div class="lbl">Process Score</div>
-          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:${sc.processScore*2}%; background:var(--accent)"></div></div>
+          <div class="progress-bar" style="margin-top:10px"><div id="score-process-bar" class="progress-fill" style="width:${sc.processScore*2}%; background:var(--accent)"></div></div>
         </div>
         <div class="summary-card">
-          <div class="num" style="color:var(--green)">${sc.progressScore}%</div>
+          <div id="score-progress-num" class="num" style="color:var(--green)">${sc.progressScore}%</div>
           <div class="lbl">Progress Score</div>
-          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:${sc.progressScore*2}%; background:var(--green)"></div></div>
+          <div class="progress-bar" style="margin-top:10px"><div id="score-progress-bar" class="progress-fill" style="width:${sc.progressScore*2}%; background:var(--green)"></div></div>
         </div>
       </div>
 
@@ -2906,19 +2898,7 @@ window.toggleField = async (batchId, internId, fieldPath, el) => {
       }
       // Recalculate scores and update DOM live
       const batch = _state.batches.find(b => b.id === batchId);
-      if (batch) {
-        const sc = calcScorecard(cached, batch);
-        const attEl = document.getElementById('score-pill-att');
-        const hrEl  = document.getElementById('score-pill-hr');
-        const drEl  = document.getElementById('score-pill-dr');
-        const aggEl = document.getElementById('score-agg-num');
-        const barEl = document.getElementById('score-agg-bar');
-        if (attEl) { attEl.textContent = sc.attPct + '% → ' + sc.attendance + 'pts'; attEl.style.background = pctBg(sc.attPct); attEl.style.color = pctColor(sc.attPct); }
-        if (hrEl)  { hrEl.textContent  = sc.hrPct  + '% → ' + sc.hrclub    + 'pts'; }
-        if (drEl)  { drEl.textContent  = sc.drPct  + '% → ' + sc.dailyreport + 'pts'; }
-        if (aggEl) { aggEl.textContent = sc.aggregate + '%'; aggEl.style.color = pctColor(sc.aggregate); }
-        if (barEl) { barEl.style.width = sc.aggregate + '%'; barEl.style.background = pctColor(sc.aggregate); }
-      }
+      if (batch) refreshScorePills(calcScorecard(cached, batch));
     }
   }
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), updates);
@@ -3284,6 +3264,33 @@ window.updateProjectTitle = async (batchId, internId, val) => {
   if (val.trim()) { logActivity('Project Title', { batchId, internId, field: 'projectTitle', value: val.trim() }); showToast('✅ Project title saved!'); }
 };
 
+function refreshScorePills(sc) {
+  const pqEl   = document.getElementById('score-pq-pts');
+  const scEl   = document.getElementById('score-sc-pts');
+  const taskEl = document.getElementById('score-pill-task');
+  const attEl  = document.getElementById('score-pill-att');
+  const hrEl   = document.getElementById('score-pill-hr');
+  const drEl   = document.getElementById('score-pill-dr');
+  const aggEl  = document.getElementById('score-agg-num');
+  const aggBar = document.getElementById('score-agg-bar');
+  const procEl = document.getElementById('score-process-num');
+  const procBar= document.getElementById('score-process-bar');
+  const progEl = document.getElementById('score-progress-num');
+  const progBar= document.getElementById('score-progress-bar');
+  if (pqEl)   pqEl.textContent   = 'Weighted: ' + sc.projectQuality + 'pts / 10';
+  if (scEl)   scEl.textContent   = 'Weighted: ' + sc.socialContest  + 'pts / 10';
+  if (taskEl) taskEl.textContent = sc.taskScore + 'pts / 30';
+  if (attEl)  { attEl.textContent = sc.attPct + '% → ' + sc.attendance + 'pts'; attEl.style.background = pctBg(sc.attPct); attEl.style.color = pctColor(sc.attPct); }
+  if (hrEl)   hrEl.textContent   = sc.hrPct  + '% → ' + sc.hrclub + 'pts';
+  if (drEl)   drEl.textContent   = sc.drPct  + '% → ' + sc.dailyreport + 'pts';
+  if (aggEl)  { aggEl.textContent = sc.aggregate + '%'; aggEl.style.color = pctColor(sc.aggregate); }
+  if (aggBar) { aggBar.style.width = sc.aggregate + '%'; aggBar.style.background = pctColor(sc.aggregate); }
+  if (procEl) procEl.textContent = sc.processScore + '%';
+  if (procBar)procBar.style.width = sc.processScore * 2 + '%';
+  if (progEl) progEl.textContent = sc.progressScore + '%';
+  if (progBar)progBar.style.width = sc.progressScore * 2 + '%';
+}
+
 window.updateSingleField = async (batchId, internId, field, val) => {
   const stringFields = ['zappyvueGrade', 'technicalInterviewGrade', 'gender', 'email', 'phone', 'name', 'hedgeId', 'projectTitle'];
   const gradeFields  = ['zappyvueGrade', 'technicalInterviewGrade', 'gender'];
@@ -3302,19 +3309,7 @@ window.updateSingleField = async (batchId, internId, field, val) => {
       // Live score refresh for projectQuality and socialContest
       if (field === 'projectQuality' || field === 'socialContest') {
         const batch = _state.batches.find(b => b.id === batchId);
-        if (batch) {
-          const sc = calcScorecard(cached, batch);
-          const pqEl  = document.getElementById('score-pq-pts');
-          const scEl  = document.getElementById('score-sc-pts');
-          const aggEl = document.getElementById('score-agg-num');
-          const barEl = document.getElementById('score-agg-bar');
-          const taskEl = document.getElementById('score-pill-task');
-          if (pqEl)  pqEl.textContent  = 'Weighted: ' + sc.projectQuality + 'pts / 10';
-          if (scEl)  scEl.textContent  = 'Weighted: ' + sc.socialContest  + 'pts / 10';
-          if (taskEl) taskEl.textContent = sc.taskScore + 'pts / 30';
-          if (aggEl) { aggEl.textContent = sc.aggregate + '%'; aggEl.style.color = pctColor(sc.aggregate); }
-          if (barEl) { barEl.style.width = sc.aggregate + '%'; barEl.style.background = pctColor(sc.aggregate); }
-        }
+        if (batch) refreshScorePills(calcScorecard(cached, batch));
       }
     }
   }
