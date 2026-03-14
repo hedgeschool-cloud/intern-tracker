@@ -1087,6 +1087,11 @@ async function loadBatches() {
   // Re-render current page
   if (_state.page === 'dashboard') navigate('dashboard');
   else if (_state.page === 'batches') navigate('batches');
+  // Pre-load all intern caches in background so search works immediately
+  // Uses Promise.all so all batches load in parallel, not sequentially
+  Promise.all(batches.map(b => {
+    if (!_state.internsCache[b.id]) return getInterns(b.id);
+  })).catch(() => {});
 }
 
 // Duration config
@@ -1526,17 +1531,22 @@ window.handleGlobalSearch = (query) => {
   box.style.display = 'block';
   box.innerHTML = '<div class="search-empty">Searching...</div>';
   clearTimeout(window._searchDebounce);
-  window._searchDebounce = setTimeout(() => _doSearch(q), 300);
+  window._searchDebounce = setTimeout(() => window._doSearch(q), 300);
 };
 
 window._searchToken = 0;
 window._searchDebounce = null;
 
-window._doSearch = function _doSearch(q) {
+window._doSearch = async function _doSearch(q) {
   const box = document.getElementById('search-results');
   if (!box) return;
   const results = [];
   try {
+  // If any batch has no cache yet, load it first (fallback for slow connections)
+  const missing = _state.batches.filter(b => !_state.internsCache[b.id]);
+  if (missing.length) {
+    await Promise.all(missing.map(b => getInterns(b.id)));
+  }
 
   // Search batches
   for (const batch of _state.batches) {
