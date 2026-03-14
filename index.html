@@ -1286,6 +1286,24 @@ window.updateMark = async (batchId, internId, task, val) => {
   const num = val === '' ? '' : Math.max(0, Math.min(100, parseFloat(val) || 0));
   const ts = serverTimestamp();
   const by = _state.userDoc?.name || 'Unknown';
+  // Update cache immediately and refresh score pills live
+  if (_state.internsCache[batchId]) {
+    const cached = _state.internsCache[batchId].find(i => i.id === internId);
+    if (cached) {
+      if (!cached.tasks) cached.tasks = {};
+      cached.tasks[task] = num;
+      const batch = _state.batches.find(b => b.id === batchId);
+      if (batch) {
+        const sc = calcScorecard(cached, batch);
+        const taskEl = document.getElementById('score-pill-task');
+        const aggEl  = document.getElementById('score-agg-num');
+        const barEl  = document.getElementById('score-agg-bar');
+        if (taskEl) taskEl.textContent = sc.taskScore + 'pts / 30';
+        if (aggEl)  { aggEl.textContent = sc.aggregate + '%'; aggEl.style.color = pctColor(sc.aggregate); }
+        if (barEl)  { barEl.style.width = sc.aggregate + '%'; barEl.style.background = pctColor(sc.aggregate); }
+      }
+    }
+  }
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
     ['tasks.' + task]: num,
     ['taskTs.' + task]: ts,
@@ -2759,7 +2777,7 @@ async function renderInternDetailAsync(param) {
           <input type="number" min="0" max="100" value="${intern.projectQuality ?? ''}" placeholder="Score out of 100"
             style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onblur="updateSingleField('${batchId}','${internId}','projectQuality',this.value)" />
-          <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.projectQuality}pts / 10</div>
+          <div id="score-pq-pts" style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.projectQuality}pts / 10</div>
           ${_state.userDoc.role==='admin' && intern.ts_projectQuality ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_projectQuality).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_projectQuality).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_projectQuality||''}</span></div>` : ''}
         </div>
         <div class="card">
@@ -2767,7 +2785,7 @@ async function renderInternDetailAsync(param) {
           <input type="number" min="0" max="100" value="${intern.socialContest ?? ''}" placeholder="Score out of 100"
             style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onblur="updateSingleField('${batchId}','${internId}','socialContest',this.value)" />
-          <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.socialContest}pts / 10</div>
+          <div id="score-sc-pts" style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.socialContest}pts / 10</div>
           ${_state.userDoc.role==='admin' && intern.ts_socialContest ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_socialContest).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_socialContest).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_socialContest||''}</span></div>` : ''}
         </div>
       </div>
@@ -2776,7 +2794,7 @@ async function renderInternDetailAsync(param) {
       <div class="card">
         <div class="flex-between mb-16">
           <h3 style="font-size:15px;font-weight:700">✅ Task Scores <span style="font-size:12px;color:var(--muted)">(${taskCount} tasks • 30% weight)</span></h3>
-          <span class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green)">${sc.taskScore}pts / 30</span>
+          <span id="score-pill-task" class="score-pill" style="background:rgba(34,197,94,.12);color:var(--green)">${sc.taskScore}pts / 30</span>
         </div>
         ${_state.userDoc.role === 'admin' && intern.lastUpdatedTasks ? `<div style="margin-bottom:10px;font-size:11px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:5px 12px;display:inline-block">🕐 Last updated: <strong>${tsToDate(intern.lastUpdatedTasks).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.lastUpdatedTasks).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> by <strong>${intern.lastUpdatedTasksBy||'Unknown'}</strong></div>` : ''}
         <div class="marks-grid">
@@ -3276,22 +3294,37 @@ window.updateSingleField = async (batchId, internId, field, val) => {
     saveVal = val === '' ? '' : Math.max(0, Math.min(100, parseFloat(val) || 0));
   }
   const ts = serverTimestamp(), by = _state.userDoc?.name || 'Unknown';
+  // Update cache immediately
+  if (_state.internsCache[batchId]) {
+    const cached = _state.internsCache[batchId].find(i => i.id === internId);
+    if (cached) {
+      cached[field] = saveVal;
+      // Live score refresh for projectQuality and socialContest
+      if (field === 'projectQuality' || field === 'socialContest') {
+        const batch = _state.batches.find(b => b.id === batchId);
+        if (batch) {
+          const sc = calcScorecard(cached, batch);
+          const pqEl  = document.getElementById('score-pq-pts');
+          const scEl  = document.getElementById('score-sc-pts');
+          const aggEl = document.getElementById('score-agg-num');
+          const barEl = document.getElementById('score-agg-bar');
+          const taskEl = document.getElementById('score-pill-task');
+          if (pqEl)  pqEl.textContent  = 'Weighted: ' + sc.projectQuality + 'pts / 10';
+          if (scEl)  scEl.textContent  = 'Weighted: ' + sc.socialContest  + 'pts / 10';
+          if (taskEl) taskEl.textContent = sc.taskScore + 'pts / 30';
+          if (aggEl) { aggEl.textContent = sc.aggregate + '%'; aggEl.style.color = pctColor(sc.aggregate); }
+          if (barEl) { barEl.style.width = sc.aggregate + '%'; barEl.style.background = pctColor(sc.aggregate); }
+        }
+      }
+    }
+  }
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
     [field]: saveVal,
     ['ts_' + field]: ts,
     ['by_' + field]: by
   });
-  // Also update the in-memory cache directly so batch pages reflect change immediately
-  if (_state.internsCache[batchId]) {
-    const cached = _state.internsCache[batchId].find(i => i.id === internId);
-    if (cached) cached[field] = saveVal;
-  }
   logActivity(gradeFields.includes(field) ? 'Grade/Field' : 'Score', { batchId, internId, field, value: saveVal });
-  if (gradeFields.includes(field) && val) {
-    showToast('✅ Saved!');
-  } else {
-    showToast('✅ Saved!');
-  }
+  showToast('✅ Saved!');
 };
 
 // ══════════════════════════════════════════════
