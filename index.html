@@ -4664,27 +4664,34 @@ window.downloadResumeReportPDF = function(internId) {
     var line = lines[i];
     if (y > 275) { pdf.addPage(); y = 20; }
 
-    if (line.indexOf('## ') === 0) {
+    if (line.indexOf('## ') === 0 || line.indexOf('### ') === 0) {
       y += 3;
-      // Section heading with background
-      var heading = line.replace('## ', '');
-      pdf.setFillColor(245, 240, 255);
-      pdf.rect(margin - 2, y - 5, usableW + 4, 9, 'F');
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(12);
-      pdf.setTextColor(109, 40, 217);
+      var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '');
+      var isMain = line.indexOf('## ') === 0;
+      if (isMain) {
+        pdf.setFillColor(245, 240, 255);
+        pdf.rect(margin - 2, y - 5, usableW + 4, 9, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.setTextColor(109, 40, 217);
+      } else {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(10);
+        pdf.setTextColor(50, 50, 50);
+      }
       var wrapped = pdf.splitTextToSize(heading, usableW);
       pdf.text(wrapped, margin, y);
-      y += wrapped.length * 7 + 4;
+      y += wrapped.length * (isMain ? 7 : 6) + (isMain ? 4 : 2);
       pdf.setTextColor(30, 30, 40);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
-    } else if (line.indexOf('- ') === 0) {
-      var bullet = pdf.splitTextToSize('- ' + line.slice(2), usableW - 6);
+    } else if (line.indexOf('- ') === 0 || line.indexOf('* ') === 0) {
+      var bulletText = line.slice(2).replace(/\*\*/g, '');
+      var bullet = pdf.splitTextToSize('- ' + bulletText, usableW - 6);
       pdf.text(bullet, margin + 4, y);
       y += bullet.length * 5.5;
     } else if (line.trim()) {
-      var cleanLine = line.replace(/\*\*/g, '');
+      var cleanLine = line.replace(/\*\*/g, '').replace(/\*([^*]+)\*/g, '$1');
       var wrapped2 = pdf.splitTextToSize(cleanLine, usableW);
       pdf.text(wrapped2, margin, y);
       y += wrapped2.length * 5.5;
@@ -4761,18 +4768,23 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
 
     var analysisText = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'No analysis returned';
 
-    // Simple safe HTML conversion
+    // Safe HTML conversion - handles ##, ###, **, and bullet points
     var lines = analysisText.split('\n');
     var html = '';
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
-      if (line.indexOf('## ') === 0) {
-        var heading = line.replace('## ', '');
-        html += '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:4px">' + heading + '</h4>';
-      } else if (line.indexOf('- ') === 0) {
-        html += '<div style="padding:3px 0 3px 16px;font-size:13px">&bull; ' + line.slice(2) + '</div>';
+      if (line.indexOf('### ') === 0) {
+        var h = line.replace('### ', '').replace(/\*\*/g, '');
+        html += '<div style="font-size:13px;font-weight:700;margin:10px 0 4px;color:var(--text)">' + h + '</div>';
+      } else if (line.indexOf('## ') === 0) {
+        var h = line.replace('## ', '').replace(/\*\*/g, '');
+        html += '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:4px">' + h + '</h4>';
+      } else if (line.indexOf('- ') === 0 || line.indexOf('* ') === 0) {
+        var item = line.slice(2).replace(/\*\*/g, '');
+        html += '<div style="padding:3px 0 3px 16px;font-size:13px">- ' + item + '</div>';
       } else if (line.trim()) {
-        html += '<p style="font-size:13px;margin:4px 0">' + line + '</p>';
+        var clean = line.replace(/\*\*/g, '').replace(/\*([^*]+)\*/g, '$1');
+        html += '<p style="font-size:13px;margin:4px 0">' + clean + '</p>';
       }
     }
 
