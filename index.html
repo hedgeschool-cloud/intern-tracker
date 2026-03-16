@@ -2564,16 +2564,15 @@ function renderBatchDetail(batchId) {
 async function renderInternDetailAsync(param) {
   const { batchId, internId } = param;
   const batch = _state.batches.find(b => b.id === batchId);
-  // Use cache first — only fetch from Firestore if not cached
-  let intern = (_state.internsCache[batchId] || []).find(i => i.id === internId);
-  if (!intern) {
-    const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
-    if (!snap.exists()) return '<div class="empty-state"><h3>Intern not found</h3></div>';
-    intern = snap.data();
-    // Add to cache
-    if (!_state.internsCache[batchId]) _state.internsCache[batchId] = [];
-    _state.internsCache[batchId].push({ id: internId, ...intern });
-  }
+  // Always fetch fresh from Firestore — ensures Google server timestamps are accurate
+  const snap = await getDoc(doc(db, 'batches', batchId, 'interns', internId));
+  if (!snap.exists()) return '<div class="empty-state"><h3>Intern not found</h3></div>';
+  const intern = snap.data();
+  // Update cache with fresh Firestore data
+  if (!_state.internsCache[batchId]) _state.internsCache[batchId] = [];
+  const idx = _state.internsCache[batchId].findIndex(i => i.id === internId);
+  if (idx >= 0) _state.internsCache[batchId][idx] = { id: internId, ...intern };
+  else _state.internsCache[batchId].push({ id: internId, ...intern });
   // Cache intern name and batch name for activity logging
   _state.currentInternName = intern.name;
   _state.currentBatchName = batch?.name || null;
@@ -2791,7 +2790,7 @@ async function renderInternDetailAsync(param) {
             <option value="C" ${intern.zappyvueGrade==='C' ? 'selected' : ''}>C</option>
           </select>
           ${intern.zappyvueGrade ? `<div style="text-align:center;margin-top:8px"><span class="score-pill" style="background:${intern.zappyvueGrade==='A'?'rgba(34,197,94,.2)':intern.zappyvueGrade==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)'};color:${intern.zappyvueGrade==='A'?'var(--green)':intern.zappyvueGrade==='B'?'var(--yellow)':'var(--red)'}">Grade ${intern.zappyvueGrade}</span></div>` : ''}
-          ${_state.userDoc.role==='admin' && intern.ts_zappyvueGrade ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_zappyvueGrade).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_zappyvueGrade).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_zappyvueGrade||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_zappyvueGrade ? `<div style="margin-top:8px;font-size:10px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:4px 10px;display:inline-block">🕐 ${tsToDate(intern.ts_zappyvueGrade).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_zappyvueGrade).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent);font-weight:600">${intern.by_zappyvueGrade||''}</span></div>` : ''}
         </div>
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">💼 Technical Interview Grade</h3>
@@ -2803,7 +2802,7 @@ async function renderInternDetailAsync(param) {
             <option value="C" ${intern.technicalInterviewGrade==='C' ? 'selected' : ''}>C</option>
           </select>
           ${intern.technicalInterviewGrade ? `<div style="text-align:center;margin-top:8px"><span class="score-pill" style="background:${intern.technicalInterviewGrade==='A'?'rgba(34,197,94,.2)':intern.technicalInterviewGrade==='B'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)'};color:${intern.technicalInterviewGrade==='A'?'var(--green)':intern.technicalInterviewGrade==='B'?'var(--yellow)':'var(--red)'}">Grade ${intern.technicalInterviewGrade}</span></div>` : ''}
-          ${_state.userDoc.role==='admin' && intern.ts_technicalInterviewGrade ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_technicalInterviewGrade).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_technicalInterviewGrade).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_technicalInterviewGrade||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_technicalInterviewGrade ? `<div style="margin-top:8px;font-size:10px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:4px 10px;display:inline-block">🕐 ${tsToDate(intern.ts_technicalInterviewGrade).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_technicalInterviewGrade).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent);font-weight:600">${intern.by_technicalInterviewGrade||''}</span></div>` : ''}
         </div>
       </div>
 
@@ -2818,7 +2817,7 @@ async function renderInternDetailAsync(param) {
             style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onblur="updateSingleField('${batchId}','${internId}','projectQuality',this.value)" />
           <div id="score-pq-pts" style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.projectQuality}pts / 10</div>
-          ${_state.userDoc.role==='admin' && intern.ts_projectQuality ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_projectQuality).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_projectQuality).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_projectQuality||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_projectQuality ? `<div style="margin-top:8px;font-size:10px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:4px 10px;display:inline-block">🕐 ${tsToDate(intern.ts_projectQuality).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_projectQuality).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent);font-weight:600">${intern.by_projectQuality||''}</span></div>` : ''}
         </div>
         <div class="card">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">🌐 Social Contest <span style="font-size:12px;color:var(--muted)">(10% weight)</span></h3>
@@ -2826,7 +2825,7 @@ async function renderInternDetailAsync(param) {
             style="width:100%;background:#ffffff;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;font-family:'DM Sans',sans-serif;outline:none"
             onblur="updateSingleField('${batchId}','${internId}','socialContest',this.value)" />
           <div id="score-sc-pts" style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">Weighted: ${sc.socialContest}pts / 10</div>
-          ${_state.userDoc.role==='admin' && intern.ts_socialContest ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">🕐 ${tsToDate(intern.ts_socialContest).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_socialContest).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent)">${intern.by_socialContest||''}</span></div>` : ''}
+          ${_state.userDoc.role==='admin' && intern.ts_socialContest ? `<div style="margin-top:8px;font-size:10px;color:var(--muted);background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12);border-radius:6px;padding:4px 10px;display:inline-block">🕐 ${tsToDate(intern.ts_socialContest).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.ts_socialContest).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})} · <span style="color:var(--accent);font-weight:600">${intern.by_socialContest||''}</span></div>` : ''}
         </div>
       </div>
 
