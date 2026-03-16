@@ -4738,7 +4738,7 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
     var internName = intern ? intern.name : 'the intern';
     var streamName = stream || 'Finance';
 
-    var prompt = 'You are an expert resume reviewer specialising in finance and business internships. Analyse this resume for ' + internName + ', who is applying for an internship in: ' + streamName + '. Provide a structured analysis with these sections:\n\n## Overall Score: [X/100]\n\n## Strengths\nList 4-6 specific strengths.\n\n## Weaknesses\nList 4-6 weaknesses or gaps.\n\n## Section-by-Section Feedback\nEvaluate each section present.\n\n## Improvement Suggestions\nList 5-8 specific actionable improvements.\n\n## ATS Score: [X/100]\nExplain ATS compatibility.\n\n## Priority Actions\nTop 3 most important changes.\n\nBe specific, constructive and encouraging.';
+    var prompt = 'You are an expert resume reviewer for finance internships. Analyse this resume for ' + internName + ' applying for ' + streamName + '. Give a structured report with: Overall Score (X/100), Strengths, Weaknesses, Section Feedback, Improvement Suggestions, ATS Score (X/100), and Priority Actions. Be specific and constructive.';
 
     var response = await fetch(PROXY_URL, {
       method: 'POST',
