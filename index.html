@@ -4626,81 +4626,40 @@ window.showToast = (msg, type='ok') => {
 // ══════════════════════════════════════════════
 const PROXY_URL = 'https://hedge-ai-proxy.hedge-school.workers.dev';
 
-window.showResumeAnalysis = (batchId, internId, stream) => {
-  const section = document.getElementById('resume-analysis-' + internId);
+window.showResumeAnalysis = function(batchId, internId, stream) {
+  var section = document.getElementById('resume-analysis-' + internId);
   if (!section) return;
-  if (section.style.display === 'none') {
-    section.style.display = 'block';
+  section.style.display = section.style.display === 'none' ? 'block' : 'none';
+  if (section.style.display === 'block') {
     section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } else {
-    section.style.display = 'none';
   }
 };
 
-window.handleResumeUpload = async (batchId, internId, stream, input) => {
-  const file = input.files[0];
+window.handleResumeUpload = async function(batchId, internId, stream, input) {
+  var file = input.files[0];
   if (!file) return;
-  if (file.type !== 'application/pdf') {
-    showToast('⚠️ Please upload a PDF file only', 'warn');
-    return;
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('⚠️ PDF too large. Max 5MB.', 'warn');
-    return;
-  }
+  if (file.type !== 'application/pdf') { showToast('Please upload a PDF file only', 'warn'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('PDF too large. Max 5MB.', 'warn'); return; }
 
-  const resultDiv = document.getElementById('resume-result-' + internId);
-  const uploadArea = document.getElementById('resume-upload-area-' + internId);
+  var resultDiv = document.getElementById('resume-result-' + internId);
   resultDiv.style.display = 'block';
-  resultDiv.innerHTML = `
-    <div style="text-align:center;padding:32px">
-      <span class="spinner" style="width:32px;height:32px;border-width:3px;display:inline-block"></span>
-      <div style="margin-top:12px;font-size:14px;color:var(--muted)">Analysing resume with AI...<br><span style="font-size:12px">This may take 15–20 seconds</span></div>
-    </div>`;
+  resultDiv.innerHTML = '<div style="text-align:center;padding:32px"><span class="spinner" style="width:32px;height:32px;border-width:3px;display:inline-block"></span><div style="margin-top:12px;font-size:14px;color:var(--muted)">Analysing resume with AI... This may take 15-20 seconds</div></div>';
 
   try {
-    // Convert PDF to base64
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]);
+    var base64 = await new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function() { resolve(reader.result.split(',')[1]); };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
 
-    // Get intern name for personalised analysis
-    const intern = (_state.internsCache[batchId] || []).find(i => i.id === internId);
-    const internName = intern?.name || 'the intern';
-    const streamName = stream || 'Finance';
+    var intern = (_state.internsCache[batchId] || []).find(function(i) { return i.id === internId; });
+    var internName = intern ? intern.name : 'the intern';
+    var streamName = stream || 'Finance';
 
-    const prompt = `You are an expert resume reviewer specialising in finance and business internships.
+    var prompt = 'You are an expert resume reviewer specialising in finance and business internships. Analyse this resume for ' + internName + ', who is applying for an internship in: ' + streamName + '. Provide a structured analysis with these sections:\n\n## Overall Score: [X/100]\n\n## Strengths\nList 4-6 specific strengths.\n\n## Weaknesses\nList 4-6 weaknesses or gaps.\n\n## Section-by-Section Feedback\nEvaluate each section present.\n\n## Improvement Suggestions\nList 5-8 specific actionable improvements.\n\n## ATS Score: [X/100]\nExplain ATS compatibility.\n\n## Priority Actions\nTop 3 most important changes.\n\nBe specific, constructive and encouraging.';
 
-Analyse this resume for ${internName}, who is applying for/completing an internship in: ${streamName}.
-
-Provide a detailed analysis in the following structure:
-
-## 📊 Overall Score: [X/100]
-
-## ✅ Strengths
-List 4-6 specific strengths with brief explanations.
-
-## ❌ Weaknesses & Gaps
-List 4-6 specific weaknesses or missing elements with explanations.
-
-## 📋 Section-by-Section Feedback
-Evaluate each section present (Contact, Summary/Objective, Education, Experience, Skills, Projects, Certifications etc.)
-
-## 🎯 Improvement Suggestions
-List 5-8 specific, actionable improvements the intern should make.
-
-## 🤖 ATS Score: [X/100]
-Explain how well this resume would perform in automated screening systems and what keywords are missing.
-
-## 💡 Priority Actions
-List the top 3 most important changes to make immediately.
-
-Be specific, constructive and encouraging. Reference actual content from the resume.`;
-
-    const response = await fetch(PROXY_URL, {
+    var response = await fetch(PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4709,120 +4668,50 @@ Be specific, constructive and encouraging. Reference actual content from the res
         messages: [{
           role: 'user',
           content: [
-            {
-              type: 'document',
-              source: {
-                type: 'base64',
-                media_type: 'application/pdf',
-                data: base64
-              }
-            },
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
             { type: 'text', text: prompt }
           ]
         }]
       })
     });
 
-    const data = await response.json();
+    var data = await response.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
 
-    if (data.error) {
-      throw new Error(data.error.message || 'API error');
+    var analysisText = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'No analysis returned';
+
+    // Simple safe HTML conversion
+    var lines = analysisText.split('\n');
+    var html = '';
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.indexOf('## ') === 0) {
+        var heading = line.replace('## ', '');
+        html += '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:4px">' + heading + '</h4>';
+      } else if (line.indexOf('- ') === 0) {
+        html += '<div style="padding:3px 0 3px 16px;font-size:13px">&bull; ' + line.slice(2) + '</div>';
+      } else if (line.trim()) {
+        html += '<p style="font-size:13px;margin:4px 0">' + line + '</p>';
+      }
     }
 
-    const analysisText = data.content?.[0]?.text || 'No analysis returned';
+    resultDiv.innerHTML = '<div style="border-top:1px solid var(--border);padding-top:16px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">'
+      + '<div style="font-size:13px;font-weight:700">Analysis: ' + file.name + '</div>'
+      + '<button class="btn btn-ghost btn-sm" onclick="document.getElementById('resume-file-' + internId + '').value='';document.getElementById('resume-result-' + internId + '').style.display='none'" style="font-size:12px">New Upload</button>'
+      + '</div>'
+      + '<div style="font-size:13px;line-height:1.7">' + html + '</div>'
+      + '</div>';
 
-    // Convert markdown to styled HTML (using split/join to avoid emoji regex issues)
-    const htmlAnalysis = analysisText
-      .split('## Overall Score:').join('<h4 style="color:var(--accent);font-size:15px;font-weight:800;margin:16px 0 8px">Overall Score:')
-      .split('## Strengths').join('<h4 style="color:#16a34a;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(22,163,74,.2)">Strengths</h4>')
-      .split('## Weaknesses').join('<h4 style="color:#dc2626;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(220,38,38,.2)">Weaknesses & Gaps</h4>')
-      .split('## Section-by-Section Feedback').join('<h4 style="color:var(--accent);font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">Section-by-Section Feedback</h4>')
-      .split('## Improvement Suggestions').join('<h4 style="color:#0ea5e9;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(14,165,233,.2)">Improvement Suggestions</h4>')
-      .split('## Priority Actions').join('<h4 style="color:#7c3aed;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">Priority Actions</h4>')
-      .split('## ATS Score:').join('<h4 style="color:#d97706;font-size:14px;font-weight:700;margin:16px 0 8px">ATS Score:')
-      .replace(/##[^\r\n]+/g, function(m){ return '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--text);">' + m.replace(/^##\s+/,'') + '</h4>'; })
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .split('\n- ').join('<li style="margin-bottom:6px;padding-left:4px">')
-      .split('\n\n').join('<br>')
-      .split('\n').join(' ');
+    // Store for any future use
+    if (!window._resumeAnalysis) window._resumeAnalysis = {};
+    window._resumeAnalysis[internId] = { text: analysisText, name: internName, stream: streamName };
 
-    resultDiv.innerHTML = `
-      <div style="border-top:1px solid var(--border);padding-top:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-          <div style="font-size:13px;font-weight:700;color:var(--text)">📄 Analysis: ${file.name}</div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost btn-sm" onclick="exportResumeReportPDF('${internId}','${internName}')" style="font-size:12px">📥 Export as PDF</button>
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('resume-file-${internId}').value='';document.getElementById('resume-result-${internId}').style.display='none'" style="font-size:12px">🔄 New Upload</button>
-          </div>
-        </div>
-        <div id="resume-report-content-${internId}" style="font-size:13px;line-height:1.7;color:var(--text)">${htmlAnalysis}</div>
-      </div>`;
-
-    // Store analysis text for PDF export
-    window._resumeAnalysis = window._resumeAnalysis || {};
-    window._resumeAnalysis[internId] = { text: analysisText, name: internName, stream: streamName, file: file.name };
-
-  } catch (err) {
+  } catch(err) {
     console.error('Resume analysis error:', err);
-    resultDiv.innerHTML = `
-      <div style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:10px;padding:16px;color:#dc2626">
-        <strong>⚠️ Analysis failed</strong><br>
-        <span style="font-size:12px">${err.message || 'Please check your internet connection and try again.'}</span>
-      </div>`;
+    resultDiv.innerHTML = '<div style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:10px;padding:16px;color:#dc2626"><strong>Analysis failed</strong><br><span style="font-size:12px">' + (err.message || 'Please try again.') + '</span></div>';
   }
-  // Reset file input
   input.value = '';
-};
-
-window.exportResumeReportPDF = (internId, internName) => {
-  const data = window._resumeAnalysis?.[internId];
-  if (!data) return showToast('⚠️ No analysis to export', 'warn');
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const margin = 18, pageW = 210, usableW = pageW - margin * 2;
-  let y = 20;
-
-  // Header
-  pdf.setFillColor(109, 40, 217);
-  pdf.rect(0, 0, 210, 28, 'F');
-  pdf.setTextColor(255,255,255);
-  pdf.setFontSize(16); pdf.setFont('helvetica','bold');
-  pdf.text('Resume Analysis Report', margin, 13);
-  pdf.setFontSize(10); pdf.setFont('helvetica','normal');
-  pdf.text(data.name + ' — ' + data.stream, margin, 21);
-  pdf.text(new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}), pageW - margin, 21, { align: 'right' });
-  pdf.setTextColor(30,30,40);
-  y = 38;
-
-  // Content — split by lines
-  const lines = data.text.split('
-');
-  pdf.setFontSize(10);
-  for (const line of lines) {
-    if (y > 275) { pdf.addPage(); y = 20; }
-    if (line.startsWith('## ')) {
-      y += 4;
-      pdf.setFont('helvetica','bold'); pdf.setFontSize(12);
-      pdf.setTextColor(109,40,217);
-      const wrapped = pdf.splitTextToSize(line.replace('## ',''), usableW);
-      pdf.text(wrapped, margin, y);
-      y += wrapped.length * 7 + 2;
-      pdf.setTextColor(30,30,40); pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
-    } else if (line.startsWith('- ')) {
-      const wrapped = pdf.splitTextToSize('• ' + line.slice(2), usableW - 4);
-      pdf.text(wrapped, margin + 4, y);
-      y += wrapped.length * 5.5;
-    } else if (line.trim()) {
-      const wrapped = pdf.splitTextToSize(line.replace(/\*\*/g,''), usableW);
-      pdf.text(wrapped, margin, y);
-      y += wrapped.length * 5.5;
-    } else {
-      y += 3;
-    }
-  }
-
-  pdf.save('Resume_Analysis_' + data.name.replace(/\s+/g,'_') + '.pdf');
-  showToast('📥 Resume analysis exported!');
 };
 
 function attachPageEvents() {
