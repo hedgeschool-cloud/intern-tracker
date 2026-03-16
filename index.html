@@ -4740,8 +4740,7 @@ Be specific, constructive and encouraging. Reference actual content from the res
       .split('## Improvement Suggestions').join('<h4 style="color:#0ea5e9;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(14,165,233,.2)">Improvement Suggestions</h4>')
       .split('## Priority Actions').join('<h4 style="color:#7c3aed;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">Priority Actions</h4>')
       .split('## ATS Score:').join('<h4 style="color:#d97706;font-size:14px;font-weight:700;margin:16px 0 8px">ATS Score:')
-      .replace(/##[^
-]+/g, function(m){ return '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--text);">' + m.replace(/^##\s+/,'') + '</h4>'; })
+      .replace(/##[^\r\n]+/g, function(m){ return '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--text);">' + m.replace(/^##\s+/,'') + '</h4>'; })
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
       .split('\n- ').join('<li style="margin-bottom:6px;padding-left:4px">')
       .split('\n\n').join('<br>')
