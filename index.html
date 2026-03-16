@@ -2838,11 +2838,24 @@ async function renderInternDetailAsync(param) {
       </div>
 
       <!-- BOTTOM ACTION BUTTONS -->
-      <div style="display:flex;gap:12px;justify-content:center;padding:32px 0 16px;border-top:1px solid var(--border);margin-top:24px">
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:32px 0 16px;border-top:1px solid var(--border);margin-top:24px">
         ${_state.userDoc.role === 'admin' ? `<button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="showEditInternModal('${batchId}','${internId}')">✏️ Edit Intern</button>` : ''}
         <button class="btn btn-primary" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
         <button class="btn btn-green" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
         <button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
+        <button class="btn btn-ghost" style="background:rgba(16,163,74,.12);color:#16a34a;border:1px solid rgba(16,163,74,.3)" onclick="showResumeAnalysis('${batchId}','${internId}','${batch?.stream||''}')" title="Upload and analyse intern resume using AI">🤖 Analyse Resume</button>
+      </div>
+      <!-- RESUME ANALYSIS SECTION -->
+      <div id="resume-analysis-${internId}" style="display:none;margin-top:8px">
+        <div class="card" style="border:2px dashed rgba(16,163,74,.3);background:rgba(16,163,74,.04)">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;color:#16a34a">🤖 AI Resume Analysis</h3>
+          <div id="resume-upload-area-${internId}">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Upload the intern's resume (PDF only). The AI will analyse strengths, weaknesses and suggest improvements.</p>
+            <input type="file" id="resume-file-${internId}" accept=".pdf" style="display:none" onchange="handleResumeUpload('${batchId}','${internId}','${batch?.stream||''}',this)" />
+            <button class="btn btn-green" onclick="document.getElementById('resume-file-${internId}').click()">📄 Choose PDF Resume</button>
+          </div>
+          <div id="resume-result-${internId}" style="display:none;margin-top:16px"></div>
+        </div>
       </div>
       <div style="padding:8px 0 24px">
         <button class="btn btn-ghost btn-sm" onclick="navigate('batch-detail','${batchId}')">← Back to ${batch?.name}</button>
@@ -4606,6 +4619,215 @@ window.showToast = (msg, type='ok') => {
     el.classList.remove('toast-show');
     window._toastHideTimer = setTimeout(() => { el.style.display = 'none'; }, 300);
   }, 3000);
+};
+
+// ══════════════════════════════════════════════
+// RESUME ANALYSIS
+// ══════════════════════════════════════════════
+const PROXY_URL = 'https://hedge-ai-proxy.hedge-school.workers.dev';
+
+window.showResumeAnalysis = (batchId, internId, stream) => {
+  const section = document.getElementById('resume-analysis-' + internId);
+  if (!section) return;
+  if (section.style.display === 'none') {
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    section.style.display = 'none';
+  }
+};
+
+window.handleResumeUpload = async (batchId, internId, stream, input) => {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') {
+    showToast('⚠️ Please upload a PDF file only', 'warn');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('⚠️ PDF too large. Max 5MB.', 'warn');
+    return;
+  }
+
+  const resultDiv = document.getElementById('resume-result-' + internId);
+  const uploadArea = document.getElementById('resume-upload-area-' + internId);
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <div style="text-align:center;padding:32px">
+      <span class="spinner" style="width:32px;height:32px;border-width:3px;display:inline-block"></span>
+      <div style="margin-top:12px;font-size:14px;color:var(--muted)">Analysing resume with AI...<br><span style="font-size:12px">This may take 15–20 seconds</span></div>
+    </div>`;
+
+  try {
+    // Convert PDF to base64
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    // Get intern name for personalised analysis
+    const intern = (_state.internsCache[batchId] || []).find(i => i.id === internId);
+    const internName = intern?.name || 'the intern';
+    const streamName = stream || 'Finance';
+
+    const prompt = `You are an expert resume reviewer specialising in finance and business internships.
+
+Analyse this resume for ${internName}, who is applying for/completing an internship in: ${streamName}.
+
+Provide a detailed analysis in the following structure:
+
+## 📊 Overall Score: [X/100]
+
+## ✅ Strengths
+List 4-6 specific strengths with brief explanations.
+
+## ❌ Weaknesses & Gaps
+List 4-6 specific weaknesses or missing elements with explanations.
+
+## 📋 Section-by-Section Feedback
+Evaluate each section present (Contact, Summary/Objective, Education, Experience, Skills, Projects, Certifications etc.)
+
+## 🎯 Improvement Suggestions
+List 5-8 specific, actionable improvements the intern should make.
+
+## 🤖 ATS Score: [X/100]
+Explain how well this resume would perform in automated screening systems and what keywords are missing.
+
+## 💡 Priority Actions
+List the top 3 most important changes to make immediately.
+
+Be specific, constructive and encouraging. Reference actual content from the resume.`;
+
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: {
+                type: 'base64',
+                media_type: 'application/pdf',
+                data: base64
+              }
+            },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || 'API error');
+    }
+
+    const analysisText = data.content?.[0]?.text || 'No analysis returned';
+
+    // Convert markdown to styled HTML
+    const htmlAnalysis = analysisText
+      .replace(/## 📊 Overall Score: (\d+\/100)/g, '<div style="background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(124,58,237,.05));border:2px solid rgba(124,58,237,.2);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center"><div style="font-size:28px;font-weight:800;color:var(--accent)">$1</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Overall Resume Score</div></div>')
+      .replace(/## 🤖 ATS Score: (\d+\/100)/g, '<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:12px 16px;margin-bottom:12px"><strong style="color:#d97706">🤖 ATS Score: $1</strong>')
+      .replace(/## ✅ Strengths/g, '<h4 style="color:#16a34a;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(22,163,74,.2)">✅ Strengths</h4>')
+      .replace(/## ❌ Weaknesses & Gaps/g, '<h4 style="color:#dc2626;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(220,38,38,.2)">❌ Weaknesses & Gaps</h4>')
+      .replace(/## 📋 Section-by-Section Feedback/g, '<h4 style="color:var(--accent);font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">📋 Section-by-Section Feedback</h4>')
+      .replace(/## 🎯 Improvement Suggestions/g, '<h4 style="color:#0ea5e9;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(14,165,233,.2)">🎯 Improvement Suggestions</h4>')
+      .replace(/## 💡 Priority Actions/g, '<h4 style="color:#7c3aed;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">💡 Priority Actions</h4>')
+      .replace(/## .+/g, '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--text)">$&</h4>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^- (.+)$/gm, '<li style="margin-bottom:6px;padding-left:4px">$1</li>')
+      .replace(/(<li.*<\/li>
+?)+/g, '<ul style="margin:8px 0 8px 16px;padding:0">$&</ul>')
+      .replace(/
+
+/g, '<br>')
+      .replace(/
+/g, ' ');
+
+    resultDiv.innerHTML = `
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">📄 Analysis: ${file.name}</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="exportResumeReportPDF('${internId}','${internName}')" style="font-size:12px">📥 Export as PDF</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('resume-file-${internId}').value='';document.getElementById('resume-result-${internId}').style.display='none'" style="font-size:12px">🔄 New Upload</button>
+          </div>
+        </div>
+        <div id="resume-report-content-${internId}" style="font-size:13px;line-height:1.7;color:var(--text)">${htmlAnalysis}</div>
+      </div>`;
+
+    // Store analysis text for PDF export
+    window._resumeAnalysis = window._resumeAnalysis || {};
+    window._resumeAnalysis[internId] = { text: analysisText, name: internName, stream: streamName, file: file.name };
+
+  } catch (err) {
+    console.error('Resume analysis error:', err);
+    resultDiv.innerHTML = `
+      <div style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:10px;padding:16px;color:#dc2626">
+        <strong>⚠️ Analysis failed</strong><br>
+        <span style="font-size:12px">${err.message || 'Please check your internet connection and try again.'}</span>
+      </div>`;
+  }
+  // Reset file input
+  input.value = '';
+};
+
+window.exportResumeReportPDF = (internId, internName) => {
+  const data = window._resumeAnalysis?.[internId];
+  if (!data) return showToast('⚠️ No analysis to export', 'warn');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const margin = 18, pageW = 210, usableW = pageW - margin * 2;
+  let y = 20;
+
+  // Header
+  pdf.setFillColor(109, 40, 217);
+  pdf.rect(0, 0, 210, 28, 'F');
+  pdf.setTextColor(255,255,255);
+  pdf.setFontSize(16); pdf.setFont('helvetica','bold');
+  pdf.text('Resume Analysis Report', margin, 13);
+  pdf.setFontSize(10); pdf.setFont('helvetica','normal');
+  pdf.text(data.name + ' — ' + data.stream, margin, 21);
+  pdf.text(new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}), pageW - margin, 21, { align: 'right' });
+  pdf.setTextColor(30,30,40);
+  y = 38;
+
+  // Content — split by lines
+  const lines = data.text.split('
+');
+  pdf.setFontSize(10);
+  for (const line of lines) {
+    if (y > 275) { pdf.addPage(); y = 20; }
+    if (line.startsWith('## ')) {
+      y += 4;
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(12);
+      pdf.setTextColor(109,40,217);
+      const wrapped = pdf.splitTextToSize(line.replace('## ',''), usableW);
+      pdf.text(wrapped, margin, y);
+      y += wrapped.length * 7 + 2;
+      pdf.setTextColor(30,30,40); pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
+    } else if (line.startsWith('- ')) {
+      const wrapped = pdf.splitTextToSize('• ' + line.slice(2), usableW - 4);
+      pdf.text(wrapped, margin + 4, y);
+      y += wrapped.length * 5.5;
+    } else if (line.trim()) {
+      const wrapped = pdf.splitTextToSize(line.replace(/\*\*/g,''), usableW);
+      pdf.text(wrapped, margin, y);
+      y += wrapped.length * 5.5;
+    } else {
+      y += 3;
+    }
+  }
+
+  pdf.save('Resume_Analysis_' + data.name.replace(/\s+/g,'_') + '.pdf');
+  showToast('📥 Resume analysis exported!');
 };
 
 function attachPageEvents() {
