@@ -3515,7 +3515,10 @@ async function renderUsersAsync() {
             ${rejected.map(u => `<tr>
               <td class="intern-name">${u.name}</td>
               <td class="text-muted">${u.email}</td>
-              <td><button class="btn btn-green btn-sm" onclick="approveUser('${u.id}')">✅ Approve</button></td>
+              <td style="display:flex;gap:8px">
+                <button class="btn btn-green btn-sm" onclick="approveUser('${u.id}')">✅ Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}','${u.name}')">🗑 Delete</button>
+              </td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -3536,6 +3539,14 @@ window.rejectUser = async (userId) => {
   await updateDoc(doc(db, 'users', userId), { status: 'rejected' });
   _state.usersCache = null;
   showToast('🚫 User rejected.');
+  navigate('users');
+};
+
+window.deleteUser = async (userId, userName) => {
+  if (!confirm('Permanently delete user "' + userName + '"? This cannot be undone.')) return;
+  await deleteDoc(doc(db, 'users', userId));
+  _state.usersCache = null;
+  showToast('🗑 User deleted.');
   navigate('users');
 };
 
