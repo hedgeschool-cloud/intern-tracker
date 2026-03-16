@@ -2587,6 +2587,7 @@ async function renderInternDetailAsync(param) {
           <button class="btn btn-primary btn-sm" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
           <button class="btn btn-green btn-sm" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
           <button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
+          <button class="btn btn-ghost btn-sm" style="background:rgba(16,163,74,.12);color:#16a34a;border:1px solid rgba(16,163,74,.3)" onclick="showResumeAnalysis('${batchId}','${internId}','${batch?.stream||''}')" title="AI Resume Analysis">🤖 Analyse Resume</button>
         </div>
       </div>
 
