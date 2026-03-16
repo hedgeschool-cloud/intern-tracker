@@ -1853,23 +1853,6 @@ async function renderScorecardAsync() {
     return html;
   }
 
-  // Podium for top 3
-  if (allEntries.length >= 1) {
-    const top = allEntries.slice(0, Math.min(3, allEntries.length));
-    const order = top.length === 3 ? [top[1],top[0],top[2]] : top.length === 2 ? [top[1],top[0]] : [top[0]];
-    const pCls  = top.length === 3 ? ['p2','p1','p3'] : top.length === 2 ? ['p2','p1'] : ['p1'];
-    const bCls  = top.length === 3 ? ['b2','b1','b3'] : top.length === 2 ? ['b2','b1'] : ['b1'];
-    const medals = ['🥈','🥇','🥉'];
-    html += '<div class="podium-wrap">' + order.map((e,i) => {
-      const rank = allEntries.indexOf(e) + 1;
-      return '<div class="podium-place">' +
-        '<div class="podium-avatar ' + pCls[i] + '">' + e.intern.name.charAt(0).toUpperCase() + '</div>' +
-        '<div class="podium-name">' + e.intern.name.split(' ')[0] + '</div>' +
-        '<div class="podium-score">' + e.sc.aggregate + '%</div>' +
-        '<div class="podium-block ' + bCls[i] + '">' + medals[i] + '</div>' +
-        '</div>';
-    }).join('') + '</div>';
-  }
 
   html += `
     <div style="border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px">
