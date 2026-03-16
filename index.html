@@ -4634,6 +4634,80 @@ window.clearResumeUpload = function(internId) {
   if (rr) rr.style.display = 'none';
 };
 
+window.downloadResumeReportPDF = function(internId) {
+  var data = window._resumeAnalysis && window._resumeAnalysis[internId];
+  if (!data) { showToast('No analysis to export', 'warn'); return; }
+
+  var { jsPDF } = window.jspdf;
+  var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  var margin = 18, pageW = 210, usableW = pageW - margin * 2;
+  var y = 0;
+
+  // Header bar
+  pdf.setFillColor(109, 40, 217);
+  pdf.rect(0, 0, 210, 30, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.text('AI Resume Analysis Report', margin, 13);
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(data.name + '  |  ' + data.stream, margin, 21);
+  pdf.text(new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }), pageW - margin, 21, { align: 'right' });
+
+  pdf.setTextColor(30, 30, 40);
+  y = 40;
+
+  // Content
+  var lines = data.text.split('
+');
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (y > 275) { pdf.addPage(); y = 20; }
+
+    if (line.indexOf('## ') === 0) {
+      y += 3;
+      // Section heading with background
+      var heading = line.replace('## ', '');
+      pdf.setFillColor(245, 240, 255);
+      pdf.rect(margin - 2, y - 5, usableW + 4, 9, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12);
+      pdf.setTextColor(109, 40, 217);
+      var wrapped = pdf.splitTextToSize(heading, usableW);
+      pdf.text(wrapped, margin, y);
+      y += wrapped.length * 7 + 4;
+      pdf.setTextColor(30, 30, 40);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+    } else if (line.indexOf('- ') === 0) {
+      var bullet = pdf.splitTextToSize('• ' + line.slice(2), usableW - 6);
+      pdf.text(bullet, margin + 4, y);
+      y += bullet.length * 5.5;
+    } else if (line.trim()) {
+      var cleanLine = line.replace(/\*\*/g, '');
+      var wrapped2 = pdf.splitTextToSize(cleanLine, usableW);
+      pdf.text(wrapped2, margin, y);
+      y += wrapped2.length * 5.5;
+    } else {
+      y += 3;
+    }
+  }
+
+  // Footer on each page
+  var pageCount = pdf.internal.getNumberOfPages();
+  for (var p = 1; p <= pageCount; p++) {
+    pdf.setPage(p);
+    pdf.setFontSize(8);
+    pdf.setTextColor(150, 150, 150);
+    pdf.text('Hedge School of Applied Economics  |  Resume Analysis Report', margin, 290);
+    pdf.text('Page ' + p + ' of ' + pageCount, pageW - margin, 290, { align: 'right' });
+  }
+
+  pdf.save('Resume_Analysis_' + data.name.replace(/\s+/g, '_') + '.pdf');
+  showToast('📥 Resume report downloaded!');
+};
+
 window.showResumeAnalysis = function(batchId, internId, stream) {
   var section = document.getElementById('resume-analysis-' + internId);
   if (!section) return;
@@ -4706,7 +4780,7 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
     resultDiv.innerHTML = '<div style="border-top:1px solid var(--border);padding-top:16px">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">'
       + '<div style="font-size:13px;font-weight:700">Analysis: ' + file.name + '</div>'
-      + '<button class="btn btn-ghost btn-sm" onclick="clearResumeUpload(\'' + internId + '\')" style="font-size:12px">New Upload</button>'
+      + '<div style="display:flex;gap:8px">'      + '<button class="btn btn-ghost btn-sm" onclick="downloadResumeReportPDF(\'' + internId + '\')" style="font-size:12px;background:rgba(124,58,237,.12);color:var(--accent);border:1px solid rgba(124,58,237,.25)">📥 Download PDF</button>'      + '<button class="btn btn-ghost btn-sm" onclick="clearResumeUpload(\'' + internId + '\')" style="font-size:12px">🔄 New Upload</button>'      + '</div>'
       + '</div>'
       + '<div style="font-size:13px;line-height:1.7">' + html + '</div>'
       + '</div>';
