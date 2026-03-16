@@ -4626,6 +4626,13 @@ window.showToast = (msg, type='ok') => {
 // ══════════════════════════════════════════════
 const PROXY_URL = 'https://hedge-ai-proxy.hedge-school.workers.dev';
 
+window.clearResumeUpload = function(internId) {
+  var rf = document.getElementById('resume-file-' + internId);
+  var rr = document.getElementById('resume-result-' + internId);
+  if (rf) rf.value = '';
+  if (rr) rr.style.display = 'none';
+};
+
 window.showResumeAnalysis = function(batchId, internId, stream) {
   var section = document.getElementById('resume-analysis-' + internId);
   if (!section) return;
@@ -4698,7 +4705,7 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
     resultDiv.innerHTML = '<div style="border-top:1px solid var(--border);padding-top:16px">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">'
       + '<div style="font-size:13px;font-weight:700">Analysis: ' + file.name + '</div>'
-      + '<button class="btn btn-ghost btn-sm" onclick="document.getElementById('resume-file-' + internId + '').value='';document.getElementById('resume-result-' + internId + '').style.display='none'" style="font-size:12px">New Upload</button>'
+      + '<button class="btn btn-ghost btn-sm" onclick="clearResumeUpload(\'' + internId + '\')" style="font-size:12px">New Upload</button>'
       + '</div>'
       + '<div style="font-size:13px;line-height:1.7">' + html + '</div>'
       + '</div>';
