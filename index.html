@@ -4773,16 +4773,21 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
     function cleanMd(s) {
-      return escHtml(s.replace(/\*\*/g, '').replace(/\*([^*]+)\*/g, '$1').replace(/#+ /g, '').trim());
+      return escHtml(s
+        .replace(/\*\*/g, '')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/#+ /g, '')
+        .replace(/^['"`]+|['"`]+$/g, '')
+        .trim());
     }
     var lines = analysisText.split('\n');
     var html = '';
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
       if (line.indexOf('### ') === 0) {
-        html += '<div style="font-size:13px;font-weight:700;margin:10px 0 4px;color:var(--text)">' + cleanMd(line.replace('### ', '')) + '</div>';
+        html += '<div style="font-size:13px;font-weight:700;margin:10px 0 4px;color:var(--text);letter-spacing:normal;text-transform:none">' + cleanMd(line.replace('### ', '')) + '</div>';
       } else if (line.indexOf('## ') === 0) {
-        html += '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:4px">' + cleanMd(line.replace('## ', '')) + '</h4>';
+        html += '<div style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:4px;letter-spacing:normal;text-transform:none">' + cleanMd(line.replace('## ', '')) + '</div>';
       } else if (line.indexOf('- ') === 0 || line.indexOf('* ') === 0) {
         html += '<div style="padding:3px 0 3px 16px;font-size:13px">- ' + cleanMd(line.slice(2)) + '</div>';
       } else if (line.trim()) {
