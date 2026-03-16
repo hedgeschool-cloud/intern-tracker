@@ -4769,16 +4769,16 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
     var analysisText = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'No analysis returned';
 
     // Safe HTML conversion - handles ##, ###, **, and bullet points
-    function escHtml(s) {
-      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
     function cleanMd(s) {
-      return escHtml(s
+      return s
         .replace(/\*\*/g, '')
         .replace(/\*([^*]+)\*/g, '$1')
         .replace(/#+ /g, '')
-        .replace(/^['"`]+|['"`]+$/g, '')
-        .trim());
+        .replace(/^['']+|['']+$/g, '')
+        .trim()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
     }
     var lines = analysisText.split('\n');
     var html = '';
