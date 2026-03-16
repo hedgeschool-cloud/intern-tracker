@@ -1178,6 +1178,7 @@ window.createBatch = async () => {
   });
   await loadBatches();
   closeModal();
+  logActivity('Create Batch', { batchId: id, batchName: name, field: 'batch', value: name });
   showToast('✅ Batch "' + name + '" created with ' + attSlots + ' attendance & ' + drSlots + ' daily report slots!');
   navigate('batch-detail', id);
 };
@@ -4132,6 +4133,7 @@ window.saveEditIntern = async (batchId, internId) => {
   if (!name) return showToast('⚠️ Name cannot be empty', 'warn');
   await updateDoc(doc(db, 'batches', batchId, 'interns', internId), { name, hedgeId, phone, email });
   invalidateInternsCache(batchId);
+  logActivity('Edit Intern', { batchId, internId, field: 'name', value: name });
   closeModal();
   showToast('✅ Intern details updated!');
   navigate('intern-detail', { batchId, internId });
@@ -4465,6 +4467,7 @@ window.saveEditBatch = async (batchId) => {
     dailyreportCount: drSlots
   });
   invalidateInternsCache(batchId);
+  logActivity('Edit Batch', { batchId, batchName: name, field: 'batch', value: name });
   closeModal();
   showToast('✅ Batch updated!');
 };
@@ -4502,6 +4505,7 @@ window.showEditMentorModal = (batchId) => {
 window.saveMentor = async (batchId) => {
   const mentor = document.getElementById('mentor-name-input').value.trim();
   await updateDoc(doc(db, 'batches', batchId), { mentor });
+  logActivity('Update Mentor', { batchId, field: 'mentor', value: mentor });
   await loadBatches();
   closeModal();
   showToast('✅ Mentor updated!');
