@@ -578,7 +578,10 @@
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" />
+        <div style="position:relative">
+          <input type="password" id="login-password" placeholder="••••••••" style="padding-right:44px;width:100%;box-sizing:border-box" />
+          <button type="button" onclick="togglePassVisibility('login-password',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:0;line-height:1">👁</button>
+        </div>
       </div>
       <button class="btn btn-primary btn-full" onclick="handleLogin()" id="login-btn">
         Sign In
@@ -793,6 +796,18 @@ document.getElementById('reg-role').addEventListener('change', e => {
 // Flag to distinguish real logins from session restorations (page refresh)
 let _justSignedIn = false;
 
+window.togglePassVisibility = (fieldId, btn) => {
+  const input = document.getElementById(fieldId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+};
+
 window.handleLogin = async () => {
   const email = document.getElementById('login-email').value.trim();
   const pass = document.getElementById('login-password').value;
@@ -948,6 +963,12 @@ onAuthStateChanged(auth, async user => {
     if (tab) tab.style.display = 'none';
     const hbtn2 = document.getElementById('hamburger-btn');
     if (hbtn2) hbtn2.style.display = 'none';
+    // Reset login button so it doesn't show "Signing in..." after logout
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) { loginBtn.innerHTML = 'Sign In'; loginBtn.disabled = false; }
+    // Clear password field
+    const loginPass = document.getElementById('login-password');
+    if (loginPass) loginPass.value = '';
   }
 });
 
