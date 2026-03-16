@@ -4731,20 +4731,22 @@ Be specific, constructive and encouraging. Reference actual content from the res
 
     const analysisText = data.content?.[0]?.text || 'No analysis returned';
 
-    // Convert markdown to styled HTML
+    // Convert markdown to styled HTML (using split/join to avoid emoji regex issues)
     const htmlAnalysis = analysisText
-      .replace(/## 📊 Overall Score: (\d+\/100)/g, '<div style="background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(124,58,237,.05));border:2px solid rgba(124,58,237,.2);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center"><div style="font-size:28px;font-weight:800;color:var(--accent)">$1</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Overall Resume Score</div></div>')
-      .replace(/## 🤖 ATS Score: (\d+\/100)/g, '<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:12px 16px;margin-bottom:12px"><strong style="color:#d97706">🤖 ATS Score: $1</strong>')
-      .replace(/## ✅ Strengths/g, '<h4 style="color:#16a34a;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(22,163,74,.2)">✅ Strengths</h4>')
-      .replace(/## ❌ Weaknesses & Gaps/g, '<h4 style="color:#dc2626;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(220,38,38,.2)">❌ Weaknesses & Gaps</h4>')
-      .replace(/## 📋 Section-by-Section Feedback/g, '<h4 style="color:var(--accent);font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">📋 Section-by-Section Feedback</h4>')
-      .replace(/## 🎯 Improvement Suggestions/g, '<h4 style="color:#0ea5e9;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(14,165,233,.2)">🎯 Improvement Suggestions</h4>')
-      .replace(/## 💡 Priority Actions/g, '<h4 style="color:#7c3aed;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">💡 Priority Actions</h4>')
-      .replace(/## .+/g, '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--text)">$&</h4>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^- (.+)$/gm, '<li style="margin-bottom:6px;padding-left:4px">$1</li>')
-      .replace(/(<li.*<\/li>
-?)+/g, '<ul style="margin:8px 0 8px 16px;padding:0">$&</ul>')
+      .split('## Overall Score:').join('<h4 style="color:var(--accent);font-size:15px;font-weight:800;margin:16px 0 8px">Overall Score:')
+      .split('## Strengths').join('<h4 style="color:#16a34a;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(22,163,74,.2)">Strengths</h4>')
+      .split('## Weaknesses').join('<h4 style="color:#dc2626;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(220,38,38,.2)">Weaknesses & Gaps</h4>')
+      .split('## Section-by-Section Feedback').join('<h4 style="color:var(--accent);font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">Section-by-Section Feedback</h4>')
+      .split('## Improvement Suggestions').join('<h4 style="color:#0ea5e9;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(14,165,233,.2)">Improvement Suggestions</h4>')
+      .split('## Priority Actions').join('<h4 style="color:#7c3aed;font-size:14px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid rgba(124,58,237,.2)">Priority Actions</h4>')
+      .split('## ATS Score:').join('<h4 style="color:#d97706;font-size:14px;font-weight:700;margin:16px 0 8px">ATS Score:')
+      .replace(/##\s+[^
+]+/g, function(m){ return '<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--text)">' + m.replace(/^##\s+/,'') + '</h4>'; })
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/
+- ([^
+]+)/g, '<li style="margin-bottom:6px;padding-left:4px">$1</li>')
+      .replace(/(<li[^>]*>[^<]*<\/li>)+/g, '<ul style="margin:8px 0 8px 16px;padding:0">$&</ul>')
       .replace(/
 
 /g, '<br>')
