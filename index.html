@@ -4659,8 +4659,7 @@ window.downloadResumeReportPDF = function(internId) {
   y = 40;
 
   // Content
-  var lines = data.text.split('
-');
+  var lines = data.text.split('\n');
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
     if (y > 275) { pdf.addPage(); y = 20; }
@@ -4681,7 +4680,7 @@ window.downloadResumeReportPDF = function(internId) {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
     } else if (line.indexOf('- ') === 0) {
-      var bullet = pdf.splitTextToSize('• ' + line.slice(2), usableW - 6);
+      var bullet = pdf.splitTextToSize('- ' + line.slice(2), usableW - 6);
       pdf.text(bullet, margin + 4, y);
       y += bullet.length * 5.5;
     } else if (line.trim()) {
