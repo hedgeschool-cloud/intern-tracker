@@ -1431,7 +1431,7 @@ window.exportBatch = async (batchId) => {
     'Aggregate %', 'Process %', 'Progress %',
     'Attendance %', 'HR/Club %', 'Daily Report %',
     'Project Quality %', 'Task Score %', 'Social Contest %',
-    'Zappyvue Grade', 'Tech Interview Grade', 'Evaluation Keywords'
+    'Zappyvue Grade', 'Tech Interview Grade', 'Evaluation Keywords', 'Resume Analysed'
   ];
   const scoreRows = interns.map(intern => {
     const sc = calcScorecard(intern, batch);
@@ -1441,7 +1441,8 @@ window.exportBatch = async (batchId) => {
       sc.attPct + '%', sc.hrPct + '%', sc.drPct + '%',
       sc.projectQuality + '%', sc.taskScore + '%', sc.socialContest + '%',
       intern.zappyvueGrade || '', intern.technicalInterviewGrade || '',
-      intern.evalKeywords || ''
+      intern.evalKeywords || '',
+      intern.resumeAnalysedAt ? 'Yes – ' + tsToDate(intern.resumeAnalysedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' by ' + (intern.resumeAnalysedBy||'') : 'No'
     ];
   });
 
@@ -2486,6 +2487,7 @@ async function renderBatchDetailAsync(batchId) {
                 <th style="padding:8px 6px;width:55px">Social</th>
                 <th style="padding:8px 6px;width:60px">Zappy</th>
                 <th style="padding:8px 6px;width:65px">Tech Int.</th>
+                <th style="padding:8px 6px;width:60px;text-align:center">Resume</th>
                 <th style="padding:8px 6px;width:90px">Actions</th>
               </tr>
             </thead>
@@ -2513,6 +2515,7 @@ async function renderBatchDetailAsync(batchId) {
         <td style="padding:7px 6px;text-align:center"><span class="score-pill" style="background:${pctBg(sc.socialContest)};color:${pctColor(sc.socialContest)};font-size:11px">${sc.socialContest}%</span></td>
         <td style="padding:7px 6px;text-align:center">${intern.zappyvueGrade ? `<span class="score-pill" style="background:${gradeColor(intern.zappyvueGrade)};color:${gradeText(intern.zappyvueGrade)};font-size:11px">${intern.zappyvueGrade}</span>` : '—'}</td>
         <td style="padding:7px 6px;text-align:center">${intern.technicalInterviewGrade ? `<span class="score-pill" style="background:${gradeColor(intern.technicalInterviewGrade)};color:${gradeText(intern.technicalInterviewGrade)};font-size:11px">${intern.technicalInterviewGrade}</span>` : '—'}</td>
+        <td style="padding:7px 6px;text-align:center" title="${intern.resumeAnalysedAt ? 'Analysed on ' + tsToDate(intern.resumeAnalysedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' by ' + (intern.resumeAnalysedBy||'') : 'Not yet analysed'}">${intern.resumeAnalysedAt ? '<span style="font-size:16px" title="">✅</span>' : '<span style="font-size:16px;opacity:.35">⬜</span>'}</td>
         <td style="padding:7px 6px">
           <div style="display:flex;gap:4px">
             <button class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:11px" onclick="navigate('intern-detail',{batchId:'${batchId}',internId:'${intern.id}'})">👁</button>
