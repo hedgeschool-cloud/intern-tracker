@@ -2591,6 +2591,7 @@ async function renderInternDetailAsync(param) {
           <button class="btn btn-green btn-sm" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
           <button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
           <button class="btn btn-ghost btn-sm" style="background:rgba(16,163,74,.12);color:#16a34a;border:1px solid rgba(16,163,74,.3)" onclick="showResumeAnalysis('${batchId}','${internId}','${batch?.stream||''}')" title="${intern.resumeAnalysedAt ? 'Last analysed: ' + tsToDate(intern.resumeAnalysedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' by ' + (intern.resumeAnalysedBy||'') : 'AI Resume Analysis'}">${intern.resumeAnalysedAt ? '✅ Resume Analysed' : '🤖 Analyse Resume'}</button>
+          ${intern.resumeAnalysedAt ? `<button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.1);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="reanalyseResume('${internId}')" title="Upload a new resume and re-run AI analysis">🔄 Re-analyse</button>` : ''}
         </div>
       </div>
 
@@ -2848,6 +2849,7 @@ async function renderInternDetailAsync(param) {
         <button class="btn btn-green" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
         <button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
         <button class="btn btn-ghost" style="background:rgba(16,163,74,.12);color:#16a34a;border:1px solid rgba(16,163,74,.3)" onclick="showResumeAnalysis('${batchId}','${internId}','${batch?.stream||''}')" title="${intern.resumeAnalysedAt ? 'Last analysed: ' + tsToDate(intern.resumeAnalysedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' by ' + (intern.resumeAnalysedBy||'') : 'Upload and analyse intern resume using AI'}">${intern.resumeAnalysedAt ? '✅ Resume Analysed' : '🤖 Analyse Resume'}</button>
+        ${intern.resumeAnalysedAt ? `<button class="btn btn-ghost" style="background:rgba(124,58,237,.1);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="reanalyseResume('${internId}')" title="Upload a new resume and re-run AI analysis">🔄 Re-analyse</button>` : ''}
       </div>
       <!-- RESUME ANALYSIS SECTION -->
       ${intern.resumeAnalysedAt ? `<div style="margin-top:6px;font-size:11px;color:var(--muted);background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.15);border-radius:6px;padding:4px 10px;display:inline-block">✅ Last analysed: <strong>${tsToDate(intern.resumeAnalysedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.resumeAnalysedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> · ${intern.resumeAnalysedBy||''} · <em>${intern.resumeAnalysedFor||''}</em></div>` : ''}
@@ -4634,8 +4636,21 @@ const PROXY_URL = 'https://hedge-ai-proxy.hedge-school.workers.dev';
 window.clearResumeUpload = function(internId) {
   var rf = document.getElementById('resume-file-' + internId);
   var rr = document.getElementById('resume-result-' + internId);
+  var ua = document.getElementById('resume-upload-area-' + internId);
   if (rf) rf.value = '';
-  if (rr) rr.style.display = 'none';
+  if (rr) { rr.style.display = 'none'; rr.innerHTML = ''; }
+  if (ua) ua.style.display = 'block';
+};
+
+window.reanalyseResume = function(internId) {
+  // Open the panel
+  var section = document.getElementById('resume-analysis-' + internId);
+  if (section) {
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  // Reset upload area so user can pick a new file
+  window.clearResumeUpload(internId);
 };
 
 window.downloadResumeReportPDF = function(internId) {
