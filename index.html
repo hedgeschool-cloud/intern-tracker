@@ -4649,6 +4649,7 @@ window.downloadResumeReportPDF = function(internId) {
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(16);
+  if (pdf.setCharSpace) pdf.setCharSpace(0);
   pdf.text('AI Resume Analysis Report', margin, 13);
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
@@ -4666,7 +4667,7 @@ window.downloadResumeReportPDF = function(internId) {
 
     if (line.indexOf('## ') === 0 || line.indexOf('### ') === 0) {
       y += 3;
-      var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '');
+      var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/[`'"]+$/g, '').replace(/&[a-z]+;/g, '').trim();
       var isMain = line.indexOf('## ') === 0;
       if (isMain) {
         pdf.setFillColor(245, 240, 255);
@@ -4686,12 +4687,12 @@ window.downloadResumeReportPDF = function(internId) {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
     } else if (line.indexOf('- ') === 0 || line.indexOf('* ') === 0) {
-      var bulletText = line.slice(2).replace(/\*\*/g, '');
+      var bulletText = line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/&[a-z]+;/g, '').trim();
       var bullet = pdf.splitTextToSize('- ' + bulletText, usableW - 6);
       pdf.text(bullet, margin + 4, y);
       y += bullet.length * 5.5;
     } else if (line.trim()) {
-      var cleanLine = line.replace(/\*\*/g, '').replace(/\*([^*]+)\*/g, '$1');
+      var cleanLine = line.replace(/\*\*/g, '').replace(/\*([^*]+)\*/g, '$1').replace(/\*/g, '').replace(/&[a-z]+;/g, '').trim();
       var wrapped2 = pdf.splitTextToSize(cleanLine, usableW);
       pdf.text(wrapped2, margin, y);
       y += wrapped2.length * 5.5;
