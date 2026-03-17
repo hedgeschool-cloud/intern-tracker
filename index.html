@@ -4695,8 +4695,8 @@ window.downloadResumeReportPDF = function(internId) {
     if (pdf.setCharSpace) pdf.setCharSpace(0);
     if (line.trim() === '---' || line.trim() === '***' || line.trim() === '___') { y += 2; continue; }
     if (line.indexOf('# ') === 0 && line.indexOf('## ') !== 0) { continue; }
-    var skipLine = ['Position:', 'Position Applied', 'Candidate:', 'Role:', 'Job Title:', 'Review Date:', 'Name:', 'Position applied', 'position applied', 'Applied For:', 'applied for:'];
-    if (skipLine.some(function(s){ return line.indexOf(s) === 0; })) { continue; }
+    var skipLine = ['Position:', 'Position Applied', 'Candidate:', 'Role:', 'Job Title:', 'Review Date:', 'Name:', 'Position applied', 'position applied', 'Applied For:', 'applied for:', 'CANDIDATE_NAME:'];
+    if (skipLine.some(function(s){ return line.toLowerCase().indexOf(s.toLowerCase()) === 0; })) { continue; }
     if (line.indexOf('## ') === 0 || line.indexOf('### ') === 0) {
       y += 3;
       var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[^\x00-\x7F]/g, '').replace(/[^a-zA-Z0-9\s\(\)\.\,\:\!\/\%\-\&\']/g, '').replace(/\s+/g, ' ').trim();
@@ -4804,7 +4804,7 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
     var internName = intern ? intern.name : 'the intern';
     var streamName = stream || 'Finance';
 
-    var prompt = 'You are an expert resume reviewer for finance internships. Analyse this resume for ' + internName + ' applying for ' + streamName + '. Give a structured report with: Overall Score (X/100), Strengths, Weaknesses, Section Feedback, Improvement Suggestions, ATS Score (X/100), and Priority Actions. Be specific and constructive.';
+    var prompt = 'You are an expert resume reviewer for finance internships. Analyse this resume. IMPORTANT: Start your response with exactly this line: CANDIDATE_NAME: [full name from resume]. Then give a structured report for ' + streamName + ' with these sections:\n## Overall Score: [X/100]\n## Strengths\n## Weaknesses\n## Section-by-Section Feedback\n## Improvement Suggestions\n## ATS Score: [X/100]\n## Priority Actions\nBe specific and constructive.';
 
     var response = await fetch(PROXY_URL, {
       method: 'POST',
@@ -4842,7 +4842,8 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
     }
-    var lines = analysisText.split('\n');
+    var displayText = typeof cleanAnalysisText !== 'undefined' ? cleanAnalysisText : analysisText;
+    var lines = displayText.split('\n');
     var html = '';
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
@@ -4869,20 +4870,13 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
     if (!window._resumeAnalysis) window._resumeAnalysis = {};
     // Extract candidate name from AI response
     var candidateName = internName;
-    var namePatterns = [
-      /(?:Resume Review Report|Report for|Reviewing Resume for|Analysis for|Candidate Name):\s*([A-Za-z][A-Za-z\s]{2,40}?)(?:\n|$)/i,
-      /^#\s+.*?:\s*([A-Za-z][A-Za-z\s]{2,40}?)(?:\n|$)/m,
-      /Candidate:\s*([A-Za-z][A-Za-z\s]{2,40}?)(?:\n|$)/i,
-      /Name:\s*([A-Za-z][A-Za-z\s]{2,40}?)(?:\n|$)/i
-    ];
-    for (var pi = 0; pi < namePatterns.length; pi++) {
-      var nm = analysisText.match(namePatterns[pi]);
-      if (nm && nm[1] && nm[1].trim().length > 2) {
-        candidateName = nm[1].replace(/[^a-zA-Z\s]/g, '').trim();
-        break;
-      }
+    var nameLineMatch = analysisText.match(/CANDIDATE_NAME:\s*([A-Za-z][A-Za-z\s]{1,40}?)(?:\n|$)/);
+    if (nameLineMatch && nameLineMatch[1] && nameLineMatch[1].trim().length > 1) {
+      candidateName = nameLineMatch[1].trim();
     }
-    window._resumeAnalysis[internId] = { text: analysisText, name: candidateName, stream: streamName };
+    // Remove the CANDIDATE_NAME line from the analysis text before displaying
+    var cleanAnalysisText = analysisText.replace(/CANDIDATE_NAME:[^\n]*\n?/, '').trim();
+    window._resumeAnalysis[internId] = { text: cleanAnalysisText, name: candidateName, stream: streamName };
 
   } catch(err) {
     console.error('Resume analysis error:', err);
