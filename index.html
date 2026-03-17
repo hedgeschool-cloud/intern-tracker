@@ -4659,15 +4659,21 @@ window.downloadResumeReportPDF = function(internId) {
   pdf.setTextColor(30, 30, 40);
   y = 40;
 
-  // Content
+  // Content - reset all text properties
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.setTextColor(30, 30, 40);
+  if (pdf.setCharSpace) pdf.setCharSpace(0);
+  if (pdf.setLineHeightFactor) pdf.setLineHeightFactor(1);
   var lines = data.text.split('\n');
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
     if (y > 275) { pdf.addPage(); y = 20; }
 
+    if (pdf.setCharSpace) pdf.setCharSpace(0);
     if (line.indexOf('## ') === 0 || line.indexOf('### ') === 0) {
       y += 3;
-      var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/[`'"]+$/g, '').replace(/&[a-z]+;/g, '').trim();
+      var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[^a-zA-Z0-9\s\(\)\.\,\:\/\%\-\&]/g, '').replace(/\s+/g, ' ').trim();
       var isMain = line.indexOf('## ') === 0;
       if (isMain) {
         pdf.setFillColor(245, 240, 255);
@@ -4687,12 +4693,12 @@ window.downloadResumeReportPDF = function(internId) {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
     } else if (line.indexOf('- ') === 0 || line.indexOf('* ') === 0) {
-      var bulletText = line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/&[a-z]+;/g, '').trim();
+      var bulletText = line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/\s+/g, ' ').trim();
       var bullet = pdf.splitTextToSize('- ' + bulletText, usableW - 6);
       pdf.text(bullet, margin + 4, y);
       y += bullet.length * 5.5;
     } else if (line.trim()) {
-      var cleanLine = line.replace(/\*\*/g, '').replace(/\*([^*]+)\*/g, '$1').replace(/\*/g, '').replace(/&[a-z]+;/g, '').trim();
+      var cleanLine = line.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/\s+/g, ' ').trim();
       var wrapped2 = pdf.splitTextToSize(cleanLine, usableW);
       pdf.text(wrapped2, margin, y);
       y += wrapped2.length * 5.5;
@@ -4771,11 +4777,14 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
 
     // Safe HTML conversion - handles ##, ###, **, and bullet points
     function cleanMd(s) {
+      // Strip all markdown: **, *, #, backticks, trailing punctuation
       return s
         .replace(/\*\*/g, '')
-        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/\*/g, '')
         .replace(/#+ /g, '')
-        .replace(/^['']+|['']+$/g, '')
+        .replace(/`/g, '')
+        .replace(/[\u2018\u2019\u201c\u201d'"]+/g, '')
+        .replace(/\s+/g, ' ')
         .trim()
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
