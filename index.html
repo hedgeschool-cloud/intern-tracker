@@ -4695,7 +4695,8 @@ window.downloadResumeReportPDF = function(internId) {
     if (pdf.setCharSpace) pdf.setCharSpace(0);
     if (line.trim() === '---' || line.trim() === '***' || line.trim() === '___') { y += 2; continue; }
     if (line.indexOf('# ') === 0 && line.indexOf('## ') !== 0) { continue; }
-    if (line.indexOf('Position:') === 0 || line.indexOf('Position Applied') === 0 || line.indexOf('Candidate:') === 0 || line.indexOf('Role:') === 0 || line.indexOf('Job Title:') === 0 || line.indexOf('Review Date:') === 0 || line.indexOf('Name:') === 0) { continue; }
+    var skipLine = ['Position:', 'Position Applied', 'Candidate:', 'Role:', 'Job Title:', 'Review Date:', 'Name:', 'Position applied', 'position applied', 'Applied For:', 'applied for:'];
+    if (skipLine.some(function(s){ return line.indexOf(s) === 0; })) { continue; }
     if (line.indexOf('## ') === 0 || line.indexOf('### ') === 0) {
       y += 3;
       var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[^\x00-\x7F]/g, '').replace(/[^a-zA-Z0-9\s\(\)\.\,\:\!\/\%\-\&\']/g, '').replace(/\s+/g, ' ').trim();
