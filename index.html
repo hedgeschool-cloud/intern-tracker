@@ -4958,9 +4958,19 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
       // Update the button to show analysed badge
       var btns = document.querySelectorAll('[onclick*="showResumeAnalysis(\'"+batchId+"\'"]');
       btns.forEach(function(b){ if (b.innerHTML.indexOf('Analyse Resume') > -1) b.innerHTML = '✅ Resume Analysed'; });
-      // Log to activityLogs so it appears in the Analytics Report
-      logActivity('Resume Analysis', { batchId: batchId, internId: internId, field: 'resume', value: candidateName + ' (' + streamName + ')' });
     } catch(e) { console.error('Could not save analysis status:', e); }
+
+    // Log to activityLogs — outside inner try/catch so it always fires
+    var batchObj = (_state.batches || []).find(function(b){ return b.id === batchId; });
+    var internObj = (_state.internsCache[batchId] || []).find(function(i){ return i.id === internId; });
+    logActivity('Resume Analysis', {
+      batchId: batchId,
+      batchName: batchObj ? batchObj.name : null,
+      internId: internId,
+      internName: internObj ? internObj.name : internName,
+      field: 'resume',
+      value: candidateName + ' (' + streamName + ')'
+    });
 
   } catch(err) {
     console.error('Resume analysis error:', err);
