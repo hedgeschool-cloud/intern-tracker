@@ -4717,11 +4717,13 @@ window.downloadResumeReportPDF = function(internId) {
       pdf.setTextColor(30, 30, 40);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
-    } else if (line.indexOf('- ') === 0 || line.indexOf('* ') === 0) {
-      var bulletText = line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[\'\"]/g, '').replace(/\s+/g, ' ').trim();
-      var bullet = pdf.splitTextToSize('- ' + bulletText, usableW - 6);
+    } else if (line.trimStart().indexOf('- ') === 0 || line.trimStart().indexOf('* ') === 0) {
+      var bulletText = line.trimStart().slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[\'\"]/g, '').replace(/\s+/g, ' ').trim();
+      var indent = line.length - line.trimStart().length > 0 ? margin + 8 : margin + 4;
+      var bulletUsableW = usableW - (indent - margin) - 2;
+      var bullet = pdf.splitTextToSize('- ' + bulletText, bulletUsableW);
       for (var bi = 0; bi < bullet.length; bi++) {
-        pdf.text(bullet[bi], margin + 4, y);
+        pdf.text(bullet[bi], indent, y);
         y += 5.5;
       }
     } else if (line.trim()) {
@@ -4731,15 +4733,21 @@ window.downloadResumeReportPDF = function(internId) {
       for (var wi = 0; wi < wrapped2.length; wi++) {
         var wline = wrapped2[wi];
         var isLastLine = wi === wrapped2.length - 1;
-        if (!isLastLine && wline.trim().split(' ').length > 1) {
-          var words = wline.trim().split(' ');
-          var totalTextW = words.reduce(function(s,w){ return s + pdf.getTextWidth(w); }, 0);
-          var spaceW = (usableW - totalTextW) / (words.length - 1);
-          var cx = margin;
-          for (var wj = 0; wj < words.length; wj++) {
-            pdf.text(words[wj], cx, y);
-            cx += pdf.getTextWidth(words[wj]) + spaceW;
-          }
+        if (!isLastLine && wline.trim().split(' ').length > 2) {
+          try {
+            var words = wline.trim().split(' ').filter(function(w){ return w.length > 0; });
+            var totalTextW = words.reduce(function(s,w){ return s + (pdf.getTextWidth(w) || 0); }, 0);
+            var spaceW = (usableW - totalTextW) / (words.length - 1);
+            if (spaceW > 0 && spaceW < 20) {
+              var cx = margin;
+              for (var wj = 0; wj < words.length; wj++) {
+                pdf.text(words[wj], cx, y);
+                cx += (pdf.getTextWidth(words[wj]) || 0) + spaceW;
+              }
+            } else {
+              pdf.text(wline, margin, y);
+            }
+          } catch(je) { pdf.text(wline, margin, y); }
         } else {
           pdf.text(wline, margin, y);
         }
