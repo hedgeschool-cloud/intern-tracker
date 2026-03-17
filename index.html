@@ -2587,7 +2587,7 @@ async function renderInternDetailAsync(param) {
           <button class="btn btn-primary btn-sm" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
           <button class="btn btn-green btn-sm" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
           <button class="btn btn-ghost btn-sm" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
-          <button class="btn btn-ghost btn-sm" style="background:rgba(16,163,74,.12);color:#16a34a;border:1px solid rgba(16,163,74,.3)" onclick="showResumeAnalysis('${batchId}','${internId}','${batch?.stream||''}')" title="AI Resume Analysis">🤖 Analyse Resume</button>
+          <button class="btn btn-ghost btn-sm" style="background:rgba(16,163,74,.12);color:#16a34a;border:1px solid rgba(16,163,74,.3)" onclick="showResumeAnalysis('${batchId}','${internId}','${batch?.stream||''}')" title="${intern.resumeAnalysedAt ? 'Last analysed: ' + tsToDate(intern.resumeAnalysedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' by ' + (intern.resumeAnalysedBy||'') : 'AI Resume Analysis'}">${intern.resumeAnalysedAt ? '✅ Resume Analysed' : '🤖 Analyse Resume'}</button>
         </div>
       </div>
 
@@ -2844,9 +2844,10 @@ async function renderInternDetailAsync(param) {
         <button class="btn btn-primary" onclick="saveCurrentPage('${batchId}','${internId}')">💾 Save</button>
         <button class="btn btn-green" onclick="exportIntern('${batchId}','${internId}')">📥 Export Report</button>
         <button class="btn btn-ghost" style="background:rgba(124,58,237,.15);color:var(--accent);border:1px solid rgba(124,58,237,.3)" onclick="exportEvaluationPDF('${batchId}','${internId}')">📄 Evaluation PDF</button>
-        <button class="btn btn-ghost" style="background:rgba(16,163,74,.12);color:#16a34a;border:1px solid rgba(16,163,74,.3)" onclick="showResumeAnalysis('${batchId}','${internId}','${batch?.stream||''}')" title="Upload and analyse intern resume using AI">🤖 Analyse Resume</button>
+        <button class="btn btn-ghost" style="background:rgba(16,163,74,.12);color:#16a34a;border:1px solid rgba(16,163,74,.3)" onclick="showResumeAnalysis('${batchId}','${internId}','${batch?.stream||''}')" title="${intern.resumeAnalysedAt ? 'Last analysed: ' + tsToDate(intern.resumeAnalysedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' by ' + (intern.resumeAnalysedBy||'') : 'Upload and analyse intern resume using AI'}">${intern.resumeAnalysedAt ? '✅ Resume Analysed' : '🤖 Analyse Resume'}</button>
       </div>
       <!-- RESUME ANALYSIS SECTION -->
+      ${intern.resumeAnalysedAt ? `<div style="margin-top:6px;font-size:11px;color:var(--muted);background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.15);border-radius:6px;padding:4px 10px;display:inline-block">✅ Last analysed: <strong>${tsToDate(intern.resumeAnalysedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} ${tsToDate(intern.resumeAnalysedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}</strong> · ${intern.resumeAnalysedBy||''} · <em>${intern.resumeAnalysedFor||''}</em></div>` : ''}
       <div id="resume-analysis-${internId}" style="display:none;margin-top:8px">
         <div class="card" style="border:2px dashed rgba(16,163,74,.3);background:rgba(16,163,74,.04)">
           <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;color:#16a34a">🤖 AI Resume Analysis</h3>
@@ -4877,6 +4878,22 @@ window.handleResumeUpload = async function(batchId, internId, stream, input) {
     // Remove the CANDIDATE_NAME line from the analysis text before displaying
     var cleanAnalysisText = analysisText.replace(/CANDIDATE_NAME:[^\n]*\n?/, '').trim();
     window._resumeAnalysis[internId] = { text: cleanAnalysisText, name: candidateName, stream: streamName };
+    // Save analysis status to Firestore permanently
+    try {
+      await updateDoc(doc(db, 'batches', batchId, 'interns', internId), {
+        resumeAnalysedAt: serverTimestamp(),
+        resumeAnalysedBy: _state.userDoc?.name || 'Unknown',
+        resumeAnalysedFor: candidateName
+      });
+      // Update cache too
+      if (_state.internsCache[batchId]) {
+        var ci = _state.internsCache[batchId].find(function(i){ return i.id === internId; });
+        if (ci) { ci.resumeAnalysedAt = new Date(); ci.resumeAnalysedBy = _state.userDoc?.name || 'Unknown'; ci.resumeAnalysedFor = candidateName; }
+      }
+      // Update the button to show analysed badge
+      var btns = document.querySelectorAll('[onclick*="showResumeAnalysis(\'"+batchId+"\'"]');
+      btns.forEach(function(b){ if (b.innerHTML.indexOf('Analyse Resume') > -1) b.innerHTML = '✅ Resume Analysed'; });
+    } catch(e) { console.error('Could not save analysis status:', e); }
 
   } catch(err) {
     console.error('Resume analysis error:', err);
