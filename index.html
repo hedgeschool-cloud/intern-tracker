@@ -4698,7 +4698,7 @@ window.downloadResumeReportPDF = function(internId) {
     if (line.indexOf('Position:') === 0) { continue; }
     if (line.indexOf('## ') === 0 || line.indexOf('### ') === 0) {
       y += 3;
-      var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[^a-zA-Z0-9\s\(\)\.\,\:\/\%\-\&]/g, '').replace(/\s+/g, ' ').trim();
+      var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[^\x00-\x7F]/g, '').replace(/[^a-zA-Z0-9\s\(\)\.\,\:\!\/\%\-\&\']/g, '').replace(/\s+/g, ' ').trim();
       var isMain = line.indexOf('## ') === 0;
       if (isMain) {
         pdf.setFillColor(245, 240, 255);
@@ -4718,7 +4718,7 @@ window.downloadResumeReportPDF = function(internId) {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
     } else if (line.trimStart().indexOf('- ') === 0 || line.trimStart().indexOf('* ') === 0) {
-      var bulletText = line.trimStart().slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[\'\"]/g, '').replace(/\s+/g, ' ').trim();
+      var bulletText = line.trimStart().slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[^a-zA-Z0-9\s\(\)\.\,\:\!\?\;\-\/\%\&\'\@\#\+\=]/g, '').replace(/\s+/g, ' ').trim();
       var indent = line.length - line.trimStart().length > 0 ? margin + 8 : margin + 4;
       var bulletUsableW = usableW - (indent - margin) - 2;
       var bullet = pdf.splitTextToSize('- ' + bulletText, bulletUsableW);
@@ -4727,7 +4727,7 @@ window.downloadResumeReportPDF = function(internId) {
         y += 5.5;
       }
     } else if (line.trim()) {
-      var cleanLine = line.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[\'\"]/g, '').replace(/\s+/g, ' ').trim();
+      var cleanLine = line.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[^a-zA-Z0-9\s\(\)\.\,\:\!\?\;\-\/\%\&\'\@\#\+\=]/g, '').replace(/\s+/g, ' ').trim();
       var wrapped2 = pdf.splitTextToSize(cleanLine, usableW);
       // Justify text for body paragraphs
       for (var wi = 0; wi < wrapped2.length; wi++) {
