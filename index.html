@@ -4671,6 +4671,7 @@ window.downloadResumeReportPDF = function(internId) {
     if (y > 275) { pdf.addPage(); y = 20; }
 
     if (pdf.setCharSpace) pdf.setCharSpace(0);
+    if (line.trim() === '---' || line.trim() === '***' || line.trim() === '___') { y += 2; continue; }
     if (line.indexOf('## ') === 0 || line.indexOf('### ') === 0) {
       y += 3;
       var heading = line.replace('### ', '').replace('## ', '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[^a-zA-Z0-9\s\(\)\.\,\:\/\%\-\&]/g, '').replace(/\s+/g, ' ').trim();
@@ -4693,15 +4694,31 @@ window.downloadResumeReportPDF = function(internId) {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
     } else if (line.indexOf('- ') === 0 || line.indexOf('* ') === 0) {
-      var bulletText = line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/\s+/g, ' ').trim();
+      var bulletText = line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[\'\"]/g, '').replace(/\s+/g, ' ').trim();
       var bullet = pdf.splitTextToSize('- ' + bulletText, usableW - 6);
       pdf.text(bullet, margin + 4, y);
       y += bullet.length * 5.5;
     } else if (line.trim()) {
-      var cleanLine = line.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/\s+/g, ' ').trim();
+      var cleanLine = line.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/[\'\"]/g, '').replace(/\s+/g, ' ').trim();
       var wrapped2 = pdf.splitTextToSize(cleanLine, usableW);
-      pdf.text(wrapped2, margin, y);
-      y += wrapped2.length * 5.5;
+      // Justify text for body paragraphs
+      for (var wi = 0; wi < wrapped2.length; wi++) {
+        var wline = wrapped2[wi];
+        var isLastLine = wi === wrapped2.length - 1;
+        if (!isLastLine && wline.trim().split(' ').length > 1) {
+          var words = wline.trim().split(' ');
+          var totalTextW = words.reduce(function(s,w){ return s + pdf.getTextWidth(w); }, 0);
+          var spaceW = (usableW - totalTextW) / (words.length - 1);
+          var cx = margin;
+          for (var wj = 0; wj < words.length; wj++) {
+            pdf.text(words[wj], cx, y);
+            cx += pdf.getTextWidth(words[wj]) + spaceW;
+          }
+        } else {
+          pdf.text(wline, margin, y);
+        }
+        y += 5.5;
+      }
     } else {
       y += 3;
     }
