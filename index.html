@@ -3740,51 +3740,6 @@ async function buildAnalyticsPDF(mentor, startDate, endDate, logs) {
     return;
   }
 
-  // ── RESUME ANALYSIS SUMMARY SECTION ──
-  const resumeLogs = logs.filter(l => l.action === 'Resume Analysis');
-  if (resumeLogs.length > 0) {
-    checkPage(20);
-    pdf.setFillColor(22, 163, 74, 0.12);
-    pdf.setFillColor(230, 255, 240);
-    pdf.rect(margin, y - 4, contentW, 10, 'F');
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(11);
-    pdf.setTextColor(22, 101, 52);
-    pdf.text('🤖 Resume Analysis Activity  (' + resumeLogs.length + ' analysis' + (resumeLogs.length > 1 ? 'es' : '') + ' in this period)', margin + 2, y + 3);
-    y += 14;
-
-    // Table header
-    pdf.setFillColor(22, 101, 52);
-    pdf.rect(margin, y - 4, contentW, 8, 'F');
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(7.5);
-    pdf.setTextColor(255, 255, 255);
-    pdf.text('Date & Time', margin + 2, y + 1);
-    pdf.text('Intern Name', margin + 50, y + 1);
-    pdf.text('Batch', margin + 100, y + 1);
-    pdf.text('Candidate (Stream)', margin + 140, y + 1);
-    y += 8;
-
-    resumeLogs.forEach(function(rl, ri) {
-      checkPage(8);
-      var ts = rl.timestamp?.toDate ? rl.timestamp.toDate() : new Date(rl.timestamp);
-      if (ri % 2 === 0) { pdf.setFillColor(240, 253, 244); pdf.rect(margin, y - 3, contentW, 7, 'F'); }
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(7.5);
-      pdf.setTextColor(40, 40, 60);
-      pdf.text(ts.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) + ' ' + ts.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}), margin + 2, y + 1);
-      pdf.text((rl.internName || '—').substring(0, 22), margin + 50, y + 1);
-      pdf.text((rl.batchName || '—').substring(0, 22), margin + 100, y + 1);
-      pdf.text((rl.value || '—').substring(0, 28), margin + 140, y + 1);
-      y += 7;
-    });
-
-    y += 4;
-    pdf.setDrawColor(200, 230, 210);
-    pdf.line(margin, y, pageW - margin, y);
-    y += 10;
-  }
-
   // ── GROUP BY SESSIONS (Login → Logout) ──
   const sessions = [];
   let currentSession = null;
