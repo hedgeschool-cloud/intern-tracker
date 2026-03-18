@@ -988,6 +988,10 @@ function initSidebar() {
     document.getElementById('admin-nav').style.display = 'block';
     document.getElementById('nav-users').style.display = 'flex';
     document.getElementById('nav-analytics').style.display = 'flex';
+  } else {
+    document.getElementById('admin-nav').style.display = 'none';
+    document.getElementById('nav-users').style.display = 'none';
+    document.getElementById('nav-analytics').style.display = 'none';
   }
 }
 
@@ -1048,8 +1052,14 @@ function renderPage(page, param) {
   else if (page === 'mentor-detail') { _state.currentMentor = param; mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderMentorDetailAsync(param).then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); ensureHamburger(); }); return; }
   else if (page === 'reports') mc.innerHTML = renderReports();
   else if (page === 'scorecard') { mc.innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted)"><span class="spinner" style="width:32px;height:32px;border-width:3px"></span></div>'; renderScorecardAsync().then(h => { document.getElementById('main-content').innerHTML = h; attachPageEvents(); ensureHamburger(); }); }
-  else if (page === 'users') mc.innerHTML = renderUsers();
-  else if (page === 'analytics') mc.innerHTML = renderAnalytics();
+  else if (page === 'users') {
+    if (_state.userDoc?.role !== 'admin') { mc.innerHTML = '<div class="empty-state"><div class="icon">⛔</div><h3>Access Denied</h3><p>This page is only accessible to admins.</p></div>'; return; }
+    mc.innerHTML = renderUsers();
+  }
+  else if (page === 'analytics') {
+    if (_state.userDoc?.role !== 'admin') { mc.innerHTML = '<div class="empty-state"><div class="icon">⛔</div><h3>Access Denied</h3><p>This page is only accessible to admins.</p></div>'; return; }
+    mc.innerHTML = renderAnalytics();
+  }
   else if (page === 'mentors') { mc.innerHTML = renderMentorList(); }
   attachPageEvents();
   ensureHamburger();
